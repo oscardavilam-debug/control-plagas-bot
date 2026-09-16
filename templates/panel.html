@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo | FUMILAB</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+    <!-- BARRA SUPERIOR ADMIN -->
+    <nav class="bg-gray-900 text-white border-b border-gray-800 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="text-lg font-black text-green-400 tracking-wider">FUMILAB</span>
+                <span class="text-xs text-gray-400">| Panel de Administración</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/" target="_blank" class="text-xs text-gray-300 hover:text-white transition flex items-center gap-1">
+                    <i class="fas fa-external-link-alt"></i> Ver Web
+                </a>
+                <a href="/logout" class="px-3 py-1.5 bg-red-600/80 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition flex items-center gap-1.5">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+
+        <!-- SECCIÓN 1: SOLICITUDES Y PROSPECTOS EN TIEMPO REAL -->
+        <div>
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2 class="text-xl font-black text-gray-900 flex items-center gap-2">
+                        <i class="fas fa-users text-green-700"></i> Solicitudes y Prospectos Recientes
+                    </h2>
+                    <p class="text-xs text-gray-500">Contactos captados automáticamente por WhatsApp y la Landing Page.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">
+                            <tr>
+                                <th class="px-6 py-3.5">Fecha</th>
+                                <th class="px-6 py-3.5">Cliente</th>
+                                <th class="px-6 py-3.5">Teléfono</th>
+                                <th class="px-6 py-3.5">Plaga</th>
+                                <th class="px-6 py-3.5">Inmueble</th>
+                                <th class="px-6 py-3.5">Origen</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for p in prospectos %}
+                            <tr class="hover:bg-gray-50/80 transition">
+                                <td class="px-6 py-4 text-xs text-gray-500">{{ p['fecha'] }}</td>
+                                <td class="px-6 py-4 font-bold text-gray-900">{{ p['nombre'] }}</td>
+                                <td class="px-6 py-4 font-mono text-xs text-green-700">
+                                    <a href="https://wa.me/{{ p['telefono'] }}" target="_blank" class="hover:underline flex items-center gap-1">
+                                        <i class="fab fa-whatsapp"></i> {{ p['telefono'] }}
+                                    </a>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-md text-xs font-semibold">
+                                        {{ p['plaga'] }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-xs text-gray-600">{{ p['inmueble'] }}</td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-[11px] font-medium">
+                                        {{ p['origen'] }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="px-6 py-8 text-center text-gray-400 text-xs">
+                                    No hay solicitudes registradas aún.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: GENERACIÓN DE CERTIFICADOS PDF Y CONTROL DE SERVICIOS -->
+        <div class="grid lg:grid-cols-12 gap-8">
+            
+            <!-- FORMULARIO DE REGISTRO DE SERVICIO -->
+            <div class="lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <h3 class="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
+                    <i class="fas fa-file-signature text-green-700"></i> Registrar Servicio Técnico
+                </h3>
+                <p class="text-xs text-gray-500 mb-5">Genera un nuevo folio para descargar el certificado PDF oficial.</p>
+
+                <form action="/guardar_servicio" method="POST" class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Cliente / Empresa</label>
+                        <input type="text" name="cliente" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Dirección del Servicio</label>
+                        <input type="text" name="direccion" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Plaga</label>
+                            <input type="text" name="plaga" required placeholder="Ej. Cucaracha alemana" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Método</label>
+                            <input type="text" name="metodo" required placeholder="Aspersión / Gel" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Producto</label>
+                            <input type="text" name="quimico" required placeholder="Químico" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Ing. Activo</label>
+                            <input type="text" name="ingrediente_activo" required placeholder="Ingrediente" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Dosis</label>
+                            <input type="text" name="dosis" required placeholder="10 ml / L" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Fecha Servicio</label>
+                            <input type="date" name="fecha_servicio" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Próxima Visita</label>
+                            <input type="date" name="proxima_visita" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Técnico Responsable</label>
+                        <input type="text" name="tecnico" required placeholder="Nombre del técnico" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-green-700 hover:bg-green-800 text-white font-bold rounded-lg text-sm transition shadow mt-2">
+                        Guardar y Generar Folio
+                    </button>
+                </form>
+            </div>
+
+            <!-- TABLA DE CERTIFICADOS LISTOS PARA DESCARGAR -->
+            <div class="lg:col-span-7 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                <h3 class="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
+                    <i class="fas fa-file-pdf text-red-600"></i> Certificados Generados
+                </h3>
+                <p class="text-xs text-gray-500 mb-5">Descarga inmediata en formato PDF formal con membrete y folio.</p>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 text-xs font-bold text-gray-500 uppercase border-b">
+                            <tr>
+                                <th class="px-4 py-3">Folio</th>
+                                <th class="px-4 py-3">Cliente</th>
+                                <th class="px-4 py-3">Fecha</th>
+                                <th class="px-4 py-3 text-right">PDF</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for s in servicios %}
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-4 py-3 font-mono font-bold text-xs text-gray-800">{{ s['folio'] }}</td>
+                                <td class="px-4 py-3 text-xs font-medium text-gray-900">{{ s['cliente'] }}</td>
+                                <td class="px-4 py-3 text-xs text-gray-500">{{ s['fecha_servicio'] }}</td>
+                                <td class="px-4 py-3 text-right">
+                                    <a href="/reporte_pdf/{{ s['id'] }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 font-bold text-xs rounded-lg border border-red-200 transition">
+                                        <i class="fas fa-download"></i> Descargar
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="px-4 py-6 text-center text-gray-400 text-xs">
+                                    No hay servicios generados todavía.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</body>
+</html>
