@@ -1,10 +1,10 @@
-import io
-import csv
 import json
+import os
+import io
 import urllib.request
 import urllib.error
 from datetime import datetime, date
-from flask import Flask, render_template, request, redirect, url_for, send_file, Response, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file
 from database import get_db_connection
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -14,19 +14,22 @@ app = Flask(__name__)
 
 # --- CONFIGURACIÓN META WHATSAPP CLOUD API ---
 PHONE_NUMBER_ID = "1281507521716481"
-WHATSAPP_TOKEN = "EAAj3VdqPd8MBSULlL4XmVSIPgygwlIiZCEZBAlqXCwx3yxEffK64FiJyICIzctSXeMxox5yvwIYkUnlNUlyETfefGd8LPlUtiiRTtLcp21tPehP5i5UjFgKS4pjG3tX1QJwJUGCKMiAOwZAqfBt1Bqr5BoyTo7JjZCUN994ieoYUhYX9EsZCB7sUDEJa1YCd678NeHArE7JGKTXTNfj2uZBvlBNf3ytaUVLPAhJFUpQOEK35hZAYC0TQPTXxytAUFymf9PD63wHCMpridZB9xrsjeAZDZD"
+WHATSAPP_TOKEN = "EAAj3VdqPd8MBSUlL4XmVSIpgygwlIiZCEZBALqXCwx3yxEfFK67tPMIAwhen2COHhiiyDISAmJ19EQS5FBCR58bpZAi3weYEAin8cQod83fqKp087zv1ZCqzNV0clx38SiFobnhygLT"
 WHATSAPP_VERIFY_TOKEN = "mi_token_secreto_plagas_2026"
+
+# Memoria temporal de conversaciones para el bot de WhatsApp
+USER_SESSIONS = {}
 
 def enviar_mensaje_whatsapp(destinatario, texto):
     url = f"https://graph.facebook.com/v21.0/{PHONE_NUMBER_ID}/messages"
     payload = json.dumps({
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
-        "to": destinatario,
+        "to": str(destinatario),
         "type": "text",
         "text": {"body": texto}
     }).encode('utf-8')
-    
+
     req = urllib.request.Request(
         url,
         data=payload,
@@ -37,7 +40,9 @@ def enviar_mensaje_whatsapp(destinatario, texto):
     )
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
-            return json.loads(response.read().decode('utf-8'))
+            res_data = json.loads(response.read().decode('utf-8'))
+            print(f"[BOT ENVIADO] Mensaje enviado a {destinatario}")
+            return res_data
     except urllib.error.HTTPError as e:
         error_body = e.read().decode('utf-8')
         print(f"[ERROR DETALLADO WHATSAPP]: {error_body}")
@@ -46,85 +51,18 @@ def enviar_mensaje_whatsapp(destinatario, texto):
         print(f"[ERROR ENVÍO WHATSAPP]: {e}")
         return None
 
-# --- RUTA PÚBLICA: LANDING PAGE ---
+
+# --- RUTA PÚBLICA: LANDING PAGE & WEB ---
 @app.route('/')
 def landing():
     return render_template('landing.html')
 
-@app.route('/solicitar-cotizacion', methods=['POST'])
-def solicitar_cotizacion():
-    nombre = request.form.get('nombre', '').strip()
-    telefono = request.form.get('telefono', '').strip()
-    tipo_inmueble = request.form.get('tipo_inmueble', '')
-    plaga = request.form.get('plaga', '')
-    mensaje = request.form.get('mensaje', '')
-    fecha_hoy = datetime.now().strftime("%Y-%m-%d %H:%M")
-
-    conn = get_db_connection()
-    conn.execute('''
-        INSERT INTO prospectos (fecha_registro, nombre, telefono, tipo_inmueble, plaga_problema, mensaje, origen)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (fecha_hoy, nombre, telefono, tipo_inmueble, plaga, mensaje, 'Landing Page'))
-    conn.commit()
-    conn.close()
-
-    return render_template('gracias.html', nombre=nombre)
-
-# --- PANEL ADMINISTRATIVO DE SERVICIOS ---
-@app.route('/admin')
+@app.route('/panel')
 def index():
-    busqueda = request.args.get('q', '').strip()
     conn = get_db_connection()
-
-    if busqueda:
-        query = '''
-            SELECT * FROM servicios 
-            WHERE cliente LIKE ? OR tipo_plaga LIKE ? OR tecnico LIKE ?
-            ORDER BY id DESC
-        '''
-        servicios_raw = conn.execute(query, (f'%{busqueda}%', f'%{busqueda}%', f'%{busqueda}%')).fetchall()
-    else:
-        servicios_raw = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
-
-    hoy = date.today()
-    servicios = []
-    vencidas_count = 0
-    proximas_count = 0
-
-    for s in servicios_raw:
-        item = dict(s)
-        estado_cita = "normal"
-        if item.get('proxima_cita'):
-            try:
-                fecha_cita = datetime.strptime(item['proxima_cita'], '%Y-%m-%d').date()
-                dias_restantes = (fecha_cita - hoy).days
-                if dias_restantes < 0:
-                    estado_cita = "vencida"
-                    vencidas_count += 1
-                elif dias_restantes <= 7:
-                    estado_cita = "proxima"
-                    proximas_count += 1
-                else:
-                    estado_cita = "vigente"
-            except ValueError:
-                estado_cita = "normal"
-        item['estado_cita'] = estado_cita
-        servicios.append(item)
-
-    total_servicios = conn.execute('SELECT COUNT(*) FROM servicios').fetchone()[0]
-    total_clientes = conn.execute('SELECT COUNT(DISTINCT cliente) FROM servicios').fetchone()[0]
-    total_prospectos = conn.execute('SELECT COUNT(*) FROM prospectos WHERE estatus = "Pendiente"').fetchone()[0]
+    servicios = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
     conn.close()
-
-    metricas = {
-        'total': total_servicios,
-        'clientes': total_clientes,
-        'vencidas': vencidas_count,
-        'proximas': proximas_count,
-        'prospectos_pendientes': total_prospectos
-    }
-
-    return render_template('index.html', servicios=servicios, busqueda=busqueda, metricas=metricas)
+    return render_template('index.html', servicios=servicios)
 
 @app.route('/prospectos')
 def ver_prospectos():
@@ -133,256 +71,247 @@ def ver_prospectos():
     conn.close()
     return render_template('prospectos.html', prospectos=prospectos)
 
-@app.route('/prospectos/atender/<int:prospecto_id>', methods=['POST'])
-def atender_prospecto(prospecto_id):
-    conn = get_db_connection()
-    conn.execute("UPDATE prospectos SET estatus = 'Atendido' WHERE id = ?", (prospecto_id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ver_prospectos'))
-
-# --- MÓDULO SERVICIOS (CRUD) ---
-@app.route('/nuevo', methods=('GET', 'POST'))
-def nuevo_servicio():
-    conn = get_db_connection()
-    if request.method == 'POST':
-        fecha = request.form['fecha']
-        proxima_cita = request.form.get('proxima_cita', '')
-        cliente = request.form['cliente']
-        direccion = request.form['direccion']
-        tipo_plaga = request.form['tipo_plaga']
-        producto_quimico = request.form['producto_quimico']
-        dosis = request.form['dosis']
-        tecnico = request.form['tecnico']
-        observaciones = request.form.get('observaciones', '')
-
-        conn.execute('''
-            INSERT INTO servicios 
-            (fecha, proxima_cita, cliente, direccion, tipo_plaga, producto_quimico, dosis, tecnico, observaciones)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (fecha, proxima_cita, cliente, direccion, tipo_plaga, producto_quimico, dosis, tecnico, observaciones))
-        conn.commit()
-        conn.close()
-        return redirect(url_for('index'))
-
-    conn.close()
-    return render_template('nuevo_servicio.html')
-
-@app.route('/editar/<int:servicio_id>', methods=('GET', 'POST'))
-def editar_servicio(servicio_id):
-    conn = get_db_connection()
-    servicio = conn.execute('SELECT * FROM servicios WHERE id = ?', (servicio_id,)).fetchone()
-    if not servicio:
-        conn.close()
-        return "Servicio no encontrado", 404
-
-    if request.method == 'POST':
-        conn.execute('''
-            UPDATE servicios 
-            SET fecha = ?, proxima_cita = ?, cliente = ?, direccion = ?, 
-                tipo_plaga = ?, producto_quimico = ?, dosis = ?, tecnico = ?, observaciones = ?
-            WHERE id = ?
-        ''', (
-            request.form['fecha'], request.form.get('proxima_cita', ''), request.form['cliente'],
-            request.form['direccion'], request.form['tipo_plaga'], request.form['producto_quimico'],
-            request.form['dosis'], request.form['tecnico'], request.form.get('observaciones', ''), servicio_id
-        ))
-        conn.commit()
-        conn.close()
-        return redirect(url_for('index'))
-
-    conn.close()
-    return render_template('editar_servicio.html', servicio=servicio)
-
-@app.route('/eliminar/<int:servicio_id>', methods=('POST',))
-def eliminar_servicio(servicio_id):
-    conn = get_db_connection()
-    conn.execute('DELETE FROM servicios WHERE id = ?', (servicio_id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('index'))
-
-@app.route('/cliente/<string:nombre_cliente>')
-def historial_cliente(nombre_cliente):
-    conn = get_db_connection()
-    servicios = conn.execute('SELECT * FROM servicios WHERE cliente = ? ORDER BY fecha DESC', (nombre_cliente,)).fetchall()
-    conn.close()
-    return render_template('cliente_historial.html', cliente=nombre_cliente, servicios=servicios)
-
-# --- INVENTARIO ---
-@app.route('/inventario', methods=('GET', 'POST'))
+@app.route('/inventario')
 def inventario():
     conn = get_db_connection()
-    if request.method == 'POST':
-        conn.execute('''
-            INSERT INTO inventario (producto, ingrediente_activo, stock, unidad, registro_sanitario)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (request.form['producto'], request.form['ingrediente_activo'], float(request.form['stock']), request.form['unidad'], request.form.get('registro_sanitario', '')))
-        conn.commit()
-        return redirect(url_for('inventario'))
-
-    productos = conn.execute('SELECT * FROM inventario ORDER BY producto ASC').fetchall()
+    productos = conn.execute('SELECT * FROM productos ORDER BY nombre ASC').fetchall()
     conn.close()
     return render_template('inventario.html', productos=productos)
 
-@app.route('/inventario/eliminar/<int:item_id>', methods=('POST',))
-def eliminar_inventario(item_id):
-    conn = get_db_connection()
-    conn.execute('DELETE FROM inventario WHERE id = ?', (item_id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('inventario'))
+@app.route('/nuevo_servicio', methods=['GET', 'POST'])
+def nuevo_servicio():
+    if request.method == 'POST':
+        cliente = request.form['cliente']
+        telefono = request.form['telefono']
+        tipo_plaga = request.form['tipo_plaga']
+        fecha = request.form['fecha']
+        costo = request.form['costo']
+        notas = request.form.get('notas', '')
 
-# --- EXPORTAR Y PDF ---
-@app.route('/exportar-csv')
-def exportar_csv():
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO servicios (cliente, telefono, tipo_plaga, fecha, costo, notas)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (cliente, telefono, tipo_plaga, fecha, costo, notas))
+        conn.commit()
+        conn.close()
+        return redirect(url_for('index'))
+    return render_template('nuevo_servicio.html')
+
+@app.route('/editar_servicio/<int:id>', methods=['GET', 'POST'])
+def editar_servicio(id):
     conn = get_db_connection()
-    servicios = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
+    if request.method == 'POST':
+        cliente = request.form['cliente']
+        telefono = request.form['telefono']
+        tipo_plaga = request.form['tipo_plaga']
+        fecha = request.form['fecha']
+        costo = request.form['costo']
+        notas = request.form.get('notas', '')
+
+        conn.execute('''
+            UPDATE servicios SET cliente=?, telefono=?, tipo_plaga=?, fecha=?, costo=?, notas=?
+            WHERE id=?
+        ''', (cliente, telefono, tipo_plaga, fecha, costo, notas, id))
+        conn.commit()
+        conn.close()
+        return redirect(url_for('index'))
+
+    servicio = conn.execute('SELECT * FROM servicios WHERE id=?', (id,)).fetchone()
+    conn.close()
+    return render_template('editar_servicio.html', servicio=servicio)
+
+@app.route('/reporte_pdf/<int:id>')
+def reporte_pdf(id):
+    conn = get_db_connection()
+    servicio = conn.execute('SELECT * FROM servicios WHERE id=?', (id,)).fetchone()
     conn.close()
 
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(['ID', 'Fecha', 'Próxima Cita', 'Cliente', 'Dirección', 'Plaga', 'Producto', 'Dosis', 'Técnico', 'Observaciones'])
-    for s in servicios:
-        writer.writerow([s['id'], s['fecha'], s['proxima_cita'] or '', s['cliente'], s['direccion'], s['tipo_plaga'], s['producto_quimico'], s['dosis'], s['tecnico'], s['observaciones'] or ''])
-    
-    output.seek(0)
-    return Response(output.getvalue().encode('utf-8-sig'), mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=servicios_plagas.csv"})
-
-@app.route('/pdf/<int:servicio_id>')
-def generar_pdf(servicio_id):
-    conn = get_db_connection()
-    servicio = conn.execute('SELECT * FROM servicios WHERE id = ?', (servicio_id,)).fetchone()
-    conn.close()
     if not servicio:
         return "Servicio no encontrado", 404
 
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
-    width, height = letter
+    p.setTitle(f"Certificado_Servicio_{id}")
 
-    p.setFillColor(colors.HexColor("#1b4d3e"))
-    p.rect(0, height - 75, width, 75, fill=1, stroke=0)
+    # Cabecera
+    p.setFillColor(colors.HexColor("#1b4332"))
+    p.rect(0, 720, 612, 80, fill=True, stroke=False)
     p.setFillColor(colors.white)
-    p.setFont("Helvetica-Bold", 17)
-    p.drawString(40, height - 42, "CERTIFICADO DE CONTROL Y MANEJO INTEGRAL DE PLAGAS")
-    p.setFont("Helvetica", 10)
-    p.drawString(40, height - 60, f"Folio Oficial: #{servicio['id']:05d}  |  Emisión: {date.today().strftime('%d/%m/%Y')}")
+    p.setFont("Helvetica-Bold", 20)
+    p.drawString(50, 755, "FUMILAB - CONTROL INTEGRAL DE PLAGAS")
+    p.setFont("Helvetica", 11)
+    p.drawString(50, 735, "Certificado de Fumigación y Control Sanitario")
 
-    y = height - 115
-    p.setFillColor(colors.HexColor("#222222"))
-    campos = [
-        ("Fecha de Aplicación:", servicio['fecha']),
-        ("Próxima Cita / Refuerzo:", servicio['proxima_cita'] or "No programada"),
-        ("Cliente / Razón Social:", servicio['cliente']),
-        ("Dirección / Instalación:", servicio['direccion']),
-        ("Plaga Identificada / Tratada:", servicio['tipo_plaga']),
-        ("Producto Químico / Registro:", servicio['producto_quimico']),
-        ("Dosis y Método Aplicado:", servicio['dosis']),
-        ("Técnico Especialista:", servicio['tecnico']),
-        ("Observaciones y Recomendaciones:", servicio['observaciones'] or "Ninguna")
-    ]
+    # Contenido
+    p.setFillColor(colors.black)
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(50, 680, f"Folio del Servicio: #{servicio['id']}")
+    p.setFont("Helvetica", 11)
+    p.drawString(50, 650, f"Cliente: {servicio['cliente']}")
+    p.drawString(50, 630, f"Teléfono: {servicio['telefono']}")
+    p.drawString(50, 610, f"Tipo de Plaga Tratada: {servicio['tipo_plaga']}")
+    p.drawString(50, 590, f"Fecha de Aplicación: {servicio['fecha']}")
+    p.drawString(50, 570, f"Costo: ${servicio['costo']}")
+    p.drawString(50, 540, "Observaciones y Recomendaciones:")
+    p.setFont("Helvetica-Oblique", 10)
+    p.drawString(60, 520, str(servicio['notas']) if servicio['notas'] else "Sin observaciones adicionales.")
 
-    for label, valor in campos:
-        p.setFont("Helvetica-Bold", 10)
-        p.drawString(50, y, label)
-        p.setFont("Helvetica", 10)
-        p.drawString(245, y, str(valor))
-        p.setStrokeColor(colors.HexColor("#E2E8F0"))
-        p.setLineWidth(0.6)
-        p.line(50, y - 5, width - 50, y - 5)
-        y -= 28
-
-    y -= 20
-    p.setFillColor(colors.HexColor("#f8fafc"))
-    p.rect(50, y - 35, width - 100, 45, fill=1, stroke=0)
-    p.setFillColor(colors.HexColor("#475569"))
-    p.setFont("Helvetica-Oblique", 8)
-    p.drawString(60, y - 5, "Nota sanitaria: Servicio ejecutado conforme a lineamientos de bioseguridad y manejo seguro de plaguicidas.")
-    p.drawString(60, y - 18, "Se sugiere mantener las áreas ventiladas y respetar el tiempo de reingreso indicado.")
-
-    y -= 70
-    p.setStrokeColor(colors.HexColor("#334155"))
+    # Pie de página
+    p.setStrokeColor(colors.HexColor("#1b4332"))
     p.setLineWidth(1)
-    p.line(width / 2 - 110, y, width / 2 + 110, y)
-    p.setFillColor(colors.HexColor("#1e293b"))
-    p.setFont("Helvetica-Bold", 9)
-    p.drawCentredString(width / 2, y - 14, str(servicio['tecnico']))
-    p.setFont("Helvetica", 8)
-    p.drawCentredString(width / 2, y - 26, "Firma del Responsable Técnico")
+    p.line(50, 480, 550, 480)
+    p.setFont("Helvetica", 9)
+    p.setFillColor(colors.gray)
+    p.drawString(50, 460, "Este documento avala la aplicación de productos autorizados por COFEPRIS.")
+    p.drawString(50, 445, "Garantía de servicio sujeta a las condiciones preventivas indicadas por el técnico.")
 
     p.showPage()
     p.save()
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name=f"certificado_servicio_{servicio['id']}.pdf", mimetype='application/pdf')
+    return send_file(buffer, as_attachment=True, download_name=f"Certificado_Fumilab_{id}.pdf", mimetype='application/pdf')
 
-# --- CHATBOT WEBHOOK (WHATSAPP CLOUD API) ---
+
+# --- RUTA DEL WEBHOOK DE WHATSAPP ---
 @app.route('/webhook/whatsapp', methods=['GET', 'POST'])
-def whatsapp_webhook():
+def webhook_whatsapp():
+    # 1. Validación inicial de Meta
     if request.method == 'GET':
         mode = request.args.get('hub.mode')
         token = request.args.get('hub.verify_token')
         challenge = request.args.get('hub.challenge')
         if mode == 'subscribe' and token == WHATSAPP_VERIFY_TOKEN:
+            print("[WEBHOOK VERIFICADO EXITOSAMENTE]")
             return challenge, 200
-        return 'Verificación fallida', 403
+        print("[ERROR TOKEN VERIFICACIÓN]")
+        return 'Token no válido', 403
 
-    if request.method == 'POST':
-        data = request.get_json()
-        try:
-            entry = data.get('entry', [{}])[0]
-            changes = entry.get('changes', [{}])[0]
-            value = changes.get('value', {})
-            
-            if 'messages' in value:
-                mensaje_obj = value['messages'][0]
-                remitente = str(mensaje_obj['from']).strip()
-                texto = mensaje_obj.get('text', {}).get('body', '').lower().strip()
-                nombre_contacto = value.get('contacts', [{}])[0].get('profile', {}).get('name', 'Usuario WhatsApp')
+    # 2. Recepción de mensajes entrantes (POST)
+    data = request.get_json()
+    print(f"\n--- [WEBHOOK INCOMING PAYLOAD] ---\n{json.dumps(data)}\n---------------------------------")
 
-                # Normalización de número para México (de 521XXXXXXXXXX a 52XXXXXXXXXX)
-                if remitente.startswith("521") and len(remitente) == 13:
-                    remitente = "52" + remitente[3:]
+    try:
+        entry = data.get('entry', [])[0]
+        changes = entry.get('changes', [])[0]
+        value = changes.get('value', {})
+        messages = value.get('messages', [])
 
-                conn = get_db_connection()
-                conn.execute('''
-                    INSERT INTO prospectos (fecha_registro, nombre, telefono, tipo_inmueble, plaga_problema, mensaje, origen)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                ''', (datetime.now().strftime("%Y-%m-%d %H:%M"), nombre_contacto, remitente, 'Por definir', 'Consulta WhatsApp', texto, 'WhatsApp Chatbot'))
-                conn.commit()
-                conn.close()
+        if messages:
+            msg = messages[0]
+            remitente = msg.get('from')
+            tipo_msg = msg.get('type')
 
-                if any(saludo in texto for saludo in ['hola', 'buen', 'buenas', 'inicio', 'menu']):
-                    respuesta = (
-                        f"👋 ¡Hola {nombre_contacto}! Bienvenido a *Fumilab Biocontrol* 🌿.\n\n"
-                        "¿En qué podemos apoyarte hoy?\n"
-                        "1️⃣ Cotizar un servicio de fumigación\n"
-                        "2️⃣ Plagas comunes que atendemos\n"
-                        "3️⃣ Consultar vigencia de mi certificado\n"
-                        "4️⃣ Hablar con un especialista técnico\n\n"
-                        "👉 Responde con el número de la opción deseada."
+            texto = ""
+            if tipo_msg == 'text':
+                texto = msg.get('text', {}).get('body', '').strip().lower()
+            elif tipo_msg == 'interactive':
+                interactivo = msg.get('interactive', {})
+                if 'button_reply' in interactivo:
+                    texto = interactivo['button_reply']['id'].lower()
+                elif 'list_reply' in interactivo:
+                    texto = interactivo['list_reply']['id'].lower()
+
+            print(f"[REMITENTE]: {remitente} | [TEXTO]: {texto}")
+
+            # Estado actual de la conversación
+            estado = USER_SESSIONS.get(remitente, 'INICIO')
+
+            # Palabras de reinicio o saludo
+            saludos = ['hola', 'buen dia', 'buenas', 'inicio', 'menu', 'empezar', 'ayuda', 'start']
+            if any(s in texto for s in saludos) or estado == 'INICIO':
+                USER_SESSIONS[remitente] = 'MENU'
+                menu_msg = (
+                    "👋 ¡Hola! Bienvenido al sistema automatizado de *Fumilab / Biocontrol Pro*.\n\n"
+                    "Por favor selecciona una opción respondiendo con el número correspondiente:\n\n"
+                    "1️⃣ *Cotizar servicio de fumigación*\n"
+                    "2️⃣ *Ver plagas y tratamientos*\n"
+                    "3️⃣ *Consultar garantía de servicio*\n"
+                    "4️⃣ *Hablar con un técnico especialista*"
+                )
+                enviar_mensaje_whatsapp(remitente, menu_msg)
+
+            elif estado == 'MENU':
+                if texto == '1':
+                    USER_SESSIONS[remitente] = 'ESPERANDO_PLAGA'
+                    enviar_mensaje_whatsapp(
+                        remitente,
+                        "📋 *Cotización Inmediata*\n\n¿Qué tipo de problema o plaga necesitas controlar?\n\n"
+                        "A) Cucarachas / Chinches\n"
+                        "B) Roedores (Ratas / Ratones)\n"
+                        "C) Termitas / Polilla\n"
+                        "D) Sanitización y desinfección preventiva\n\n"
+                        "Responde con la letra de tu opción (A, B, C o D)."
                     )
-                elif texto == '1':
-                    respuesta = "📋 Excelente. Indícanos por favor si tu inmueble es *Residencial*, *Comercial* o *Industrial*, y qué tipo de plaga has detectado para preparar tu presupuesto."
                 elif texto == '2':
-                    respuesta = "🐜 Controlamos activamente cucaracha alemana y americana, chinches de cama, roedores, termitas, hormigas y fauna nociva con productos seguros y certificados."
-                elif texto == '3':
-                    respuesta = "📄 Para validar tu certificado o póliza, por favor compártenos el nombre de tu establecimiento o el folio de tu último servicio."
-                elif texto == '4':
-                    respuesta = "👨‍🔬 Un técnico especialista tomará tu conversación en breve. También puedes llamarnos o agendar inspección directamente."
-                else:
-                    respuesta = (
-                        "Hemos recibido tu mensaje correctamente ✅. "
-                        "Uno de nuestros asesores técnicos te atenderá enseguida, o escribe *HOLA* para volver a ver las opciones."
+                    enviar_mensaje_whatsapp(
+                        remitente,
+                        "🛡️ *Nuestros Tratamientos:*\n\n"
+                        "• *Residencial:* Termonebulización y aplicación de gel sin olor, 100% seguro para niños y mascotas.\n"
+                        "• *Comercial / Restaurantes:* Tratamientos con certificado oficial para inspecciones sanitarias.\n"
+                        "• *Industrial:* Control perimetral de roedores y monitoreo constante.\n\n"
+                        "Escribe *1* si deseas cotizar tu servicio o *menu* para volver."
                     )
+                elif texto == '3':
+                    enviar_mensaje_whatsapp(
+                        remitente,
+                        "📄 *Póliza de Garantía:*\nTodos nuestros servicios cuentan con póliza de garantía por escrito de 30 a 90 días con refuerzo sin costo adicional si persiste la plaga.\n\nEscribe *menu* para regresar."
+                    )
+                elif texto == '4':
+                    USER_SESSIONS[remitente] = 'INICIO'
+                    enviar_mensaje_whatsapp(
+                        remitente,
+                        "👨‍🔧 Un asesor técnico se comunicará contigo por este mismo chat en breve.\nSi es una urgencia, déjanos tu dirección y horario de contacto."
+                    )
+                else:
+                    enviar_mensaje_whatsapp(remitente, "Por favor responde con un número del *1 al 4* o escribe *menu* para reiniciar.")
 
-                enviar_mensaje_whatsapp(remitente, respuesta)
-                print(f"[BOT ENVIADO] Respuesta enviada a {remitente}")
+            elif estado == 'ESPERANDO_PLAGA':
+                opciones_plaga = {
+                    'a': 'Cucarachas / Chinches',
+                    'b': 'Roedores',
+                    'c': 'Termitas',
+                    'd': 'Sanitización'
+                }
+                plaga_elegida = opciones_plaga.get(texto, 'General')
+                USER_SESSIONS[f"{remitente}_plaga"] = plaga_elegida
+                USER_SESSIONS[remitente] = 'ESPERANDO_UBICACION'
+                enviar_mensaje_whatsapp(
+                    remitente,
+                    f"Entendido, tratamiento para *{plaga_elegida}*.\n\n"
+                    "¿Para qué tipo de inmueble es el servicio?\n"
+                    "1. Casa / Departamento\n"
+                    "2. Negocio / Restaurante\n"
+                    "3. Bodega / Empresa"
+                )
 
-        except Exception as e:
-            print(f"[ERROR WEBHOOK]: {e}")
+            elif estado == 'ESPERANDO_UBICACION':
+                plaga = USER_SESSIONS.get(f"{remitente}_plaga", "General")
+                # Guardar prospecto en base de datos SQLite
+                try:
+                    conn = get_db_connection()
+                    conn.execute('''
+                        INSERT INTO prospectos (telefono, plaga, inmueble, fecha_registro)
+                        VALUES (?, ?, ?, ?)
+                    ''', (remitente, plaga, texto, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                    conn.commit()
+                    conn.close()
+                except Exception as err_db:
+                    print(f"[DB ERROR]: {err_db}")
 
-        return jsonify({'status': 'recibido'}), 200
+                USER_SESSIONS[remitente] = 'INICIO'
+                enviar_mensaje_whatsapp(
+                    remitente,
+                    "✅ *¡Cotización registrada con éxito!*\n\n"
+                    f"Plaga seleccionada: *{plaga}*\n"
+                    "Un técnico revisará los detalles y te mandará el presupuesto estimado en unos minutos.\n\n"
+                    "¡Gracias por contactar a Fumilab!"
+                )
+
+    except Exception as e:
+        print(f"[ERROR EN MANEJO DE WEBHOOK]: {e}")
+
+    return 'EVENT_RECEIVED', 200
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
