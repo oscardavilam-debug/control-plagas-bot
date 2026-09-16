@@ -17,7 +17,6 @@ PHONE_NUMBER_ID = "1281507521716481"
 WHATSAPP_TOKEN = "EAAj3VdqPd8MBSUlL4XmVSIpgygwlIiZCEZBALqXCwx3yxEfFK67tPMIAwhen2COHhiiyDISAmJ19EQS5FBCR58bpZAi3weYEAin8cQod83fqKp087zv1ZCqzNV0clx38SiFobnhygLT"
 WHATSAPP_VERIFY_TOKEN = "mi_token_secreto_plagas_2026"
 
-# Memoria temporal de conversaciones para el bot de WhatsApp
 USER_SESSIONS = {}
 
 def enviar_mensaje_whatsapp(destinatario, texto):
@@ -52,10 +51,31 @@ def enviar_mensaje_whatsapp(destinatario, texto):
         return None
 
 
-# --- RUTA PÚBLICA: LANDING PAGE & WEB ---
+# --- RUTAS WEB ---
 @app.route('/')
 def landing():
     return render_template('landing.html')
+
+# Endpoint requerido por la landing page
+@app.route('/solicitar_cotizacion', methods=['GET', 'POST'])
+def solicitar_cotizacion():
+    if request.method == 'POST':
+        nombre = request.form.get('nombre', '')
+        telefono = request.form.get('telefono', '')
+        plaga = request.form.get('plaga', 'General')
+        inmueble = request.form.get('inmueble', 'Casa')
+        try:
+            conn = get_db_connection()
+            conn.execute('''
+                INSERT INTO prospectos (telefono, plaga, inmueble, fecha_registro)
+                VALUES (?, ?, ?, ?)
+            ''', (f"{nombre} - {telefono}", plaga, inmueble, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"[DB ERROR COTIZACION]: {e}")
+        return render_template('gracias.html')
+    return redirect(url_for('landing'))
 
 @app.route('/panel')
 def index():
@@ -134,7 +154,6 @@ def reporte_pdf(id):
     p = canvas.Canvas(buffer, pagesize=letter)
     p.setTitle(f"Certificado_Servicio_{id}")
 
-    # Cabecera
     p.setFillColor(colors.HexColor("#1b4332"))
     p.rect(0, 720, 612, 80, fill=True, stroke=False)
     p.setFillColor(colors.white)
@@ -143,7 +162,6 @@ def reporte_pdf(id):
     p.setFont("Helvetica", 11)
     p.drawString(50, 735, "Certificado de Fumigación y Control Sanitario")
 
-    # Contenido
     p.setFillColor(colors.black)
     p.setFont("Helvetica-Bold", 12)
     p.drawString(50, 680, f"Folio del Servicio: #{servicio['id']}")
@@ -157,7 +175,6 @@ def reporte_pdf(id):
     p.setFont("Helvetica-Oblique", 10)
     p.drawString(60, 520, str(servicio['notas']) if servicio['notas'] else "Sin observaciones adicionales.")
 
-    # Pie de página
     p.setStrokeColor(colors.HexColor("#1b4332"))
     p.setLineWidth(1)
     p.line(50, 480, 550, 480)
@@ -175,7 +192,6 @@ def reporte_pdf(id):
 # --- RUTA DEL WEBHOOK DE WHATSAPP ---
 @app.route('/webhook/whatsapp', methods=['GET', 'POST'])
 def webhook_whatsapp():
-    # 1. Validación inicial de Meta
     if request.method == 'GET':
         mode = request.args.get('hub.mode')
         token = request.args.get('hub.verify_token')
@@ -186,10 +202,7 @@ def webhook_whatsapp():
         print("[ERROR TOKEN VERIFICACIÓN]")
         return 'Token no válido', 403
 
-    # 2. Recepción de mensajes entrantes (POST)
     data = request.get_json()
-    print(f"\n--- [WEBHOOK INCOMING PAYLOAD] ---\n{json.dumps(data)}\n---------------------------------")
-
     try:
         entry = data.get('entry', [])[0]
         changes = entry.get('changes', [])[0]
@@ -213,10 +226,8 @@ def webhook_whatsapp():
 
             print(f"[REMITENTE]: {remitente} | [TEXTO]: {texto}")
 
-            # Estado actual de la conversación
             estado = USER_SESSIONS.get(remitente, 'INICIO')
 
-            # Palabras de reinicio o saludo
             saludos = ['hola', 'buen dia', 'buenas', 'inicio', 'menu', 'empezar', 'ayuda', 'start']
             if any(s in texto for s in saludos) or estado == 'INICIO':
                 USER_SESSIONS[remitente] = 'MENU'
@@ -286,7 +297,6 @@ def webhook_whatsapp():
 
             elif estado == 'ESPERANDO_UBICACION':
                 plaga = USER_SESSIONS.get(f"{remitente}_plaga", "General")
-                # Guardar prospecto en base de datos SQLite
                 try:
                     conn = get_db_connection()
                     conn.execute('''
@@ -308,7 +318,7 @@ def webhook_whatsapp():
                 )
 
     except Exception as e:
-        print(f"[ERROR EN MANEJO DE WEBHOOK]: {e}")
+        print(f"[ERROR WEBHOOK]: {e}")
 
     return 'EVENT_RECEIVED', 200
 
