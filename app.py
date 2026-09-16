@@ -13,7 +13,6 @@ app.secret_key = os.getenv("SECRET_KEY", "fumilab_clave_secreta_segura_2026")
 
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "Fumilab2026!")
 
-# Credenciales Meta
 PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID", "1281507521716481")
 WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN", "")
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "mi_token_secreto_plagas_2026")
@@ -25,7 +24,7 @@ DB_NAME = "plagas.db"
 def init_db():
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
-        # Tabla de prospectos (Web y WhatsApp)
+        # 1. Tabla de prospectos
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS prospectos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +36,7 @@ def init_db():
                 fecha TEXT
             )
         ''')
-        # Tabla de servicios para certificados PDF y cobros
+        # 2. Tabla de servicios
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS servicios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,18 +54,23 @@ def init_db():
                 precio_cobrado REAL DEFAULT 0.0
             )
         ''')
-        # Tabla de gastos / egresos
+        # Migración automática si la tabla servicios ya existía sin precio_cobrado
+        try:
+            cursor.execute("ALTER TABLE servicios ADD COLUMN precio_cobrado REAL DEFAULT 0.0")
+        except Exception:
+            pass
+
+        # 3. Tabla de gastos
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS gastos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 fecha TEXT,
                 categoria TEXT,
                 concepto TEXT,
-                monto REAL DEFAULT 0.0,
-                comprobante TEXT
+                monto REAL DEFAULT 0.0
             )
         ''')
-        # Tabla de ingresos adicionales
+        # 4. Tabla de ingresos extra
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS ingresos_extra (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,9 +87,7 @@ user_sessions = {}
 
 def send_whatsapp_message(to_number, text):
     if not WHATSAPP_TOKEN:
-        print("[AVISO] WHATSAPP_TOKEN no configurado en entorno.")
         return False
-    
     clean_number = to_number.replace("+", "").replace(" ", "").strip()
     if clean_number.startswith("521") and len(clean_number) == 13:
         clean_number = "52" + clean_number[3:]
@@ -178,7 +180,7 @@ def login_required(func):
     wrapper.__name__ = func.__name__
     return wrapper
 
-# ================= DASHBOARD & FINANZAS =================
+# ================= DASHBOARD FINANCIERO =================
 
 @app.route("/dashboard")
 @login_required
@@ -187,39 +189,38 @@ def dashboard():
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
         
-        # Cantidad de servicios y suma de cobros
         c.execute("SELECT COUNT(*) as total_servicios, COALESCE(SUM(precio_cobrado), 0) as ingreso_servicios FROM servicios")
         servicios_stat = c.fetchone()
         
-        # Ingresos adicionales
         c.execute("SELECT COALESCE(SUM(monto), 0) as total_extra FROM ingresos_extra")
         extra_stat = c.fetchone()
         
-        # Gastos totales y por categoría
         c.execute("SELECT COALESCE(SUM(monto), 0) as total_gastos FROM gastos")
         gastos_stat = c.fetchone()
 
         c.execute("SELECT categoria, COALESCE(SUM(monto), 0) as total FROM gastos GROUP BY categoria")
         gastos_por_cat = {row["categoria"]: row["total"] for row in c.fetchall()}
 
-        # Últimos gastos
         c.execute("SELECT * FROM gastos ORDER BY id DESC LIMIT 10")
         ultimos_gastos = c.fetchall()
 
-        # Últimos ingresos extra
         c.execute("SELECT * FROM ingresos_extra ORDER BY id DESC LIMIT 10")
         ultimos_ingresos_extra = c.fetchall()
 
-    ingresos_totales = servicios_stat["ingreso_servicios"] + extra_stat["total_extra"]
-    gastos_totales = gastos_stat["total_gastos"]
-    utilidad_neta = ingresos_totales - gastos_totales
+    total_servicios = servicios_stat["total_servicios"] if servicios_stat else 0
+    ingreso_servicios = servicios_stat["ingreso_servicios"] if servicios_stat else 0.0
+    total_extra = extra_stat["total_extra"] if extra_stat else 0.0
+    total_gastos = gastos_stat["total_gastos"] if gastos_stat else 0.0
+
+    ingresos_totales = ingreso_servicios + total_extra
+    utilidad_neta = ingresos_totales - total_gastos
 
     metricas = {
-        "total_servicios": servicios_stat["total_servicios"],
-        "ingresos_servicios": servicios_stat["ingreso_servicios"],
-        "ingresos_extra": extra_stat["total_extra"],
+        "total_servicios": total_servicios,
+        "ingresos_servicios": ingreso_servicios,
+        "ingresos_extra": total_extra,
         "ingresos_totales": ingresos_totales,
-        "gastos_totales": gastos_totales,
+        "gastos_totales": total_gastos,
         "utilidad_neta": utilidad_neta,
         "gastos_por_cat": gastos_por_cat
     }
@@ -232,7 +233,7 @@ def guardar_gasto():
     fecha = request.form.get("fecha") or datetime.now().strftime("%Y-%m-%d")
     categoria = request.form.get("categoria")
     concepto = request.form.get("concepto")
-    monto = float(request.form.get("monto", 0.0))
+    monto = float(request.form.get("monto", 0.0) or 0.0)
 
     with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
@@ -247,7 +248,7 @@ def guardar_gasto():
 def guardar_ingreso_extra():
     fecha = request.form.get("fecha") or datetime.now().strftime("%Y-%m-%d")
     concepto = request.form.get("concepto")
-    monto = float(request.form.get("monto", 0.0))
+    monto = float(request.form.get("monto", 0.0) or 0.0)
 
     with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
@@ -257,7 +258,7 @@ def guardar_ingreso_extra():
 
     return redirect(url_for("dashboard"))
 
-# ================= RUTAS ADMINISTRATIVAS SEPARADAS =================
+# ================= PROSPECTOS =================
 
 @app.route("/prospectos")
 @login_required
@@ -268,6 +269,8 @@ def prospectos():
         c.execute("SELECT * FROM prospectos ORDER BY id DESC")
         prospectos_list = c.fetchall()
     return render_template("prospectos.html", prospectos=prospectos_list)
+
+# ================= PANEL CERTIFICADOS PDF =================
 
 @app.route("/panel")
 @login_required
@@ -321,7 +324,6 @@ def reporte_pdf(servicio_id):
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
 
-    # Encabezado
     p.setFillColor(colors.HexColor("#14532d"))
     p.rect(0, height - 90, width, 90, fill=1, stroke=0)
 
@@ -334,7 +336,6 @@ def reporte_pdf(servicio_id):
     p.drawRightString(width - 40, height - 50, f"FOLIO: {s['folio']}")
     p.drawRightString(width - 40, height - 68, f"Fecha: {s['fecha_servicio']}")
 
-    # Cuerpo
     y = height - 130
     p.setFillColor(colors.black)
     p.setFont("Helvetica-Bold", 12)
@@ -405,7 +406,6 @@ def reporte_pdf(servicio_id):
     p.setFont("Helvetica", 10)
     p.drawString(180, y, str(s['proxima_visita']))
 
-    # Pie
     p.setFont("Helvetica", 8)
     p.setFillColor(colors.gray)
     p.drawString(40, 60, "Este reporte avala la aplicación técnica bajo normas oficiales y lineamientos de bioseguridad COFEPRIS.")
@@ -417,7 +417,7 @@ def reporte_pdf(servicio_id):
 
     return send_file(buffer, as_attachment=True, download_name=f"Certificado_{s['folio']}.pdf", mimetype="application/pdf")
 
-# ================= WEBHOOK DE WHATSAPP =================
+# ================= WEBHOOK WHATSAPP =================
 
 @app.route("/webhook", methods=["GET"])
 def verify_webhook():
