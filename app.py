@@ -3,16 +3,19 @@ import sqlite3
 import requests
 from io import BytesIO
 from datetime import datetime
+from functools import wraps
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session, send_file
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "fumilab_clave_secreta_segura_2026")
+# Clave fija de sesión para que no se pierda al reiniciar
+app.secret_key = os.getenv("SECRET_KEY", "fumilab_clave_secreta_segura_2026_plagas")
 
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "Fumilab2026!")
 
+# Credenciales Meta
 PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID", "1281507521716481")
 WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN", "")
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "mi_token_secreto_plagas_2026")
@@ -24,33 +27,33 @@ DB_NAME = "plagas.db"
 def init_db():
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
-        # 1. Tabla de prospectos
+        # 1. Tabla de prospectos (Web y WhatsApp)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS prospectos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                telefono TEXT,
-                nombre TEXT,
-                plaga TEXT,
-                inmueble TEXT,
-                origen TEXT,
-                fecha TEXT
+                telefono TEXT DEFAULT '',
+                nombre TEXT DEFAULT '',
+                plaga TEXT DEFAULT '',
+                inmueble TEXT DEFAULT '',
+                origen TEXT DEFAULT '',
+                fecha TEXT DEFAULT ''
             )
         ''')
-        # 2. Tabla de servicios
+        # 2. Tabla de servicios para certificados PDF y cobros
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS servicios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                folio TEXT,
-                cliente TEXT,
-                direccion TEXT,
-                plaga TEXT,
-                metodo TEXT,
-                quimico TEXT,
-                ingrediente_activo TEXT,
-                dosis TEXT,
-                fecha_servicio TEXT,
-                proxima_visita TEXT,
-                tecnico TEXT,
+                folio TEXT DEFAULT '',
+                cliente TEXT DEFAULT '',
+                direccion TEXT DEFAULT '',
+                plaga TEXT DEFAULT '',
+                metodo TEXT DEFAULT '',
+                quimico TEXT DEFAULT '',
+                ingrediente_activo TEXT DEFAULT '',
+                dosis TEXT DEFAULT '',
+                fecha_servicio TEXT DEFAULT '',
+                proxima_visita TEXT DEFAULT '',
+                tecnico TEXT DEFAULT '',
                 precio_cobrado REAL DEFAULT 0.0
             )
         ''')
@@ -60,22 +63,22 @@ def init_db():
         except Exception:
             pass
 
-        # 3. Tabla de gastos
+        # 3. Tabla de gastos / egresos
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS gastos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                fecha TEXT,
-                categoria TEXT,
-                concepto TEXT,
+                fecha TEXT DEFAULT '',
+                categoria TEXT DEFAULT '',
+                concepto TEXT DEFAULT '',
                 monto REAL DEFAULT 0.0
             )
         ''')
-        # 4. Tabla de ingresos extra
+        # 4. Tabla de ingresos adicionales
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS ingresos_extra (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                fecha TEXT,
-                concepto TEXT,
+                fecha TEXT DEFAULT '',
+                concepto TEXT DEFAULT '',
                 monto REAL DEFAULT 0.0
             )
         ''')
@@ -118,6 +121,34 @@ def sync_google_sheets(datos):
     except Exception as e:
         print(f"[ERROR SHEETS] {e}")
 
+# ================= SEGURIDAD Y LOGIN (PROTECCIÓN ESTRICTA) =================
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get("admin_logged"):
+            return redirect(url_for("login", next=request.path))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    next_page = request.args.get("next") or url_for("dashboard")
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        if password == ADMIN_PASSWORD:
+            session["admin_logged"] = True
+            return redirect(next_page)
+        else:
+            error = "Contraseña incorrecta. Intente nuevamente."
+    return render_template("login.html", error=error)
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
 # ================= RUTAS PÚBLICAS =================
 
 @app.route("/")
@@ -152,35 +183,7 @@ def solicitar_cotizacion():
 
     return redirect("/?enviado=1#cotizador")
 
-# ================= SEGURIDAD Y LOGIN =================
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    error = None
-    next_page = request.args.get("next") or url_for("dashboard")
-    if request.method == "POST":
-        password = request.form.get("password")
-        if password == ADMIN_PASSWORD:
-            session["admin_logged"] = True
-            return redirect(next_page)
-        else:
-            error = "Contraseña incorrecta."
-    return render_template("login.html", error=error)
-
-@app.route("/logout")
-def logout():
-    session.pop("admin_logged", None)
-    return redirect(url_for("login"))
-
-def login_required(func):
-    def wrapper(*args, **kwargs):
-        if not session.get("admin_logged"):
-            return redirect(url_for("login", next=request.url))
-        return func(*args, **kwargs)
-    wrapper.__name__ = func.__name__
-    return wrapper
-
-# ================= DASHBOARD FINANCIERO =================
+# ================= DASHBOARD FINANCIERO (PROTEGIDO) =================
 
 @app.route("/dashboard")
 @login_required
@@ -231,9 +234,12 @@ def dashboard():
 @login_required
 def guardar_gasto():
     fecha = request.form.get("fecha") or datetime.now().strftime("%Y-%m-%d")
-    categoria = request.form.get("categoria")
-    concepto = request.form.get("concepto")
-    monto = float(request.form.get("monto", 0.0) or 0.0)
+    categoria = request.form.get("categoria", "Otros")
+    concepto = request.form.get("concepto", "")
+    try:
+        monto = float(request.form.get("monto", 0.0) or 0.0)
+    except ValueError:
+        monto = 0.0
 
     with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
@@ -247,8 +253,11 @@ def guardar_gasto():
 @login_required
 def guardar_ingreso_extra():
     fecha = request.form.get("fecha") or datetime.now().strftime("%Y-%m-%d")
-    concepto = request.form.get("concepto")
-    monto = float(request.form.get("monto", 0.0) or 0.0)
+    concepto = request.form.get("concepto", "")
+    try:
+        monto = float(request.form.get("monto", 0.0) or 0.0)
+    except ValueError:
+        monto = 0.0
 
     with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
@@ -258,45 +267,56 @@ def guardar_ingreso_extra():
 
     return redirect(url_for("dashboard"))
 
-# ================= PROSPECTOS =================
+# ================= SOLICITUDES Y PROSPECTOS (PROTEGIDO) =================
 
 @app.route("/prospectos")
 @login_required
 def prospectos():
-    with sqlite3.connect(DB_NAME) as conn:
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
-        c.execute("SELECT * FROM prospectos ORDER BY id DESC")
-        prospectos_list = c.fetchall()
-    return render_template("prospectos.html", prospectos=prospectos_list)
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            c.execute("SELECT id, telefono, nombre, plaga, inmueble, origen, fecha FROM prospectos ORDER BY id DESC")
+            prospectos_list = c.fetchall()
+        return render_template("prospectos.html", prospectos=prospectos_list)
+    except Exception as e:
+        print(f"[ERROR CARGANDO PROSPECTOS] {e}")
+        return f"Error al cargar prospectos: {e}", 500
 
-# ================= PANEL CERTIFICADOS PDF =================
+# ================= PANEL CERTIFICADOS PDF (PROTEGIDO) =================
 
 @app.route("/panel")
 @login_required
 def panel():
-    with sqlite3.connect(DB_NAME) as conn:
-        conn.row_factory = sqlite3.Row
-        c = conn.cursor()
-        c.execute("SELECT * FROM servicios ORDER BY id DESC")
-        servicios = c.fetchall()
-    return render_template("panel.html", servicios=servicios)
+    try:
+        with sqlite3.connect(DB_NAME) as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            c.execute("SELECT * FROM servicios ORDER BY id DESC")
+            servicios = c.fetchall()
+        return render_template("panel.html", servicios=servicios)
+    except Exception as e:
+        print(f"[ERROR CARGANDO PANEL] {e}")
+        return f"Error al cargar panel: {e}", 500
 
 @app.route("/guardar_servicio", methods=["POST"])
 @login_required
 def guardar_servicio():
     folio = f"FUM-{datetime.now().strftime('%y%m%d%H%M')}"
-    cliente = request.form.get("cliente")
-    direccion = request.form.get("direccion")
-    plaga = request.form.get("plaga")
-    metodo = request.form.get("metodo")
-    quimico = request.form.get("quimico")
-    ingrediente_activo = request.form.get("ingrediente_activo")
-    dosis = request.form.get("dosis")
-    fecha_servicio = request.form.get("fecha_servicio")
-    proxima_visita = request.form.get("proxima_visita")
-    tecnico = request.form.get("tecnico")
-    precio_cobrado = float(request.form.get("precio_cobrado", 0.0) or 0.0)
+    cliente = request.form.get("cliente", "")
+    direccion = request.form.get("direccion", "")
+    plaga = request.form.get("plaga", "")
+    metodo = request.form.get("metodo", "")
+    quimico = request.form.get("quimico", "")
+    ingrediente_activo = request.form.get("ingrediente_activo", "")
+    dosis = request.form.get("dosis", "")
+    fecha_servicio = request.form.get("fecha_servicio", "")
+    proxima_visita = request.form.get("proxima_visita", "")
+    tecnico = request.form.get("tecnico", "")
+    try:
+        precio_cobrado = float(request.form.get("precio_cobrado", 0.0) or 0.0)
+    except ValueError:
+        precio_cobrado = 0.0
 
     with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
