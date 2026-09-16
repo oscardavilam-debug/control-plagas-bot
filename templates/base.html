@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Control de Plagas</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f1f5f9; color: #334155; }
+        nav { background: #1e293b; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; }
+        nav a.brand { color: #f8fafc; font-weight: bold; font-size: 18px; text-decoration: none; }
+        nav .links a { color: #cbd5e1; text-decoration: none; margin-left: 20px; font-weight: 500; font-size: 14px; }
+        nav .links a:hover { color: #ffffff; }
+        .container { max-width: 1050px; margin: 30px auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0f172a; margin-top: 0; }
+        a.btn, button.btn { background: #27ae60; color: white; padding: 8px 14px; text-decoration: none; border-radius: 5px; border: none; cursor: pointer; display: inline-block; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        th { background: #f8fafc; color: #475569; font-weight: 600; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; color: #334155; }
+        input, textarea, select { width: 100%; padding: 9px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('index') }}" class="brand">🛡️ Fumilab</a>
+        <div class="links">
+            <a href="{{ url_for('landing') }}" target="_blank" style="color: #38bdf8;">🌐 Ver Sitio Web</a>
+            <a href="{{ url_for('index') }}">Bitácora</a>
+            <a href="{{ url_for('ver_prospectos') }}">Prospectos / Leads</a>
+            <a href="{{ url_for('inventario') }}">Inventario</a>
+        </div>
+    </nav>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

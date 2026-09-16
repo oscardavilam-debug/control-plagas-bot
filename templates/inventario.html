@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Gestión de Inventario de Plaguicidas e Insumos</h2>
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px; margin-top: 20px;">
+    <!-- Formulario de alta de insumo -->
+    <div style="background: #f8fafc; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0; height: fit-content;">
+        <h3 style="margin-top: 0; font-size: 16px;">Registrar Producto</h3>
+        <form method="POST">
+            <div class="form-group">
+                <label>Nombre Comercial:</label>
+                <input type="text" name="producto" placeholder="Ej. Biothrine Flow" required>
+            </div>
+            <div class="form-group">
+                <label>Ingrediente Activo:</label>
+                <input type="text" name="ingrediente_activo" placeholder="Ej. Deltametrina" required>
+            </div>
+            <div class="form-group">
+                <label>Stock Disponible:</label>
+                <input type="number" step="0.01" name="stock" placeholder="Ej. 5.5" required>
+            </div>
+            <div class="form-group">
+                <label>Unidad de Medida:</label>
+                <select name="unidad" required>
+                    <option value="Litros">Litros</option>
+                    <option value="Mililitros (ml)">Mililitros (ml)</option>
+                    <option value="Kilos (kg)">Kilos (kg)</option>
+                    <option value="Gramos (g)">Gramos (g)</option>
+                    <option value="Piezas">Piezas (trampas/cebos)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Registro Sanitario / COFEPRIS:</label>
+                <input type="text" name="registro_sanitario" placeholder="Ej. RSCO-URB-INAC-...">
+            </div>
+            <button type="submit" class="btn" style="width: 100%; background: #0f766e;">+ Guardar en Inventario</button>
+        </form>
+    </div>
+
+    <!-- Tabla de stock -->
+    <div>
+        <h3 style="margin-top: 0; font-size: 16px;">Insumos Disponibles</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Ingrediente</th>
+                    <th>Stock</th>
+                    <th>Registro</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in productos %}
+                <tr>
+                    <td><strong>{{ p['producto'] }}</strong></td>
+                    <td>{{ p['ingrediente_activo'] }}</td>
+                    <td style="font-weight: bold; color: #0f766e;">{{ p['stock'] }} {{ p['unidad'] }}</td>
+                    <td style="font-size: 11px; color: #64748b;">{{ p['registro_sanitario'] or 'N/A' }}</td>
+                    <td>
+                        <form action="{{ url_for('eliminar_inventario', item_id=p['id']) }}" method="POST" onsubmit="return confirm('¿Eliminar producto?');">
+                            <button type="submit" class="btn" style="background: #b91c1c; padding: 3px 6px; font-size: 11px;">Borrar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #64748b;">No hay productos registrados en inventario.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

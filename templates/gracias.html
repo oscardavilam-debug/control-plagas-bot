@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Solicitud Recibida</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; text-align: center; padding: 80px 20px; color: #1e293b; }
+        .card { max-width: 500px; margin: auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h2 { color: #10b981; margin-bottom: 10px; }
+        p { color: #64748b; line-height: 1.6; margin-bottom: 25px; }
+        a.btn { background: #0f172a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>¡Solicitud Recibida con Éxito!</h2>
+        <p>Gracias <strong>{{ nombre }}</strong>. Uno de nuestros técnicos especialistas revisará los datos de tu inmueble y te contactará por teléfono o WhatsApp en breve con tu cotización.</p>
+        <a href="{{ url_for('landing') }}" class="btn">Volver a la página principal</a>
+    </div>
+</body>
+</html>

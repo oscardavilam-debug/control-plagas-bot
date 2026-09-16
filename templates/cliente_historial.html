@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <a href="{{ url_for('index') }}" style="color: #64748b; text-decoration: none; font-size: 13px;">← Volver al inicio</a>
+        <h2 style="margin-top: 5px;">Expediente: {{ cliente }}</h2>
+    </div>
+    <div style="background: #e0f2fe; color: #0369a1; padding: 8px 14px; border-radius: 6px; font-weight: bold; font-size: 14px;">
+        {{ servicios|length }} servicio(s) histórico(s)
+    </div>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Ubicación / Área</th>
+            <th>Plaga Detectada</th>
+            <th>Químico y Dosis</th>
+            <th>Técnico</th>
+            <th>Observaciones</th>
+            <th>PDF</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in servicios %}
+        <tr>
+            <td>{{ s['fecha'] }}</td>
+            <td>{{ s['direccion'] }}</td>
+            <td><strong>{{ s['tipo_plaga'] }}</strong></td>
+            <td>{{ s['producto_quimico'] }} ({{ s['dosis'] }})</td>
+            <td>{{ s['tecnico'] }}</td>
+            <td style="font-size: 12px; color: #475569;">{{ s['observaciones'] or '---' }}</td>
+            <td>
+                <a href="{{ url_for('generar_pdf', servicio_id=s['id']) }}" class="btn" style="background: #ea580c; padding: 3px 7px; font-size: 11px;">PDF</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Tarjetas de Métricas -->
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px;">
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; text-align: center;">
+        <div style="font-size: 24px; font-weight: bold; color: #0284c7;">{{ metricas.total }}</div>
+        <div style="font-size: 12px; color: #64748b; font-weight: bold;">Servicios Totales</div>
+    </div>
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; text-align: center;">
+        <div style="font-size: 24px; font-weight: bold; color: #10b981;">{{ metricas.clientes }}</div>
+        <div style="font-size: 12px; color: #64748b; font-weight: bold;">Clientes Activos</div>
+    </div>
+    <div style="background: #fef3c7; border: 1px solid #fde68a; padding: 15px; border-radius: 6px; text-align: center;">
+        <div style="font-size: 24px; font-weight: bold; color: #d97706;">{{ metricas.proximas }}</div>
+        <div style="font-size: 12px; color: #b45309; font-weight: bold;">Citas Próximas (7 días)</div>
+    </div>
+    <div style="background: #fee2e2; border: 1px solid #fecaca; padding: 15px; border-radius: 6px; text-align: center;">
+        <div style="font-size: 24px; font-weight: bold; color: #dc2626;">{{ metricas.vencidas }}</div>
+        <div style="font-size: 12px; color: #b91c1c; font-weight: bold;">Citas Vencidas</div>
+    </div>
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2>Bitácora de Aplicaciones</h2>
+    <div style="display: flex; gap: 8px;">
+        <a href="{{ url_for('exportar_csv') }}" class="btn" style="background-color: #0f766e;">Exportar a Excel (.csv)</a>
+        <a href="{{ url_for('nuevo_servicio') }}" class="btn">+ Registrar Servicio</a>
+    </div>
+</div>
+
+<!-- Buscador -->
+<form method="GET" action="{{ url_for('index') }}" style="display: flex; gap: 10px; margin-bottom: 20px;">
+    <input type="text" name="q" value="{{ busqueda }}" placeholder="Buscar por cliente, plaga o técnico..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    <button type="submit" class="btn" style="background-color: #0284c7;">Buscar</button>
+    {% if busqueda %}
+        <a href="{{ url_for('index') }}" class="btn" style="background-color: #64748b;">Limpiar</a>
+    {% endif %}
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Próxima Cita</th>
+            <th>Cliente</th>
+            <th>Plaga</th>
+            <th>Químico / Dosis</th>
+            <th>Técnico</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in servicios %}
+        <tr>
+            <td>{{ s['fecha'] }}</td>
+            <td>
+                {% if s['proxima_cita'] %}
+                    {% if s['estado_cita'] == 'vencida' %}
+                        <span style="background: #dc2626; color: white; padding: 3px 7px; border-radius: 4px; font-size: 11px; font-weight: bold;">
+                            ⚠️ {{ s['proxima_cita'] }} (Vencida)
+                        </span>
+                    {% elif s['estado_cita'] == 'proxima' %}
+                        <span style="background: #d97706; color: white; padding: 3px 7px; border-radius: 4px; font-size: 11px; font-weight: bold;">
+                            ⏳ {{ s['proxima_cita'] }} (Próxima)
+                        </span>
+                    {% else %}
+                        <span style="background: #16a34a; color: white; padding: 3px 7px; border-radius: 4px; font-size: 11px;">
+                            {{ s['proxima_cita'] }}
+                        </span>
+                    {% endif %}
+                {% else %}
+                    <span style="color: #94a3b8;">---</span>
+                {% endif %}
+            </td>
+            <td>
+                <!-- Enlace al expediente del cliente -->
+                <a href="{{ url_for('historial_cliente', nombre_cliente=s['cliente']) }}" style="color: #0284c7; font-weight: bold; text-decoration: none;" title="Ver historial de este cliente">
+                    {{ s['cliente'] }} ↗
+                </a>
+            </td>
+            <td><strong>{{ s['tipo_plaga'] }}</strong></td>
+            <td>{{ s['producto_quimico'] }} ({{ s['dosis'] }})</td>
+            <td>{{ s['tecnico'] }}</td>
+            <td style="white-space: nowrap;">
+                <a href="{{ url_for('generar_pdf', servicio_id=s['id']) }}" class="btn" style="background: #ea580c; padding: 4px 7px; font-size: 12px;">PDF</a>
+                <a href="{{ url_for('editar_servicio', servicio_id=s['id']) }}" class="btn" style="background: #334155; padding: 4px 7px; font-size: 12px;">Editar</a>
+                <form action="{{ url_for('eliminar_servicio', servicio_id=s['id']) }}" method="POST" style="display: inline;" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
+                    <button type="submit" class="btn" style="background: #b91c1c; padding: 4px 7px; font-size: 12px;">Borrar</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="7" style="text-align: center; color: #64748b;">No se encontraron registros.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

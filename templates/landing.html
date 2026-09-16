@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fumigación y Control Integral de Plagas Profesional</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { color: #334155; background: #fff; }
+        header { background: #0f172a; color: white; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 20px; color: #10b981; }
+        header a.admin-btn { color: #94a3b8; font-size: 13px; text-decoration: none; border: 1px solid #334155; padding: 6px 12px; border-radius: 4px; }
+        header a.admin-btn:hover { color: #fff; border-color: #fff; }
+
+        .hero { background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.85)), url('https://images.unsplash.com/photo-1584467735871-8e85353a8413?auto=format&fit=crop&w=1400&q=80') center/cover; color: white; padding: 60px 20px; text-align: center; }
+        .hero h2 { font-size: 36px; margin-bottom: 15px; color: #f8fafc; }
+        .hero p { font-size: 18px; max-width: 650px; margin: auto; color: #cbd5e1; line-height: 1.5; }
+
+        .main-container { max-width: 1000px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .info-box h3 { color: #0f172a; margin-bottom: 15px; font-size: 22px; }
+        .feature { margin-bottom: 20px; }
+        .feature strong { display: block; color: #047857; margin-bottom: 4px; }
+        
+        .form-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .form-card h3 { margin-bottom: 15px; color: #0f172a; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+        button.btn-submit { width: 100%; background: #10b981; color: white; border: none; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+        button.btn-submit:hover { background: #059669; }
+
+        .whatsapp-float { position: fixed; bottom: 25px; right: 25px; background: #25d366; color: white; border-radius: 50px; padding: 12px 20px; font-weight: bold; text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🛡️ Biocontrol Pro</h1>
+        <a href="{{ url_for('index') }}" class="admin-btn">Acceso Administrativo →</a>
+    </header>
+
+    <section class="hero">
+        <h2>Protección Total y Control Certificado de Plagas</h2>
+        <p>Servicio residencial, comercial e industrial. Erradicación garantizada de cucarachas, roedores, chinches y termitas con productos avalados por COFEPRIS.</p>
+    </section>
+
+    <div class="main-container">
+        <div class="info-box">
+            <h3>¿Por qué elegir nuestro servicio?</h3>
+            <div class="feature">
+                <strong>✔ Certificados de Fumigación Oficiales</strong>
+                <p>Emitimos constancia y ficha técnica de los productos utilizados con validez para inspecciones sanitarias.</p>
+            </div>
+            <div class="feature">
+                <strong>✔ Productos 100% Seguros</strong>
+                <p>Uso de químicos inodoros, de baja toxicidad para humanos y mascotas, con alto poder residual.</p>
+            </div>
+            <div class="feature">
+                <strong>✔ Respuesta Rápida y Seguimiento</strong>
+                <p>Atención en menos de 24 horas y calendario de refuerzos programado.</p>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h3>Solicita tu Cotización Inmediata</h3>
+            <form action="{{ url_for('solicitar_cotizacion') }}" method="POST">
+                <div class="form-group">
+                    <label>Tu Nombre o Empresa:</label>
+                    <input type="text" name="nombre" required placeholder="Ej. Juan Pérez / Restaurante El Roble">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono (WhatsApp):</label>
+                    <input type="tel" name="telefono" required placeholder="Ej. 55 1234 5678">
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Inmueble:</label>
+                    <select name="tipo_inmueble" required>
+                        <option value="Casa / Departamento">Casa / Departamento</option>
+                        <option value="Restaurante / Cafetería">Restaurante / Cafetería</option>
+                        <option value="Bodega / Industria">Bodega / Nave Industrial</option>
+                        <option value="Oficina / Local Comercial">Oficina / Local Comercial</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Plaga a Tratar:</label>
+                    <input type="text" name="plaga" required placeholder="Ej. Cucarachas, Ratas, Chinches...">
+                </div>
+                <div class="form-group">
+                    <label>Detalles o Metros Cuadrados aproximados:</label>
+                    <textarea name="mensaje" rows="2" placeholder="Ej. Inmueble de 120m2, presencia detectada en cocina"></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Enviar Solicitud</button>
+            </form>
+        </div>
+    </div>
+
+    <a href="https://wa.me/5215500000000?text=Hola,%20solicito%20cotización%20para%20control%20de%20plagas" class="whatsapp-float" target="_blank">
+        💬 Cotizar por WhatsApp
+    </a>
+</body>
+</html>

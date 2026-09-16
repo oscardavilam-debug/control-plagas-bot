@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Registrar Orden de Servicio</h2>
+<form method="POST">
+    <div style="display: flex; gap: 15px;">
+        <div class="form-group" style="flex: 1;">
+            <label for="fecha">Fecha del Servicio:</label>
+            <input type="date" id="fecha" name="fecha" required>
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label for="proxima_cita">Próxima Visita / Refuerzo:</label>
+            <input type="date" id="proxima_cita" name="proxima_cita">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="cliente">Nombre del Cliente / Empresa:</label>
+        <input type="text" id="cliente" name="cliente" required placeholder="Ej. Restaurante Los Álamos">
+    </div>
+    <div class="form-group">
+        <label for="direccion">Dirección / Área Aplicada:</label>
+        <input type="text" id="direccion" name="direccion" required placeholder="Ej. Cocina y almacén central">
+    </div>
+    <div class="form-group">
+        <label for="tipo_plaga">Plaga Objetivo:</label>
+        <input type="text" id="tipo_plaga" name="tipo_plaga" required placeholder="Ej. Cucaracha americana, Roedores, Termitas">
+    </div>
+    <div class="form-group">
+        <label for="producto_quimico">Producto Químico / Ingrediente Activo:</label>
+        <input type="text" id="producto_quimico" name="producto_quimico" required placeholder="Ej. Deltametrina 2.5%">
+    </div>
+    <div class="form-group">
+        <label for="dosis">Dosis Aplicada:</label>
+        <input type="text" id="dosis" name="dosis" required placeholder="Ej. 10 ml por litro de agua">
+    </div>
+    <div class="form-group">
+        <label for="tecnico">Técnico Responsable:</label>
+        <input type="text" id="tecnico" name="tecnico" required placeholder="Nombre del aplicador">
+    </div>
+    <div class="form-group">
+        <label for="observaciones">Observaciones / Recomendaciones:</label>
+        <textarea id="observaciones" name="observaciones" rows="3" placeholder="Ej. Sellar grietas y ventilar 2 horas"></textarea>
+    </div>
+    <button type="submit" class="btn">Guardar Servicio</button>
+    <a href="{{ url_for('index') }}" style="margin-left: 10px; color: #666; text-decoration: none;">Cancelar</a>
+</form>
+{% endblock %}

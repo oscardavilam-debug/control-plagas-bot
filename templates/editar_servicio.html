@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Modificar Orden de Servicio #{{ servicio['id'] }}</h2>
+<form method="POST">
+    <div style="display: flex; gap: 15px;">
+        <div class="form-group" style="flex: 1;">
+            <label for="fecha">Fecha del Servicio:</label>
+            <input type="date" id="fecha" name="fecha" value="{{ servicio['fecha'] }}" required>
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label for="proxima_cita">Próxima Visita / Refuerzo:</label>
+            <input type="date" id="proxima_cita" name="proxima_cita" value="{{ servicio['proxima_cita'] or '' }}">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="cliente">Nombre del Cliente / Empresa:</label>
+        <input type="text" id="cliente" name="cliente" value="{{ servicio['cliente'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="direccion">Dirección / Área Aplicada:</label>
+        <input type="text" id="direccion" name="direccion" value="{{ servicio['direccion'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="tipo_plaga">Plaga Objetivo:</label>
+        <input type="text" id="tipo_plaga" name="tipo_plaga" value="{{ servicio['tipo_plaga'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="producto_quimico">Producto Químico / Ingrediente Activo:</label>
+        <input type="text" id="producto_quimico" name="producto_quimico" value="{{ servicio['producto_quimico'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="dosis">Dosis Aplicada:</label>
+        <input type="text" id="dosis" name="dosis" value="{{ servicio['dosis'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="tecnico">Técnico Responsable:</label>
+        <input type="text" id="tecnico" name="tecnico" value="{{ servicio['tecnico'] }}" required>
+    </div>
+    <div class="form-group">
+        <label for="observaciones">Observaciones / Recomendaciones:</label>
+        <textarea id="observaciones" name="observaciones" rows="3">{{ servicio['observaciones'] or '' }}</textarea>
+    </div>
+    <button type="submit" class="btn" style="background-color: #2980b9;">Actualizar Cambios</button>
+    <a href="{{ url_for('index') }}" style="margin-left: 10px; color: #666; text-decoration: none;">Cancelar</a>
+</form>
+{% endblock %}
