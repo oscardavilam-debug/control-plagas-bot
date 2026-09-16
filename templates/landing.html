@@ -57,25 +57,26 @@
         </div>
     </div>
 
-    <!-- ENCABEZADO INSTITUCIONAL -->
+    <!-- ENCABEZADO INSTITUCIONAL CON LOGO CIRCULAR -->
     <header class="bg-white sticky top-0 z-40 shadow-sm border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="w-12 h-12 bg-brand-700 text-white rounded-xl flex items-center justify-center text-2xl shadow-md border border-brand-600">
+            <a href="/" class="flex items-center space-x-3">
+                <img src="/static/logo.png" alt="Fumilab Control de Plagas" class="h-14 w-14 rounded-full object-cover shadow-sm border-2 border-brand-700 bg-white" onerror="this.onerror=null; this.classList.add('hidden'); document.getElementById('logo-fallback-nav').classList.remove('hidden');">
+                <div id="logo-fallback-nav" class="hidden w-12 h-12 bg-brand-700 text-white rounded-xl flex items-center justify-center text-2xl shadow-md border border-brand-600">
                     <i class="fas fa-shield-virus"></i>
                 </div>
                 <div>
                     <span class="text-2xl font-black tracking-tight text-gray-900">FUMILAB</span>
                     <p class="text-[10px] uppercase tracking-widest text-brand-700 font-extrabold">Control Profesional de Plagas</p>
                 </div>
-            </div>
+            </a>
 
             <nav class="hidden md:flex items-center space-x-8 text-sm font-semibold text-gray-600">
                 <a href="#plagas" class="hover:text-brand-700 transition">Tratamientos</a>
                 <a href="#metodo" class="hover:text-brand-700 transition">Metodología MIP</a>
                 <a href="#empresas" class="hover:text-brand-700 transition">Soluciones Comerciales</a>
                 <a href="#residencial" class="hover:text-brand-700 transition">Hogares</a>
-                <a href="#garantia" class="hover:text-brand-700 transition">Póliza y Garantía</a>
+                <a href="#documentacion" class="hover:text-brand-700 transition">Documentación Oficial</a>
                 <a href="#faq" class="hover:text-brand-700 transition">Preguntas Frecuentes</a>
             </nav>
 
@@ -130,7 +131,7 @@
                             <p class="text-[11px] text-gray-300">Seguro para niños y mascotas</p>
                         </div>
                         <div>
-                            <p class="font-bold text-white text-sm"><i class="fas fa-file-contract text-green-400 mr-1"></i> Garantía por Escrito</p>
+                            <p class="font-bold text-white text-sm"><i class="fas fa-file-contract text-green-400 mr-1"></i> Documentación</p>
                             <p class="text-[11px] text-gray-300">Certificados para auditorías</p>
                         </div>
                     </div>
@@ -389,16 +390,16 @@
         </div>
     </section>
 
-    <!-- DOCUMENTACIÓN Y GARANTÍA -->
-    <section id="garantia" class="py-16 bg-white border-b border-gray-200">
+    <!-- DOCUMENTACIÓN Y SEGUIMIENTO TÉCNICO -->
+    <section id="documentacion" class="py-16 bg-white border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-brand-dark text-white rounded-2xl p-8 sm:p-12 shadow-xl">
                 <div class="grid lg:grid-cols-2 gap-8 items-center">
                     <div>
                         <span class="text-xs font-bold uppercase tracking-wider text-green-400">DOCUMENTACIÓN OFICIAL Y SEGUIMIENTO</span>
-                        <h3 class="text-2xl sm:text-3xl font-bold mt-2 mb-4">Garantía por Escrito y Respaldo Sanitario</h3>
+                        <h3 class="text-2xl sm:text-3xl font-bold mt-2 mb-4">Reportes Técnicos y Respaldo Sanitario</h3>
                         <p class="text-sm text-gray-300 leading-relaxed">
-                            En servicios comerciales podemos proporcionar documentación formal de acuerdo con las características y alcance del servicio contratado, respaldando auditorías y trámites oficiales.
+                            En servicios comerciales proporcionamos documentación formal de acuerdo con las características y alcance del servicio contratado, respaldando auditorías y trámites oficiales.
                         </p>
                     </div>
                     <div class="grid sm:grid-cols-2 gap-3 text-xs text-gray-200">
@@ -467,12 +468,15 @@
         </div>
     </section>
 
-    <!-- PIE DE PÁGINA -->
+    <!-- PIE DE PÁGINA CON LOGO CIRCULAR -->
     <footer class="bg-gray-900 text-gray-400 py-10 text-xs border-t border-gray-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
-            <div>
-                <span class="text-base font-black text-white">FUMILAB CONTROL DE PLAGAS</span>
-                <p class="text-green-400 italic mt-0.5">Resultados que se ven, clientes que se quedan.</p>
+            <div class="flex items-center space-x-3">
+                <img src="/static/logo.png" alt="Fumilab" class="h-10 w-10 rounded-full object-cover border border-gray-700 bg-white" onerror="this.style.display='none'">
+                <div>
+                    <span class="text-base font-black text-white">FUMILAB CONTROL DE PLAGAS</span>
+                    <p class="text-green-400 italic mt-0.5">Resultados que se ven, clientes que se quedan.</p>
+                </div>
             </div>
             <div class="space-y-1">
                 <p><i class="fas fa-map-marker-alt text-green-400 mr-1"></i> Cobertura Técnica: CDMX y Estado de México</p>
