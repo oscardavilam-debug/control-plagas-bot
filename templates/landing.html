@@ -468,7 +468,7 @@
         </div>
     </section>
 
-    <!-- PIE DE PÁGINA CON LOGO CIRCULAR -->
+    <!-- PIE DE PÁGINA CON LOGO Y ACCESO A ADMINISTRACIÓN -->
     <footer class="bg-gray-900 text-gray-400 py-10 text-xs border-t border-gray-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
             <div class="flex items-center space-x-3">
@@ -478,13 +478,25 @@
                     <p class="text-green-400 italic mt-0.5">Resultados que se ven, clientes que se quedan.</p>
                 </div>
             </div>
-            <div class="space-y-1">
+            <div class="space-y-1 sm:text-right">
                 <p><i class="fas fa-map-marker-alt text-green-400 mr-1"></i> Cobertura Técnica: CDMX y Estado de México</p>
                 <p><i class="fas fa-shield-alt text-green-400 mr-1"></i> Cumplimiento Normativo Oficial</p>
             </div>
         </div>
-        <div class="max-w-7xl mx-auto px-4 mt-6 pt-6 border-t border-gray-800 text-center text-gray-500">
-            &copy; 2026 FUMILAB CONTROL DE PLAGAS. Todos los derechos reservados.
+        
+        <!-- ENLACES ADMINISTRATIVOS DIRECTOS -->
+        <div class="max-w-7xl mx-auto px-4 mt-6 pt-6 border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-3 text-gray-500">
+            <div>
+                &copy; 2026 FUMILAB CONTROL DE PLAGAS. Todos los derechos reservados.
+            </div>
+            <div class="flex space-x-6 text-xs font-semibold">
+                <a href="/prospectos" class="text-gray-400 hover:text-green-400 transition flex items-center gap-1.5">
+                    <i class="fas fa-users-cog"></i> Ver Solicitudes / Prospectos
+                </a>
+                <a href="/panel" class="text-gray-400 hover:text-green-400 transition flex items-center gap-1.5">
+                    <i class="fas fa-file-invoice-dollar"></i> Panel Administrativo (PDF)
+                </a>
+            </div>
         </div>
     </footer>
 
