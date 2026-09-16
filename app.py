@@ -37,7 +37,7 @@ def init_db():
                 fecha TEXT
             )
         ''')
-        # Tabla de servicios para certificados PDF
+        # Tabla de servicios para certificados PDF y cobros
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS servicios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,7 +51,28 @@ def init_db():
                 dosis TEXT,
                 fecha_servicio TEXT,
                 proxima_visita TEXT,
-                tecnico TEXT
+                tecnico TEXT,
+                precio_cobrado REAL DEFAULT 0.0
+            )
+        ''')
+        # Tabla de gastos / egresos
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS gastos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha TEXT,
+                categoria TEXT,
+                concepto TEXT,
+                monto REAL DEFAULT 0.0,
+                comprobante TEXT
+            )
+        ''')
+        # Tabla de ingresos adicionales
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS ingresos_extra (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha TEXT,
+                concepto TEXT,
+                monto REAL DEFAULT 0.0
             )
         ''')
         conn.commit()
@@ -115,7 +136,6 @@ def solicitar_cotizacion():
                   (telefono, nombre, plaga, inmueble, "Landing Page", fecha))
         conn.commit()
 
-    # Sincronización a Sheets
     sync_google_sheets({
         "fecha": fecha,
         "nombre": nombre,
@@ -125,7 +145,6 @@ def solicitar_cotizacion():
         "origen": "Landing Page"
     })
 
-    # Alerta WhatsApp al Admin
     alerta = f"🚨 *NUEVO PROSPECTO WEB*\n\n👤 *Cliente:* {nombre}\n📱 *Tel:* {telefono}\n🪳 *Plaga:* {plaga}\n🏠 *Inmueble:* {inmueble}\n📅 *Fecha:* {fecha}"
     send_whatsapp_message(ADMIN_PHONE, alerta)
 
@@ -136,11 +155,12 @@ def solicitar_cotizacion():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
+    next_page = request.args.get("next") or url_for("dashboard")
     if request.method == "POST":
         password = request.form.get("password")
         if password == ADMIN_PASSWORD:
             session["admin_logged"] = True
-            return redirect(url_for("panel"))
+            return redirect(next_page)
         else:
             error = "Contraseña incorrecta."
     return render_template("login.html", error=error)
@@ -153,12 +173,101 @@ def logout():
 def login_required(func):
     def wrapper(*args, **kwargs):
         if not session.get("admin_logged"):
-            return redirect(url_for("login"))
+            return redirect(url_for("login", next=request.url))
         return func(*args, **kwargs)
     wrapper.__name__ = func.__name__
     return wrapper
 
-# ================= RUTAS ADMINISTRATIVAS PROTEGIDAS =================
+# ================= DASHBOARD & FINANZAS =================
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    with sqlite3.connect(DB_NAME) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        
+        # Cantidad de servicios y suma de cobros
+        c.execute("SELECT COUNT(*) as total_servicios, COALESCE(SUM(precio_cobrado), 0) as ingreso_servicios FROM servicios")
+        servicios_stat = c.fetchone()
+        
+        # Ingresos adicionales
+        c.execute("SELECT COALESCE(SUM(monto), 0) as total_extra FROM ingresos_extra")
+        extra_stat = c.fetchone()
+        
+        # Gastos totales y por categoría
+        c.execute("SELECT COALESCE(SUM(monto), 0) as total_gastos FROM gastos")
+        gastos_stat = c.fetchone()
+
+        c.execute("SELECT categoria, COALESCE(SUM(monto), 0) as total FROM gastos GROUP BY categoria")
+        gastos_por_cat = {row["categoria"]: row["total"] for row in c.fetchall()}
+
+        # Últimos gastos
+        c.execute("SELECT * FROM gastos ORDER BY id DESC LIMIT 10")
+        ultimos_gastos = c.fetchall()
+
+        # Últimos ingresos extra
+        c.execute("SELECT * FROM ingresos_extra ORDER BY id DESC LIMIT 10")
+        ultimos_ingresos_extra = c.fetchall()
+
+    ingresos_totales = servicios_stat["ingreso_servicios"] + extra_stat["total_extra"]
+    gastos_totales = gastos_stat["total_gastos"]
+    utilidad_neta = ingresos_totales - gastos_totales
+
+    metricas = {
+        "total_servicios": servicios_stat["total_servicios"],
+        "ingresos_servicios": servicios_stat["ingreso_servicios"],
+        "ingresos_extra": extra_stat["total_extra"],
+        "ingresos_totales": ingresos_totales,
+        "gastos_totales": gastos_totales,
+        "utilidad_neta": utilidad_neta,
+        "gastos_por_cat": gastos_por_cat
+    }
+
+    return render_template("dashboard.html", m=metricas, gastos=ultimos_gastos, extras=ultimos_ingresos_extra)
+
+@app.route("/guardar_gasto", methods=["POST"])
+@login_required
+def guardar_gasto():
+    fecha = request.form.get("fecha") or datetime.now().strftime("%Y-%m-%d")
+    categoria = request.form.get("categoria")
+    concepto = request.form.get("concepto")
+    monto = float(request.form.get("monto", 0.0))
+
+    with sqlite3.connect(DB_NAME) as conn:
+        c = conn.cursor()
+        c.execute("INSERT INTO gastos (fecha, categoria, concepto, monto) VALUES (?, ?, ?, ?)",
+                  (fecha, categoria, concepto, monto))
+        conn.commit()
+
+    return redirect(url_for("dashboard"))
+
+@app.route("/guardar_ingreso_extra", methods=["POST"])
+@login_required
+def guardar_ingreso_extra():
+    fecha = request.form.get("fecha") or datetime.now().strftime("%Y-%m-%d")
+    concepto = request.form.get("concepto")
+    monto = float(request.form.get("monto", 0.0))
+
+    with sqlite3.connect(DB_NAME) as conn:
+        c = conn.cursor()
+        c.execute("INSERT INTO ingresos_extra (fecha, concepto, monto) VALUES (?, ?, ?)",
+                  (fecha, concepto, monto))
+        conn.commit()
+
+    return redirect(url_for("dashboard"))
+
+# ================= RUTAS ADMINISTRATIVAS SEPARADAS =================
+
+@app.route("/prospectos")
+@login_required
+def prospectos():
+    with sqlite3.connect(DB_NAME) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute("SELECT * FROM prospectos ORDER BY id DESC")
+        prospectos_list = c.fetchall()
+    return render_template("prospectos.html", prospectos=prospectos_list)
 
 @app.route("/panel")
 @login_required
@@ -168,14 +277,7 @@ def panel():
         c = conn.cursor()
         c.execute("SELECT * FROM servicios ORDER BY id DESC")
         servicios = c.fetchall()
-        c.execute("SELECT * FROM prospectos ORDER BY id DESC LIMIT 50")
-        prospectos = c.fetchall()
-    return render_template("panel.html", servicios=servicios, prospectos=prospectos)
-
-@app.route("/prospectos")
-@login_required
-def ver_prospectos():
-    return redirect(url_for("panel"))
+    return render_template("panel.html", servicios=servicios)
 
 @app.route("/guardar_servicio", methods=["POST"])
 @login_required
@@ -191,13 +293,14 @@ def guardar_servicio():
     fecha_servicio = request.form.get("fecha_servicio")
     proxima_visita = request.form.get("proxima_visita")
     tecnico = request.form.get("tecnico")
+    precio_cobrado = float(request.form.get("precio_cobrado", 0.0) or 0.0)
 
     with sqlite3.connect(DB_NAME) as conn:
         c = conn.cursor()
         c.execute('''
-            INSERT INTO servicios (folio, cliente, direccion, plaga, metodo, quimico, ingrediente_activo, dosis, fecha_servicio, proxima_visita, tecnico)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (folio, cliente, direccion, plaga, metodo, quimico, ingrediente_activo, dosis, fecha_servicio, proxima_visita, tecnico))
+            INSERT INTO servicios (folio, cliente, direccion, plaga, metodo, quimico, ingrediente_activo, dosis, fecha_servicio, proxima_visita, tecnico, precio_cobrado)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (folio, cliente, direccion, plaga, metodo, quimico, ingrediente_activo, dosis, fecha_servicio, proxima_visita, tecnico, precio_cobrado))
         conn.commit()
 
     return redirect(url_for("panel"))
@@ -391,14 +494,12 @@ def webhook():
             state["nombre"] = text.title()
             fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            # Guardar en BD
             with sqlite3.connect(DB_NAME) as conn:
                 c = conn.cursor()
                 c.execute("INSERT INTO prospectos (telefono, nombre, plaga, inmueble, origen, fecha) VALUES (?, ?, ?, ?, ?, ?)",
                           (from_number, state["nombre"], state["plaga"], state["inmueble"], "WhatsApp Bot", fecha))
                 conn.commit()
 
-            # Sincronizar con Google Sheets
             sync_google_sheets({
                 "fecha": fecha,
                 "nombre": state["nombre"],
@@ -408,7 +509,6 @@ def webhook():
                 "origen": "WhatsApp Bot"
             })
 
-            # Notificar al Administrador
             alerta = f"📲 *NUEVO LEAD POR WHATSAPP*\n\n👤 *Cliente:* {state['nombre']}\n📱 *Tel:* +{from_number}\n🪳 *Plaga:* {state['plaga']}\n🏠 *Inmueble:* {state['inmueble']}\n📅 *Fecha:* {fecha}"
             send_whatsapp_message(ADMIN_PHONE, alerta)
 

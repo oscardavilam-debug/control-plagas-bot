@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financiero y Operativo | FUMILAB</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+    <!-- BARRA SUPERIOR -->
+    <nav class="bg-gray-900 text-white border-b border-gray-800 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            <div class="flex items-center space-x-6">
+                <a href="/" class="text-lg font-black text-green-400 tracking-wider">FUMILAB</a>
+                <div class="flex space-x-2 text-xs font-semibold">
+                    <a href="/dashboard" class="px-3 py-1.5 bg-green-700 text-white rounded-lg flex items-center gap-1.5">
+                        <i class="fas fa-chart-line"></i> Dashboard Financiero
+                    </a>
+                    <a href="/panel" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg flex items-center gap-1.5 transition">
+                        <i class="fas fa-file-pdf text-red-400"></i> Certificados PDF
+                    </a>
+                    <a href="/prospectos" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg flex items-center gap-1.5 transition">
+                        <i class="fas fa-users text-blue-400"></i> Solicitudes Web/WhatsApp
+                    </a>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/" target="_blank" class="text-xs text-gray-300 hover:text-white transition flex items-center gap-1">
+                    <i class="fas fa-external-link-alt"></i> Ver Web
+                </a>
+                <a href="/logout" class="px-3 py-1.5 bg-red-600/80 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition flex items-center gap-1.5">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- ENCABEZADO -->
+        <div>
+            <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
+                <i class="fas fa-wallet text-green-700"></i> Balance Financiero y Control de Operaciones
+            </h1>
+            <p class="text-xs text-gray-500 mt-1">Supervisión en tiempo real de servicios concluidos, gastos operativos y utilidad neta.</p>
+        </div>
+
+        <!-- 4 TARJETAS PRINCIPALES (KPIS) -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- SERVICIOS REALIZADOS -->
+            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold uppercase text-gray-500 tracking-wider">Servicios Realizados</p>
+                    <p class="text-3xl font-black text-gray-900 mt-1">{{ m.total_servicios }}</p>
+                    <p class="text-[11px] text-green-700 font-semibold mt-1">Órdenes Técnicas</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-xl">
+                    <i class="fas fa-shield-virus"></i>
+                </div>
+            </div>
+
+            <!-- INGRESOS TOTALES -->
+            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold uppercase text-gray-500 tracking-wider">Ingresos Totales</p>
+                    <p class="text-2xl font-black text-gray-900 mt-1">${{ "{:,.2f}".format(m.ingresos_totales) }}</p>
+                    <p class="text-[11px] text-gray-500 mt-1">Servicios + Ganancias Extra</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-green-50 text-green-700 flex items-center justify-center text-xl">
+                    <i class="fas fa-hand-holding-dollar"></i>
+                </div>
+            </div>
+
+            <!-- GASTOS TOTALES -->
+            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold uppercase text-gray-500 tracking-wider">Gastos / Operación</p>
+                    <p class="text-2xl font-black text-red-600 mt-1">${{ "{:,.2f}".format(m.gastos_totales) }}</p>
+                    <p class="text-[11px] text-gray-500 mt-1">Material, auto, nómina, etc.</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-xl">
+                    <i class="fas fa-receipt"></i>
+                </div>
+            </div>
+
+            <!-- UTILIDAD NETA -->
+            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] font-bold uppercase text-gray-500 tracking-wider">Utilidad Neta</p>
+                    <p class="text-2xl font-black {% if m.utilidad_neta >= 0 %}text-emerald-700{% else %}text-red-700{% endif %} mt-1">
+                        ${{ "{:,.2f}".format(m.utilidad_neta) }}
+                    </p>
+                    <p class="text-[11px] font-semibold text-gray-500 mt-1">Margen Real Disponible</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl {% if m.utilidad_neta >= 0 %}bg-emerald-50 text-emerald-700{% else %}bg-red-50 text-red-700{% endif %} flex items-center justify-center text-xl">
+                    <i class="fas fa-vault"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- DESGLOSE DE GASTOS POR CATEGORÍA -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-700 mb-4 flex items-center gap-2">
+                <i class="fas fa-pie-chart text-green-700"></i> Desglose de Gastos Operativos
+            </h3>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-center">
+                <div class="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <p class="text-[10px] font-bold uppercase text-gray-500">Material / Químicos</p>
+                    <p class="text-base font-black text-gray-900 mt-1">${{ "{:,.2f}".format(m.gastos_por_cat.get('Materiales', 0.0)) }}</p>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <p class="text-[10px] font-bold uppercase text-gray-500">Gasolina</p>
+                    <p class="text-base font-black text-gray-900 mt-1">${{ "{:,.2f}".format(m.gastos_por_cat.get('Gasolina', 0.0)) }}</p>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <p class="text-[10px] font-bold uppercase text-gray-500">Auto / Mantenimiento</p>
+                    <p class="text-base font-black text-gray-900 mt-1">${{ "{:,.2f}".format(m.gastos_por_cat.get('Vehiculo', 0.0)) }}</p>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <p class="text-[10px] font-bold uppercase text-gray-500">Estacionamiento</p>
+                    <p class="text-base font-black text-gray-900 mt-1">${{ "{:,.2f}".format(m.gastos_por_cat.get('Estacionamiento', 0.0)) }}</p>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <p class="text-[10px] font-bold uppercase text-gray-500">Nómina / Empleados</p>
+                    <p class="text-base font-black text-gray-900 mt-1">${{ "{:,.2f}".format(m.gastos_por_cat.get('Empleados', 0.0)) }}</p>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <p class="text-[10px] font-bold uppercase text-gray-500">Otros Operativos</p>
+                    <p class="text-base font-black text-gray-900 mt-1">${{ "{:,.2f}".format(m.gastos_por_cat.get('Otros', 0.0)) }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORMULARIOS Y TABLAS DE GESTIÓN RÁPIDA -->
+        <div class="grid lg:grid-cols-2 gap-8">
+            
+            <!-- REGISTRAR GASTO -->
+            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-minus-circle text-red-600"></i> Registrar Gasto / Egreso
+                </h3>
+                <form action="/guardar_gasto" method="POST" class="space-y-3 text-sm">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Fecha</label>
+                            <input type="date" name="fecha" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Categoría</label>
+                            <select name="categoria" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                                <option value="Materiales">Material / Químicos</option>
+                                <option value="Gasolina">Gasolina</option>
+                                <option value="Vehiculo">Auto / Mantenimiento</option>
+                                <option value="Estacionamiento">Estacionamiento / Casetas</option>
+                                <option value="Empleados">Pago a Empleados / Nómina</option>
+                                <option value="Otros">Otros Operativos</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Concepto / Descripción</label>
+                        <input type="text" name="concepto" required placeholder="Ej. Garrafa 1L Termidor, afinación Vento, estacionamiento plaza..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Monto ($ MXN)</label>
+                        <input type="number" step="0.50" name="monto" required placeholder="0.00" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg font-bold">
+                    </div>
+                    <button type="submit" class="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition text-xs uppercase tracking-wider">
+                        Guardar Gasto
+                    </button>
+                </form>
+
+                <!-- ÚLTIMOS GASTOS -->
+                <div class="pt-4 border-t border-gray-100">
+                    <p class="text-xs font-bold text-gray-500 uppercase mb-2">Últimos Gastos Registrados</p>
+                    <div class="space-y-2 max-h-48 overflow-y-auto pr-1 text-xs">
+                        {% for g in gastos %}
+                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <div>
+                                <span class="font-bold text-gray-800">{{ g['concepto'] }}</span>
+                                <span class="text-[10px] text-gray-400 block">{{ g['fecha'] }} • {{ g['categoria'] }}</span>
+                            </div>
+                            <span class="font-bold text-red-600">-${{ "{:,.2f}".format(g['monto']) }}</span>
+                        </div>
+                        {% else %}
+                        <p class="text-gray-400 text-center py-2 text-xs">No hay gastos capturados.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- REGISTRAR GANANCIA ADICIONAL -->
+            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-plus-circle text-green-600"></i> Registrar Ganancia Adicional / Venta Extra
+                </h3>
+                <form action="/guardar_ingreso_extra" method="POST" class="space-y-3 text-sm">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Fecha</label>
+                            <input type="date" name="fecha" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Monto ($ MXN)</label>
+                            <input type="number" step="0.50" name="monto" required placeholder="0.00" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg font-bold">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Concepto</label>
+                        <input type="text" name="concepto" required placeholder="Ej. Venta de cebaderos cebados, trampa para moscas, refuerzo express..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                    </div>
+                    <button type="submit" class="w-full py-2.5 bg-green-700 hover:bg-green-800 text-white font-bold rounded-lg transition text-xs uppercase tracking-wider">
+                        Guardar Ingreso Adicional
+                    </button>
+                </form>
+
+                <!-- ÚLTIMOS INGRESOS EXTRA -->
+                <div class="pt-4 border-t border-gray-100">
+                    <p class="text-xs font-bold text-gray-500 uppercase mb-2">Últimos Ingresos Extra</p>
+                    <div class="space-y-2 max-h-48 overflow-y-auto pr-1 text-xs">
+                        {% for e in extras %}
+                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <div>
+                                <span class="font-bold text-gray-800">{{ e['concepto'] }}</span>
+                                <span class="text-[10px] text-gray-400 block">{{ e['fecha'] }}</span>
+                            </div>
+                            <span class="font-bold text-emerald-600">+${{ "{:,.2f}".format(e['monto']) }}</span>
+                        </div>
+                        {% else %}
+                        <p class="text-gray-400 text-center py-2 text-xs">No hay ingresos extra registrados.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</body>
+</html>

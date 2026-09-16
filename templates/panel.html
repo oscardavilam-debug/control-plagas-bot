@@ -3,18 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Administrativo | FUMILAB</title>
+    <title>Certificados y Servicios PDF | FUMILAB</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-100 font-sans text-gray-800">
 
-    <!-- BARRA SUPERIOR ADMIN -->
+    <!-- BARRA SUPERIOR CON PESTAÑAS -->
     <nav class="bg-gray-900 text-white border-b border-gray-800 sticky top-0 z-30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <span class="text-lg font-black text-green-400 tracking-wider">FUMILAB</span>
-                <span class="text-xs text-gray-400">| Panel de Administración</span>
+            <div class="flex items-center space-x-6">
+                <a href="/" class="text-lg font-black text-green-400 tracking-wider">FUMILAB</a>
+                <div class="flex space-x-2 text-xs font-semibold">
+                    <a href="/dashboard" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg flex items-center gap-1.5 transition">
+                        <i class="fas fa-chart-line text-emerald-400"></i> Dashboard Financiero
+                    </a>
+                    <a href="/panel" class="px-3 py-1.5 bg-green-700 text-white rounded-lg flex items-center gap-1.5">
+                        <i class="fas fa-file-pdf text-red-300"></i> Certificados PDF
+                    </a>
+                    <a href="/prospectos" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg flex items-center gap-1.5 transition">
+                        <i class="fas fa-users text-blue-400"></i> Solicitudes Web/WhatsApp
+                    </a>
+                </div>
             </div>
             <div class="flex items-center space-x-4">
                 <a href="/" target="_blank" class="text-xs text-gray-300 hover:text-white transition flex items-center gap-1">
@@ -27,68 +37,15 @@
         </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
-
-        <!-- SECCIÓN 1: SOLICITUDES Y PROSPECTOS EN TIEMPO REAL -->
-        <div>
-            <div class="flex justify-between items-center mb-4">
-                <div>
-                    <h2 class="text-xl font-black text-gray-900 flex items-center gap-2">
-                        <i class="fas fa-users text-green-700"></i> Solicitudes y Prospectos Recientes
-                    </h2>
-                    <p class="text-xs text-gray-500">Contactos captados automáticamente por WhatsApp y la Landing Page.</p>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-gray-50 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">
-                            <tr>
-                                <th class="px-6 py-3.5">Fecha</th>
-                                <th class="px-6 py-3.5">Cliente</th>
-                                <th class="px-6 py-3.5">Teléfono</th>
-                                <th class="px-6 py-3.5">Plaga</th>
-                                <th class="px-6 py-3.5">Inmueble</th>
-                                <th class="px-6 py-3.5">Origen</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            {% for p in prospectos %}
-                            <tr class="hover:bg-gray-50/80 transition">
-                                <td class="px-6 py-4 text-xs text-gray-500">{{ p['fecha'] }}</td>
-                                <td class="px-6 py-4 font-bold text-gray-900">{{ p['nombre'] }}</td>
-                                <td class="px-6 py-4 font-mono text-xs text-green-700">
-                                    <a href="https://wa.me/{{ p['telefono'] }}" target="_blank" class="hover:underline flex items-center gap-1">
-                                        <i class="fab fa-whatsapp"></i> {{ p['telefono'] }}
-                                    </a>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-md text-xs font-semibold">
-                                        {{ p['plaga'] }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-xs text-gray-600">{{ p['inmueble'] }}</td>
-                                <td class="px-6 py-4">
-                                    <span class="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-[11px] font-medium">
-                                        {{ p['origen'] }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="6" class="px-6 py-8 text-center text-gray-400 text-xs">
-                                    No hay solicitudes registradas aún.
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div class="mb-6">
+            <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
+                <i class="fas fa-file-contract text-green-700"></i> Gestión de Servicios y Emisión de Certificados
+            </h1>
+            <p class="text-xs text-gray-500 mt-1">Registra aplicaciones técnicas, vincula el ingreso al Dashboard y descarga los reportes oficiales en formato PDF.</p>
         </div>
 
-        <!-- SECCIÓN 2: GENERACIÓN DE CERTIFICADOS PDF Y CONTROL DE SERVICIOS -->
         <div class="grid lg:grid-cols-12 gap-8">
             
             <!-- FORMULARIO DE REGISTRO DE SERVICIO -->
@@ -96,73 +53,79 @@
                 <h3 class="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
                     <i class="fas fa-file-signature text-green-700"></i> Registrar Servicio Técnico
                 </h3>
-                <p class="text-xs text-gray-500 mb-5">Genera un nuevo folio para descargar el certificado PDF oficial.</p>
+                <p class="text-xs text-gray-500 mb-5">Genera un folio oficial y suma el cobro a tus ingresos.</p>
 
                 <form action="/guardar_servicio" method="POST" class="space-y-3">
                     <div>
-                        <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Cliente / Empresa</label>
-                        <input type="text" name="cliente" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none">
+                        <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Cliente / Razón Social</label>
+                        <input type="text" name="cliente" required placeholder="Ej. Restaurante El Portón SA" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none">
                     </div>
 
                     <div>
                         <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Dirección del Servicio</label>
-                        <input type="text" name="direccion" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none">
+                        <input type="text" name="direccion" required placeholder="Calle, Número, Colonia, Alcaldía/Municipio" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none">
                     </div>
 
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Plaga</label>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Plaga Objetivo</label>
                             <input type="text" name="plaga" required placeholder="Ej. Cucaracha alemana" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Método</label>
-                            <input type="text" name="metodo" required placeholder="Aspersión / Gel" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none">
+                            <input type="text" name="metodo" required placeholder="Aspersión / Gel / Cebado" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-600 focus:outline-none">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-3 gap-2">
                         <div>
                             <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Producto</label>
-                            <input type="text" name="quimico" required placeholder="Químico" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
+                            <input type="text" name="quimico" required placeholder="Marca" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Ing. Activo</label>
-                            <input type="text" name="ingrediente_activo" required placeholder="Ingrediente" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
+                            <input type="text" name="ingrediente_activo" required placeholder="Activo" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Dosis</label>
-                            <input type="text" name="dosis" required placeholder="10 ml / L" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
+                            <input type="text" name="dosis" required placeholder="10 ml/L" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Fecha Servicio</label>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Fecha de Aplicación</label>
                             <input type="date" name="fecha_servicio" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Próxima Visita</label>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Próximo Refuerzo</label>
                             <input type="date" name="proxima_visita" required class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Técnico Responsable</label>
-                        <input type="text" name="tecnico" required placeholder="Nombre del técnico" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Técnico Certificado</label>
+                            <input type="text" name="tecnico" required placeholder="Nombre del aplicador" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Precio Cobrado ($ MXN)</label>
+                            <input type="number" step="10.0" name="precio_cobrado" required placeholder="Ej. 1800.00" class="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg font-bold text-green-700">
+                        </div>
                     </div>
 
                     <button type="submit" class="w-full py-3 bg-green-700 hover:bg-green-800 text-white font-bold rounded-lg text-sm transition shadow mt-2">
-                        Guardar y Generar Folio
+                        Registrar Servicio y Generar Folio
                     </button>
                 </form>
             </div>
 
-            <!-- TABLA DE CERTIFICADOS LISTOS PARA DESCARGAR -->
+            <!-- TABLA DE CERTIFICADOS PDF -->
             <div class="lg:col-span-7 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                 <h3 class="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
-                    <i class="fas fa-file-pdf text-red-600"></i> Certificados Generados
+                    <i class="fas fa-file-pdf text-red-600"></i> Certificados Emitidos
                 </h3>
-                <p class="text-xs text-gray-500 mb-5">Descarga inmediata en formato PDF formal con membrete y folio.</p>
+                <p class="text-xs text-gray-500 mb-5">Descarga inmediata en PDF formal con membrete y folio.</p>
 
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
@@ -170,26 +133,26 @@
                             <tr>
                                 <th class="px-4 py-3">Folio</th>
                                 <th class="px-4 py-3">Cliente</th>
-                                <th class="px-4 py-3">Fecha</th>
-                                <th class="px-4 py-3 text-right">PDF</th>
+                                <th class="px-4 py-3">Cobrado</th>
+                                <th class="px-4 py-3 text-right">Descarga</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             {% for s in servicios %}
                             <tr class="hover:bg-gray-50 transition">
-                                <td class="px-4 py-3 font-mono font-bold text-xs text-gray-800">{{ s['folio'] }}</td>
+                                <td class="px-4 py-3 font-mono font-bold text-xs text-green-800">{{ s['folio'] }}</td>
                                 <td class="px-4 py-3 text-xs font-medium text-gray-900">{{ s['cliente'] }}</td>
-                                <td class="px-4 py-3 text-xs text-gray-500">{{ s['fecha_servicio'] }}</td>
+                                <td class="px-4 py-3 font-bold text-xs text-emerald-700">${{ "{:,.2f}".format(s['precio_cobrado']) }}</td>
                                 <td class="px-4 py-3 text-right">
                                     <a href="/reporte_pdf/{{ s['id'] }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 font-bold text-xs rounded-lg border border-red-200 transition">
-                                        <i class="fas fa-download"></i> Descargar
+                                        <i class="fas fa-file-pdf"></i> PDF
                                     </a>
                                 </td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="4" class="px-4 py-6 text-center text-gray-400 text-xs">
-                                    No hay servicios generados todavía.
+                                <td colspan="4" class="px-4 py-8 text-center text-gray-400 text-xs">
+                                    No se han registrado servicios técnicos todavía.
                                 </td>
                             </tr>
                             {% endfor %}
