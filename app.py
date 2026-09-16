@@ -14,17 +14,23 @@ app = Flask(__name__)
 
 # --- CONFIGURACIÓN META WHATSAPP CLOUD API ---
 PHONE_NUMBER_ID = "1281507521716481"
-WHATSAPP_TOKEN = "EAAj3VdqPd8MBSTjsNLBoKZAuqtKImsqTnivGVhcE3UTl2r5YTT52Fnbm4O6TczQVRbWU4hkqUQbvao3bIDMFWkna0wo7QyA2s5ZAqQKi9wX26xTnFZCZCNmeyxVPMoZCjIwPRKxXMaenMR8AA8nX0SXFBQPBOa4BzJdYVDnKt0QA8aGUGU3FSLHQnaZBh1zRNd25gMS8bse9YPpj71cinMB4W4xvZBxaor4JU8tIAYcurIw1RriENqTzD7JbWGNOlEvZCqw423tkZAyhcbF049AtZBcgQZD"
+WHATSAPP_TOKEN = "EAAj3VdqPd8MBSTjsNLBoKZAuqtKImsqTnivGVhcE3UTl2r5YTT52Fnbm4O6TczQVRbWU4hkqUQbvao3bIDMFWkna0wo7QyA2s5ZAqKi9wX26xTnFZCZCNMeyx"
 WHATSAPP_VERIFY_TOKEN = "mi_token_secreto_plagas_2026"
 
 USER_SESSIONS = {}
 
 def enviar_mensaje_whatsapp(destinatario, texto):
+    destinatario_str = str(destinatario)
+    
+    # Corrección automática para México: quita el '1' inicial si viene como 521...
+    if destinatario_str.startswith('521') and len(destinatario_str) == 13:
+        destinatario_str = '52' + destinatario_str[3:]
+
     url = f"https://graph.facebook.com/v21.0/{PHONE_NUMBER_ID}/messages"
     payload = json.dumps({
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
-        "to": str(destinatario),
+        "to": destinatario_str,
         "type": "text",
         "text": {"body": texto}
     }).encode('utf-8')
@@ -40,7 +46,7 @@ def enviar_mensaje_whatsapp(destinatario, texto):
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
             res_data = json.loads(response.read().decode('utf-8'))
-            print(f"[BOT ENVIADO] Mensaje enviado a {destinatario}")
+            print(f"[BOT ENVIADO] Mensaje enviado a {destinatario_str}")
             return res_data
     except urllib.error.HTTPError as e:
         error_body = e.read().decode('utf-8')
@@ -56,7 +62,6 @@ def enviar_mensaje_whatsapp(destinatario, texto):
 def landing():
     return render_template('landing.html')
 
-# Endpoint requerido por la landing page
 @app.route('/solicitar_cotizacion', methods=['GET', 'POST'])
 def solicitar_cotizacion():
     if request.method == 'POST':
