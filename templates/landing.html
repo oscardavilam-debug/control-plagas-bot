@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fumilab Control de Plagas | Servicios Residenciales, Comerciales e Industriales</title>
-    <!-- Tailwind CSS CDN -->
+    <title>FUMILAB | Control Profesional de Plagas en CDMX y Edomex</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -15,11 +14,11 @@
                         brand: {
                             50: '#f0fdf4',
                             100: '#dcfce7',
-                            500: '#16a34a',
+                            600: '#16a34a',
                             700: '#15803d',
                             800: '#166534',
                             900: '#14532d',
-                            dark: '#0c2e1b'
+                            dark: '#0a2315'
                         }
                     }
                 }
@@ -28,7 +27,7 @@
     </script>
     <style>
         .gradient-hero {
-            background: linear-gradient(135deg, rgba(12, 46, 27, 0.96) 0%, rgba(20, 83, 45, 0.92) 100%), 
+            background: linear-gradient(135deg, rgba(10, 35, 21, 0.95) 0%, rgba(20, 83, 45, 0.90) 100%), 
                         url('https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1600&q=80');
             background-size: cover;
             background-position: center;
@@ -45,20 +44,20 @@
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased font-sans">
 
-    <!-- BARRA SUPERIOR DE CONFIANZA -->
+    <!-- BARRA SUPERIOR -->
     <div class="bg-brand-900 text-white text-xs sm:text-sm py-2 px-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center flex-wrap gap-2">
             <div class="flex items-center space-x-4">
-                <span class="flex items-center gap-1.5"><i class="fas fa-shield-alt text-green-400"></i> Licencia Sanitaria Oficial COFEPRIS</span>
-                <span class="hidden md:flex items-center gap-1.5"><i class="fas fa-leaf text-green-400"></i> Fórmulas Inodoras y Seguras para Mascotas</span>
+                <span><i class="fas fa-map-marker-alt text-green-400 mr-1"></i> CDMX y Estado de México</span>
+                <span class="hidden sm:inline"><i class="fas fa-shield-alt text-green-400 mr-1"></i> Enfoque en Manejo Integrado de Plagas (MIP)</span>
             </div>
             <div class="flex items-center space-x-4">
-                <span class="flex items-center gap-1.5"><i class="fas fa-clock text-green-400"></i> Atención Inmediata 24/7</span>
+                <a href="tel:5614806293" class="hover:text-green-300 transition font-semibold"><i class="fas fa-phone-alt text-green-400 mr-1"></i> 56 1480 6293</a>
             </div>
         </div>
     </div>
 
-    <!-- NAVEGACIÓN -->
+    <!-- ENCABEZADO -->
     <header class="bg-white sticky top-0 z-40 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -67,122 +66,118 @@
                 </div>
                 <div>
                     <span class="text-2xl font-black tracking-tight text-gray-900">FUMILAB</span>
-                    <p class="text-[10px] uppercase tracking-widest text-brand-700 font-bold">Control de Plagas</p>
+                    <p class="text-[10px] uppercase tracking-widest text-brand-700 font-bold">Control Profesional de Plagas</p>
                 </div>
             </div>
 
             <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
-                <a href="#servicios" class="hover:text-brand-700 transition">Tratamientos</a>
-                <a href="#metodologia" class="hover:text-brand-700 transition">Procedimiento</a>
-                <a href="#garantia" class="hover:text-brand-700 transition">Garantía por Escrito</a>
-                <a href="#cotizador" class="hover:text-brand-700 transition">Cotizar</a>
+                <a href="#plagas" class="hover:text-brand-700 transition">Plagas</a>
+                <a href="#metodo" class="hover:text-brand-700 transition">Método MIP</a>
+                <a href="#empresas" class="hover:text-brand-700 transition">Empresas</a>
+                <a href="#residencial" class="hover:text-brand-700 transition">Residencial</a>
+                <a href="#faq" class="hover:text-brand-700 transition">Preguntas</a>
             </nav>
 
             <div class="flex items-center space-x-3">
-                <a href="https://wa.me/15551570850?text=hola" target="_blank" class="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded-lg shadow-sm transition">
+                <a href="https://wa.me/525614806293?text=Hola,%20solicito%20cotizaci%C3%B3n%20para%20control%20de%20plagas" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded-lg shadow-sm transition">
                     <i class="fab fa-whatsapp text-lg"></i>
-                    <span>Cotizar por Bot</span>
+                    <span class="hidden sm:inline">WhatsApp</span>
                 </a>
-                <a href="#cotizador" class="px-5 py-2.5 bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition">
-                    Pedir Servicio
+                <a href="#cotizador" class="px-5 py-2.5 bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold rounded-lg shadow-md transition">
+                    Cotizar
                 </a>
             </div>
         </div>
     </header>
 
     <!-- HERO SECTION -->
-    <section class="gradient-hero text-white py-20 lg:py-28 relative overflow-hidden">
+    <section class="gradient-hero text-white py-20 lg:py-24 relative overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="grid lg:grid-cols-12 gap-12 items-center">
                 <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
                     <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold uppercase tracking-wider text-green-300">
                         <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-                        Fumilab Control de Plagas Oficial
+                        Hogares • Restaurantes • Farmacias • Comercios • Empresas
                     </div>
                     <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
-                        Eliminación definitiva de plagas <br>
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-emerald-400">con respaldo y certificación oficial</span>
+                        Protegemos tu hogar <br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-emerald-400">y tu negocio</span>
                     </h1>
                     <p class="text-lg text-gray-200 max-w-2xl font-light">
-                        En <strong>Fumilab Control de Plagas</strong> protegemos tu hogar, restaurante o empresa con fórmulas termonebulizadas y geles microencapsulados de grado profesional. Sin olores molestos y con <strong>certificado sanitario válido ante auditorías</strong>.
+                        Soluciones profesionales para el control y prevención de plagas mediante inspección, tratamiento y seguimiento continuo.
+                    </p>
+                    <p class="text-sm font-semibold text-green-300 italic">
+                        "Resultados que se ven, clientes que se quedan."
                     </p>
 
                     <div class="pt-4 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                        <a href="#cotizador" class="inline-flex items-center justify-center px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-gray-950 font-bold rounded-xl shadow-lg hover:shadow-emerald-500/30 transition text-base">
-                            <i class="fas fa-calculator mr-2"></i> Cotizar Ahora
+                        <a href="https://wa.me/525614806293?text=Hola,%20solicito%20cotizaci%C3%B3n%20para%20control%20de%20plagas" target="_blank" class="inline-flex items-center justify-center px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-gray-950 font-bold rounded-xl shadow-lg transition text-base">
+                            <i class="fab fa-whatsapp mr-2 text-xl"></i> Solicitar Cotización por WhatsApp
                         </a>
-                        <a href="https://wa.me/15551570850?text=hola" target="_blank" class="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-semibold rounded-xl transition text-base">
-                            <i class="fab fa-whatsapp mr-2 text-green-400 text-xl"></i> WhatsApp Directo
+                        <a href="#cotizador" class="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-semibold rounded-xl transition text-base">
+                            Formulario Web
                         </a>
                     </div>
 
-                    <!-- Badges -->
-                    <div class="pt-8 border-t border-white/10 grid grid-cols-3 gap-4 text-center">
-                        <div>
-                            <p class="text-2xl sm:text-3xl font-bold text-green-300">90 Días</p>
-                            <p class="text-xs text-gray-300">Póliza de Garantía</p>
-                        </div>
-                        <div>
-                            <p class="text-2xl sm:text-3xl font-bold text-green-300">100%</p>
-                            <p class="text-xs text-gray-300">Seguro para Mascotas</p>
-                        </div>
-                        <div>
-                            <p class="text-2xl sm:text-3xl font-bold text-green-300">COFEPRIS</p>
-                            <p class="text-xs text-gray-300">Normativa Sanitaria</p>
-                        </div>
+                    <div class="pt-6 border-t border-white/10 flex flex-wrap gap-6 justify-center lg:justify-start text-xs text-gray-300">
+                        <span><i class="fas fa-check text-green-400 mr-1.5"></i> Inspección detallada</span>
+                        <span><i class="fas fa-check text-green-400 mr-1.5"></i> Tratamientos dirigidos</span>
+                        <span><i class="fas fa-check text-green-400 mr-1.5"></i> Seguro para mascotas y niños</span>
                     </div>
                 </div>
 
-                <!-- Formulario Rápido Hero -->
+                <!-- COTIZADOR RÁPIDO -->
                 <div class="lg:col-span-5" id="cotizador">
                     <div class="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 text-gray-800 border border-gray-100">
-                        <div class="mb-6">
-                            <span class="text-xs font-bold uppercase tracking-wider text-brand-700 bg-brand-50 px-2.5 py-1 rounded">Atención Personalizada</span>
-                            <h3 class="text-2xl font-bold text-gray-900 mt-2">Agenda tu inspección</h3>
-                            <p class="text-sm text-gray-500">Un técnico de Fumilab evaluará tu caso de inmediato.</p>
+                        <div class="mb-5">
+                            <span class="text-xs font-bold uppercase tracking-wider text-brand-700 bg-brand-50 px-2.5 py-1 rounded">Atención Inmediata</span>
+                            <h3 class="text-2xl font-bold text-gray-900 mt-2">¿Tienes problemas con alguna plaga?</h3>
+                            <p class="text-xs text-gray-500 mt-1">Cuéntanos tu caso para seleccionar el tratamiento más adecuado.</p>
                         </div>
 
                         <form action="/solicitar_cotizacion" method="POST" class="space-y-4">
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Nombre Completo</label>
-                                <input type="text" name="nombre" required placeholder="Ej. Juan Pérez" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none text-sm transition">
+                                <input type="text" name="nombre" required placeholder="Ej. Juan Pérez" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-600 focus:bg-white focus:outline-none text-sm transition">
                             </div>
 
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Teléfono WhatsApp</label>
-                                <input type="tel" name="telefono" required placeholder="Ej. 55 1234 5678" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none text-sm transition">
+                                <input type="tel" name="telefono" required placeholder="Ej. 55 1234 5678" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-600 focus:bg-white focus:outline-none text-sm transition">
                             </div>
 
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Plaga a Tratar</label>
-                                    <select name="plaga" class="w-full px-3 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none text-sm transition">
+                                    <select name="plaga" class="w-full px-3 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-600 focus:bg-white focus:outline-none text-sm transition">
                                         <option value="Cucarachas">Cucarachas</option>
-                                        <option value="Chinches">Chinches de Cama</option>
                                         <option value="Roedores">Roedores (Ratas/Ratones)</option>
-                                        <option value="Termitas">Termitas / Polilla</option>
-                                        <option value="Sanitización">Desinfección Sanitaria</option>
-                                        <option value="Otra">Otra plaga</option>
+                                        <option value="Chinches de cama">Chinches de cama</option>
+                                        <option value="Hormigas">Hormigas / Rastreras</option>
+                                        <option value="Moscas">Moscas / Voladores</option>
+                                        <option value="Alacranes">Alacranes / Ocasionales</option>
+                                        <option value="No sé qué plaga tengo">No sé qué plaga es</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Inmueble</label>
-                                    <select name="inmueble" class="w-full px-3 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none text-sm transition">
-                                        <option value="Casa">Casa</option>
-                                        <option value="Departamento">Departamento</option>
-                                        <option value="Restaurante">Restaurante / Bar</option>
-                                        <option value="Negocio">Local Comercial</option>
-                                        <option value="Bodega">Bodega / Nave</option>
+                                    <select name="inmueble" class="w-full px-3 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-600 focus:bg-white focus:outline-none text-sm transition">
+                                        <option value="Hogar">Hogar / Departamento</option>
+                                        <option value="Restaurante">Restaurante / Cocina</option>
+                                        <option value="Farmacia">Farmacia</option>
+                                        <option value="Comercio">Comercio / Tienda</option>
+                                        <option value="Oficina">Oficina</option>
+                                        <option value="Almacén">Almacén / Empresa</option>
                                     </select>
                                 </div>
                             </div>
 
                             <button type="submit" class="w-full py-4 bg-brand-700 hover:bg-brand-800 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
-                                <span>Solicitar Cotización Sin Compromiso</span>
+                                <span>Solicitar Cotización</span>
                                 <i class="fas fa-arrow-right text-sm"></i>
                             </button>
                             <p class="text-center text-[11px] text-gray-400 mt-2">
-                                <i class="fas fa-shield-alt text-xs mr-1"></i> Garantía y confidencialidad Fumilab.
+                                <i class="fas fa-map-marker-alt text-xs mr-1 text-brand-700"></i> Cobertura en CDMX y Estado de México.
                             </p>
                         </form>
                     </div>
@@ -191,216 +186,280 @@
         </div>
     </section>
 
-    <!-- TRATAMIENTOS ESPECIALIZADOS -->
-    <section id="servicios" class="py-20 bg-white">
+    <!-- PLAGAS QUE CONTROLAMOS -->
+    <section id="plagas" class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center max-w-3xl mx-auto mb-16">
-                <span class="text-brand-700 font-bold uppercase tracking-wider text-xs bg-brand-50 px-3 py-1 rounded-full">Fumilab Especialidades</span>
-                <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-3">Tratamientos especializados para cada plaga</h2>
-                <p class="text-gray-600 mt-3 text-base">Utilizamos insecticidas piriproxifenos y reguladores biológicos de última generación que erradican colonias completas protegiendo tus instalaciones.</p>
+                <span class="text-brand-700 font-bold uppercase tracking-wider text-xs bg-brand-50 px-3 py-1 rounded-full">Tratamientos a Medida</span>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-3">Plagas que controlamos</h2>
+                <p class="text-gray-600 mt-3 text-sm">
+                    En <strong>FUMILAB</strong> no aplicamos el mismo tratamiento para todos los casos. Primero identificamos la plaga, revisamos las condiciones del lugar y detectamos los factores que favorecen su presencia.
+                </p>
             </div>
 
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Tarjeta 1: Cucarachas -->
-                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-500 hover:shadow-xl transition group">
-                    <div class="w-14 h-14 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center text-2xl mb-6 group-hover:bg-brand-700 group-hover:text-white transition">
-                        <i class="fas fa-bug"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Cucarachas (Alemana / Americana)</h3>
-                    <p class="text-sm text-gray-600 mb-4">Erradicación profunda mediante gel atrayente y microencapsulados. Corta el ciclo biológico eliminando ninfas y huevecillos.</p>
-                    <ul class="text-xs text-gray-500 space-y-2 border-t border-gray-200 pt-4">
-                        <li class="flex items-center"><i class="fas fa-check text-brand-500 mr-2"></i> No requiere desocupar alacenas</li>
-                        <li class="flex items-center"><i class="fas fa-check text-brand-500 mr-2"></i> Efecto residual prolongado</li>
-                    </ul>
+                <!-- Cucarachas -->
+                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition">
+                    <div class="text-3xl mb-4">🪳</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Cucarachas</h3>
+                    <p class="text-sm text-gray-600">Control de cucaracha alemana, americana y otras especies mediante tratamientos dirigidos a las áreas de actividad y refugio.</p>
                 </div>
 
-                <!-- Tarjeta 2: Chinches de Cama -->
-                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-500 hover:shadow-xl transition group">
-                    <div class="w-14 h-14 rounded-xl bg-red-100 text-red-600 flex items-center justify-center text-2xl mb-6 group-hover:bg-red-600 group-hover:text-white transition">
-                        <i class="fas fa-bed"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Chinches de Cama (Cimex)</h3>
-                    <p class="text-sm text-gray-600 mb-4">Tratamiento térmico combinado con choque químico microencapsulado en colchones, cabeceras, zoclos y enchufes.</p>
-                    <ul class="text-xs text-gray-500 space-y-2 border-t border-gray-200 pt-4">
-                        <li class="flex items-center"><i class="fas fa-check text-red-500 mr-2"></i> Detección de nidos ocultos</li>
-                        <li class="flex items-center"><i class="fas fa-check text-red-500 mr-2"></i> Refuerzo garantizado incluido</li>
-                    </ul>
+                <!-- Roedores -->
+                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition">
+                    <div class="text-3xl mb-4">🐀</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Roedores</h3>
+                    <p class="text-sm text-gray-600">Inspección, monitoreo y control mediante estaciones y estrategias adaptadas a las condiciones del inmueble.</p>
                 </div>
 
-                <!-- Tarjeta 3: Roedores -->
-                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-500 hover:shadow-xl transition group">
-                    <div class="w-14 h-14 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl mb-6 group-hover:bg-amber-700 group-hover:text-white transition">
-                        <i class="fas fa-shield-cat"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Roedores (Ratas y Ratones)</h3>
-                    <p class="text-sm text-gray-600 mb-4">Cebado de seguridad en estaciones herméticas con rodenticidas anticoagulantes que evitan malos olores por descomposición.</p>
-                    <ul class="text-xs text-gray-500 space-y-2 border-t border-gray-200 pt-4">
-                        <li class="flex items-center"><i class="fas fa-check text-amber-600 mr-2"></i> Estaciones seguras e inviolables</li>
-                        <li class="flex items-center"><i class="fas fa-check text-amber-600 mr-2"></i> Asesoría en sellado de accesos</li>
-                    </ul>
+                <!-- Chinches -->
+                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition">
+                    <div class="text-3xl mb-4">🛏️</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Chinches de cama</h3>
+                    <p class="text-sm text-gray-600">Inspección detallada y tratamiento especializado de las áreas afectadas, con seguimiento cuando las condiciones del caso lo requieren.</p>
                 </div>
 
-                <!-- Tarjeta 4: Termitas y Madera -->
-                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-500 hover:shadow-xl transition group">
-                    <div class="w-14 h-14 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-2xl mb-6 group-hover:bg-emerald-800 group-hover:text-white transition">
-                        <i class="fas fa-tree"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Termitas y Polilla</h3>
-                    <p class="text-sm text-gray-600 mb-4">Inyección especializada a presión en madera y barreras químicas para proteger estructuras, marcos y muebles finos.</p>
-                    <ul class="text-xs text-gray-500 space-y-2 border-t border-gray-200 pt-4">
-                        <li class="flex items-center"><i class="fas fa-check text-emerald-600 mr-2"></i> Protección estructural duradera</li>
-                        <li class="flex items-center"><i class="fas fa-check text-emerald-600 mr-2"></i> No daña barnices ni acabados</li>
-                    </ul>
+                <!-- Hormigas -->
+                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition">
+                    <div class="text-3xl mb-4">🐜</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Hormigas y plagas rastreras</h3>
+                    <p class="text-sm text-gray-600">Identificación de áreas de ingreso, refugio y actividad para establecer un tratamiento focalizado.</p>
                 </div>
 
-                <!-- Tarjeta 5: Arañas y Alacranes -->
-                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-500 hover:shadow-xl transition group">
-                    <div class="w-14 h-14 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-2xl mb-6 group-hover:bg-purple-700 group-hover:text-white transition">
-                        <i class="fas fa-spider"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Fauna Nociva y Arácnidos</h3>
-                    <p class="text-sm text-gray-600 mb-4">Barrera perimetral de alta residualidad contra araña violinista, viuda negra, alacranes y ciempiés en jardines y bodegas.</p>
-                    <ul class="text-xs text-gray-500 space-y-2 border-t border-gray-200 pt-4">
-                        <li class="flex items-center"><i class="fas fa-check text-purple-600 mr-2"></i> Efecto de derribo instantáneo</li>
-                        <li class="flex items-center"><i class="fas fa-check text-purple-600 mr-2"></i> Resiste sol y humedad exterior</li>
-                    </ul>
+                <!-- Moscas -->
+                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition">
+                    <div class="text-3xl mb-4">🪰</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Moscas e insectos voladores</h3>
+                    <p class="text-sm text-gray-600">Identificación de factores de atracción y reproducción, acompañada de medidas de control y prevención.</p>
                 </div>
 
-                <!-- Tarjeta 6: Sanitización COFEPRIS -->
-                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-500 hover:shadow-xl transition group">
-                    <div class="w-14 h-14 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-2xl mb-6 group-hover:bg-blue-700 group-hover:text-white transition">
-                        <i class="fas fa-pump-medical"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Desinfección y Sanitización</h3>
-                    <p class="text-sm text-gray-600 mb-4">Micronebulización con sales cuaternarias de última generación. Elimina 99.9% de virus, bacterias y hongos en minutos.</p>
-                    <ul class="text-xs text-gray-500 space-y-2 border-t border-gray-200 pt-4">
-                        <li class="flex items-center"><i class="fas fa-check text-blue-600 mr-2"></i> Certificado de desinfección</li>
-                        <li class="flex items-center"><i class="fas fa-check text-blue-600 mr-2"></i> Entrada segura en 30 minutos</li>
-                    </ul>
+                <!-- Alacranes -->
+                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition">
+                    <div class="text-3xl mb-4">🦂</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Alacranes y plagas ocasionales</h3>
+                    <p class="text-sm text-gray-600">Inspección de zonas de riesgo y aplicación de medidas de control de acuerdo con las características del inmueble.</p>
                 </div>
             </div>
-        </div>
-    </section>
 
-    <!-- METODOLOGÍA EN 4 PASOS -->
-    <section id="metodologia" class="py-20 bg-gray-100 border-y border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-2xl mx-auto mb-16">
-                <span class="text-brand-700 font-bold uppercase tracking-wider text-xs">Protocolo Fumilab</span>
-                <h2 class="text-3xl font-extrabold text-gray-900 mt-2">¿Cómo trabajamos?</h2>
-            </div>
-
-            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div class="bg-white p-6 rounded-xl shadow-sm text-center relative">
-                    <div class="w-12 h-12 bg-brand-50 text-brand-700 font-bold text-xl rounded-full flex items-center justify-center mx-auto mb-4 border border-brand-200">1</div>
-                    <h4 class="font-bold text-gray-900 mb-2">Inspección Inicial</h4>
-                    <p class="text-xs text-gray-500">Evaluación de zonas críticas, grado de infestación y rutas de tránsito.</p>
-                </div>
-
-                <div class="bg-white p-6 rounded-xl shadow-sm text-center relative">
-                    <div class="w-12 h-12 bg-brand-50 text-brand-700 font-bold text-xl rounded-full flex items-center justify-center mx-auto mb-4 border border-brand-200">2</div>
-                    <h4 class="font-bold text-gray-900 mb-2">Aplicación de Choque</h4>
-                    <p class="text-xs text-gray-500">Técnicas de nebulización ULV y colocación milimétrica de productos.</p>
-                </div>
-
-                <div class="bg-white p-6 rounded-xl shadow-sm text-center relative">
-                    <div class="w-12 h-12 bg-brand-50 text-brand-700 font-bold text-xl rounded-full flex items-center justify-center mx-auto mb-4 border border-brand-200">3</div>
-                    <h4 class="font-bold text-gray-900 mb-2">Certificado Oficial</h4>
-                    <p class="text-xs text-gray-500">Emisión de constancia con registro sanitario de los insumos aplicados.</p>
-                </div>
-
-                <div class="bg-white p-6 rounded-xl shadow-sm text-center relative">
-                    <div class="w-12 h-12 bg-brand-50 text-brand-700 font-bold text-xl rounded-full flex items-center justify-center mx-auto mb-4 border border-brand-200">4</div>
-                    <h4 class="font-bold text-gray-900 mb-2">Garantía Fumilab</h4>
-                    <p class="text-xs text-gray-500">Monitoreo continuo. Si notas actividad dentro de la vigencia, acudimos sin costo.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- GARANTÍA Y CERTIFICACIÓN -->
-    <section id="garantia" class="py-20 bg-brand-dark text-white relative overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="grid lg:grid-cols-2 gap-12 items-center">
-                <div class="space-y-6">
-                    <span class="inline-flex items-center gap-2 px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-xs font-semibold">
-                        <i class="fas fa-file-contract"></i> Cumplimiento Normativo
-                    </span>
-                    <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                        Fumilab Control de Plagas: Documentación oficial para tu negocio
-                    </h2>
-                    <p class="text-gray-300 text-sm leading-relaxed">
-                        Emitimos actas técnicas y certificados con validez ante revisiones sanitarias gubernamentales para restaurantes, cafeterías, bodegas, escuelas y oficinas. Mantén tus instalaciones 100% protegidas y en norma.
-                    </p>
-                    <div class="space-y-3 pt-2">
-                        <div class="flex items-start gap-3">
-                            <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
-                            <span class="text-sm text-gray-200">Hojas de datos técnicos y de seguridad COFEPRIS.</span>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
-                            <span class="text-sm text-gray-200">Póliza de garantía de servicio por escrito.</span>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
-                            <span class="text-sm text-gray-200">Técnicos uniformados y con equipo de protección adecuado.</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white/5 p-8 rounded-2xl border border-white/10 backdrop-blur-sm text-center">
-                    <i class="fas fa-award text-6xl text-emerald-400 mb-4"></i>
-                    <h3 class="text-2xl font-bold mb-2">Garantía por Escrito Fumilab</h3>
-                    <p class="text-gray-300 text-xs mb-6 max-w-sm mx-auto">Solucionamos el problema de raíz con compromiso formal en cada aplicación.</p>
-                    <a href="https://wa.me/15551570850?text=hola" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-gray-950 font-bold text-sm rounded-xl transition shadow-lg">
-                        <i class="fab fa-whatsapp text-lg"></i> Consultar por WhatsApp
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="bg-gray-900 text-gray-400 py-12 text-sm border-t border-gray-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div>
-                <span class="text-xl font-black text-white">FUMILAB</span>
-                <p class="text-[11px] text-brand-500 font-bold uppercase tracking-wider">Control de Plagas</p>
-                <p class="text-xs text-gray-400 mt-3">Especialistas en control integral de plagas urbanas y sanidad ambiental para casas, comercios e industrias.</p>
-            </div>
-            <div>
-                <h5 class="text-white font-semibold mb-3">Servicios</h5>
-                <ul class="text-xs space-y-2">
-                    <li><a href="#servicios" class="hover:text-white transition">Cucarachas</a></li>
-                    <li><a href="#servicios" class="hover:text-white transition">Chinches de Cama</a></li>
-                    <li><a href="#servicios" class="hover:text-white transition">Control de Roedores</a></li>
-                    <li><a href="#servicios" class="hover:text-white transition">Sanitización de Espacios</a></li>
-                </ul>
-            </div>
-            <div>
-                <h5 class="text-white font-semibold mb-3">Compromiso</h5>
-                <ul class="text-xs space-y-2">
-                    <li>Licencia Sanitaria Federal</li>
-                    <li>Fórmulas Biodegradables</li>
-                    <li>Certificados Oficiales</li>
-                    <li>Atención de Emergencias</li>
-                </ul>
-            </div>
-            <div>
-                <h5 class="text-white font-semibold mb-3">Contacto Rápido</h5>
-                <p class="text-xs text-gray-300 mb-2">Comunícate por WhatsApp con nuestro bot de atención para cotizar tu servicio en segundos.</p>
-                <a href="https://wa.me/15551570850?text=hola" target="_blank" class="text-green-400 hover:text-green-300 text-xs font-bold inline-flex items-center gap-1">
-                    <i class="fab fa-whatsapp"></i> Chat de Fumilab
+            <!-- Llamado interactivo WhatsApp -->
+            <div class="mt-12 bg-brand-50 border border-brand-100 rounded-2xl p-8 text-center max-w-3xl mx-auto">
+                <h4 class="text-xl font-bold text-gray-900 mb-2">¿No sabes qué plaga tienes?</h4>
+                <p class="text-sm text-gray-600 mb-5">Envíanos fotografías o video por WhatsApp para orientarte y diagnosticar el problema.</p>
+                <a href="https://wa.me/525614806293?text=Hola,%20adjunto%20fotos/videos%20para%20identificar%20qu%C3%A9%20plaga%20tengo" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold text-sm rounded-xl transition shadow">
+                    <i class="fab fa-whatsapp text-lg"></i> Enviar fotos por WhatsApp
                 </a>
             </div>
         </div>
-        <div class="max-w-7xl mx-auto px-4 mt-8 pt-8 border-t border-gray-800 text-center text-xs text-gray-500">
-            &copy; 2026 Fumilab Control de Plagas. Todos los derechos reservados.
+    </section>
+
+    <!-- METODOLOGÍA MIP -->
+    <section id="metodo" class="py-20 bg-gray-100 border-y border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-brand-700 font-bold uppercase tracking-wider text-xs">MÁS QUE FUMIGAR, CONTROLAMOS EL PROBLEMA</span>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-2">Manejo Integrado de Plagas (MIP)</h2>
+                <p class="text-gray-600 mt-3 text-sm">
+                    Identificamos las condiciones que permiten que la plaga encuentre alimento, agua, refugio o puntos de acceso.
+                </p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/60">
+                    <span class="text-2xl font-black text-brand-700">01</span>
+                    <h4 class="font-bold text-gray-900 mt-2 mb-2">Inspección</h4>
+                    <p class="text-xs text-gray-600">Revisamos las áreas afectadas, evidencias de actividad y puntos de ingreso, refugio y reproducción.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/60">
+                    <span class="text-2xl font-black text-brand-700">02</span>
+                    <h4 class="font-bold text-gray-900 mt-2 mb-2">Tratamiento</h4>
+                    <p class="text-xs text-gray-600">Seleccionamos técnicas y productos adecuados según la plaga, nivel de actividad e inmueble.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/60">
+                    <span class="text-2xl font-black text-brand-700">03</span>
+                    <h4 class="font-bold text-gray-900 mt-2 mb-2">Monitoreo</h4>
+                    <p class="text-xs text-gray-600">Utilizamos dispositivos para evaluar la actividad biológica y la evolución del tratamiento.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/60">
+                    <span class="text-2xl font-black text-brand-700">04</span>
+                    <h4 class="font-bold text-gray-900 mt-2 mb-2">Recomendaciones</h4>
+                    <p class="text-xs text-gray-600">Señalamos condiciones de riesgo y proponemos medidas preventivas o correctivas.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/60">
+                    <span class="text-2xl font-black text-brand-700">05</span>
+                    <h4 class="font-bold text-gray-900 mt-2 mb-2">Seguimiento</h4>
+                    <p class="text-xs text-gray-600">Evaluamos resultados y determinamos si son necesarias acciones adicionales.</p>
+                </div>
+            </div>
+
+            <!-- Métodos aplicados -->
+            <div class="mt-12 bg-white rounded-xl p-6 border border-gray-200 text-center">
+                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Métodos y técnicas utilizadas</h4>
+                <p class="text-xs sm:text-sm text-gray-700 font-medium leading-relaxed">
+                    Aplicación dirigida • Geles y cebos • Tratamientos en grietas y hendiduras • Polvos insecticidas • Estaciones para roedores • Trampas y dispositivos de monitoreo • Tratamientos especializados • Medidas preventivas
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SOLUCIONES PARA EMPRESAS -->
+    <section id="empresas" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <span class="text-brand-700 font-bold uppercase tracking-wider text-xs bg-brand-50 px-3 py-1 rounded-full">SOLUCIONES PARA EMPRESAS</span>
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-3 mb-4">
+                        Manejo Integrado de Plagas para establecimientos
+                    </h2>
+                    <p class="text-gray-600 text-sm mb-6">
+                        Diseñamos programas de control de plagas adaptados a las necesidades y riesgos de cada establecimiento.
+                    </p>
+
+                    <div class="grid grid-cols-2 gap-3 mb-6 text-xs font-semibold text-gray-700">
+                        <div class="flex items-center"><i class="fas fa-utensils text-brand-700 mr-2"></i> Restaurantes y cocinas</div>
+                        <div class="flex items-center"><i class="fas fa-prescription-bottle-alt text-brand-700 mr-2"></i> Farmacias</div>
+                        <div class="flex items-center"><i class="fas fa-store text-brand-700 mr-2"></i> Comercios</div>
+                        <div class="flex items-center"><i class="fas fa-building text-brand-700 mr-2"></i> Oficinas</div>
+                        <div class="flex items-center"><i class="fas fa-warehouse text-brand-700 mr-2"></i> Almacenes</div>
+                        <div class="flex items-center"><i class="fas fa-industry text-brand-700 mr-2"></i> Instalaciones comerciales</div>
+                    </div>
+
+                    <a href="https://wa.me/525614806293?text=Hola,%20deseo%20solicitar%20informaci%C3%B3n%20para%20mi%20negocio/empresa" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-700 hover:bg-brand-800 text-white font-bold text-sm rounded-lg transition shadow">
+                        Solicitar información para mi negocio
+                    </a>
+                </div>
+
+                <div class="bg-gray-50 border border-gray-200 rounded-2xl p-7">
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Un programa que permite identificar riesgos</h3>
+                    <p class="text-xs text-gray-500 mb-4">No nos limitamos a tratar la plaga presente, buscamos identificar:</p>
+                    <ul class="text-xs text-gray-600 space-y-2.5">
+                        <li class="flex items-center"><i class="fas fa-check text-brand-600 mr-2"></i> Puntos de ingreso</li>
+                        <li class="flex items-center"><i class="fas fa-check text-brand-600 mr-2"></i> Fuentes de alimento y agua</li>
+                        <li class="flex items-center"><i class="fas fa-check text-brand-600 mr-2"></i> Áreas de refugio</li>
+                        <li class="flex items-center"><i class="fas fa-check text-brand-600 mr-2"></i> Condiciones estructurales de riesgo</li>
+                        <li class="flex items-center"><i class="fas fa-check text-brand-600 mr-2"></i> Evidencias de actividad</li>
+                        <li class="flex items-center"><i class="fas fa-check text-brand-600 mr-2"></i> Necesidades de monitoreo</li>
+                        <li class="flex items-center"><i class="fas fa-check text-brand-600 mr-2"></i> Acciones correctivas recomendadas</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SERVICIO RESIDENCIAL -->
+    <section id="residencial" class="py-16 bg-brand-50 border-y border-brand-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-3xl">
+            <span class="text-brand-700 font-bold uppercase tracking-wider text-xs">SERVICIO RESIDENCIAL</span>
+            <h2 class="text-3xl font-extrabold text-gray-900 mt-2 mb-3">Protege tu hogar</h2>
+            <p class="text-sm text-gray-600 mb-6">
+                Cada vivienda presenta condiciones diferentes. Antes de recomendar un tratamiento consideramos el tipo de plaga, áreas afectadas, nivel de actividad y características del inmueble. Te explicamos las indicaciones necesarias antes y después del servicio, incluyendo las medidas cuando existen niños o mascotas.
+            </p>
+            <a href="#cotizador" class="inline-flex items-center gap-2 px-8 py-3.5 bg-brand-700 hover:bg-brand-800 text-white font-bold text-sm rounded-lg transition shadow">
+                Cotizar servicio para mi hogar
+            </a>
+        </div>
+    </section>
+
+    <!-- DOCUMENTACIÓN Y SEGUIMIENTO -->
+    <section class="py-16 bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-brand-dark text-white rounded-2xl p-8 sm:p-12">
+                <div class="grid lg:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-green-400">CONTROL COMERCIAL</span>
+                        <h3 class="text-2xl sm:text-3xl font-bold mt-2 mb-4">Documentación y Seguimiento</h3>
+                        <p class="text-sm text-gray-300">
+                            En servicios comerciales proporcionamos documentación conforme a las características y alcance del servicio contratado para auditorías y control interno.
+                        </p>
+                    </div>
+                    <div class="grid sm:grid-cols-2 gap-3 text-xs text-gray-200">
+                        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Reporte de servicio</div>
+                        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Evidencias de inspección</div>
+                        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Registro de dispositivos</div>
+                        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Observaciones encontradas</div>
+                        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Medidas correctivas</div>
+                        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Carpeta para auditorías</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PREGUNTAS FRECUENTES -->
+    <section id="faq" class="py-20 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-14">
+                <span class="text-brand-700 font-bold uppercase tracking-wider text-xs">RESOLVEMOS TUS DUDAS</span>
+                <h2 class="text-3xl font-extrabold text-gray-900 mt-2">Preguntas Frecuentes</h2>
+            </div>
+
+            <div class="space-y-4">
+                <div class="bg-white p-6 rounded-xl border border-gray-200">
+                    <h4 class="font-bold text-gray-900 mb-2">¿Cuánto cuesta un servicio?</h4>
+                    <p class="text-sm text-gray-600">El costo depende de la plaga, dimensiones del inmueble, nivel de infestación, ubicación y tratamiento necesario. Podemos solicitar fotografías, video o realizar una inspección cuando sea necesario antes de determinar el tratamiento.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-gray-200">
+                    <h4 class="font-bold text-gray-900 mb-2">¿Tengo que salir durante el servicio?</h4>
+                    <p class="text-sm text-gray-600">Depende del tratamiento utilizado. Antes de comenzar te indicaremos las medidas de seguridad y el tiempo de reingreso correspondiente al producto y procedimiento empleado.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-gray-200">
+                    <h4 class="font-bold text-gray-900 mb-2">¿Es seguro si tengo mascotas?</h4>
+                    <p class="text-sm text-gray-600">Infórmanos qué mascotas se encuentran en el inmueble. Te proporcionaremos las indicaciones necesarias antes, durante y después del tratamiento.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-gray-200">
+                    <h4 class="font-bold text-gray-900 mb-2">¿Una sola aplicación elimina el problema?</h4>
+                    <p class="text-sm text-gray-600">Depende de la plaga y del nivel de infestación. Algunos casos pueden requerir seguimiento, refuerzo, monitoreo y medidas correctivas adicionales.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-gray-200">
+                    <h4 class="font-bold text-gray-900 mb-2">¿Atienden negocios?</h4>
+                    <p class="text-sm text-gray-600">Sí. Contamos con servicios para establecimientos comerciales y programas de Manejo Integrado de Plagas.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CIERRE Y CTA FINAL -->
+    <section class="py-16 bg-white border-t border-gray-200 text-center">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-extrabold text-gray-900 mb-3">¿Necesitas ayuda con una plaga?</h2>
+            <p class="text-sm text-gray-600 mb-6">Cuéntanos qué está sucediendo. Puedes enviarnos fotografías o video del problema para recibir orientación y determinar el siguiente paso.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="https://wa.me/525614806293?text=Hola,%20deseo%20orientaci%C3%B3n%20sobre%20un%20problema%20de%20plagas" target="_blank" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow transition">
+                    <i class="fab fa-whatsapp text-xl"></i> Hablar por WhatsApp
+                </a>
+                <a href="#cotizador" class="inline-flex items-center justify-center px-8 py-3.5 bg-brand-700 hover:bg-brand-800 text-white font-bold rounded-xl shadow transition">
+                    Solicitar Cotización
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- PIE DE PÁGINA -->
+    <footer class="bg-gray-900 text-gray-400 py-10 text-xs border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
+            <div>
+                <span class="text-base font-black text-white">FUMILAB CONTROL DE PLAGAS</span>
+                <p class="text-green-400 italic mt-0.5">Resultados que se ven, clientes que se quedan.</p>
+            </div>
+            <div class="space-y-1">
+                <p><i class="fas fa-map-marker-alt text-green-400 mr-1"></i> CDMX y Estado de México</p>
+                <p><i class="fas fa-phone-alt text-green-400 mr-1"></i> 56 1480 6293</p>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 mt-6 pt-6 border-t border-gray-800 text-center text-gray-500">
+            &copy; 2026 FUMILAB. Todos los derechos reservados.
         </div>
     </footer>
 
-    <!-- BOTÓN FLOTANTE DE WHATSAPP -->
-    <a href="https://wa.me/15551570850?text=hola" target="_blank" class="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-2xl transition transform hover:scale-110 pulse-whatsapp" title="Cotizar por WhatsApp con Fumilab">
+    <!-- BOTÓN FLOTANTE WHATSAPP -->
+    <a href="https://wa.me/525614806293?text=Hola,%20solicito%20cotizaci%C3%B3n%20para%20control%20de%20plagas" target="_blank" class="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-2xl transition transform hover:scale-110 pulse-whatsapp" title="WhatsApp FUMILAB">
         <i class="fab fa-whatsapp"></i>
     </a>
 
