@@ -18,7 +18,7 @@
                             700: '#15803d',
                             800: '#166534',
                             900: '#14532d',
-                            dark: '#0a2315'
+                            dark: '#081f13'
                         }
                     }
                 }
@@ -27,7 +27,7 @@
     </script>
     <style>
         .gradient-hero {
-            background: linear-gradient(135deg, rgba(10, 35, 21, 0.95) 0%, rgba(20, 83, 45, 0.90) 100%), 
+            background: linear-gradient(135deg, rgba(8, 31, 19, 0.96) 0%, rgba(20, 83, 45, 0.92) 100%), 
                         url('https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1600&q=80');
             background-size: cover;
             background-position: center;
@@ -44,47 +44,48 @@
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased font-sans">
 
-    <!-- BARRA SUPERIOR -->
-    <div class="bg-brand-900 text-white text-xs sm:text-sm py-2 px-4">
+    <!-- BARRA SUPERIOR DE CERTIFICACIÓN Y COBERTURA -->
+    <div class="bg-brand-900 text-white text-xs sm:text-sm py-2 px-4 border-b border-brand-800">
         <div class="max-w-7xl mx-auto flex justify-between items-center flex-wrap gap-2">
             <div class="flex items-center space-x-4">
-                <span><i class="fas fa-map-marker-alt text-green-400 mr-1"></i> CDMX y Estado de México</span>
-                <span class="hidden sm:inline"><i class="fas fa-shield-alt text-green-400 mr-1"></i> Enfoque en Manejo Integrado de Plagas (MIP)</span>
+                <span class="flex items-center gap-1.5"><i class="fas fa-map-marker-alt text-green-400"></i> Cobertura Técnica: CDMX y Estado de México</span>
+                <span class="hidden md:flex items-center gap-1.5"><i class="fas fa-certificate text-green-400"></i> Insumos Autorizados COFEPRIS / Normativa Oficial Mexicana</span>
             </div>
             <div class="flex items-center space-x-4">
-                <a href="tel:5614806293" class="hover:text-green-300 transition font-semibold"><i class="fas fa-phone-alt text-green-400 mr-1"></i> 56 1480 6293</a>
+                <span class="flex items-center gap-1.5 text-green-300 font-semibold"><i class="fas fa-shield-check text-green-400"></i> Centro de Atención Inmediata 24/7</span>
             </div>
         </div>
     </div>
 
-    <!-- ENCABEZADO -->
-    <header class="bg-white sticky top-0 z-40 shadow-sm">
+    <!-- ENCABEZADO INSTITUCIONAL -->
+    <header class="bg-white sticky top-0 z-40 shadow-sm border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="w-11 h-11 bg-brand-700 text-white rounded-xl flex items-center justify-center text-xl shadow-md">
+                <div class="w-12 h-12 bg-brand-700 text-white rounded-xl flex items-center justify-center text-2xl shadow-md border border-brand-600">
                     <i class="fas fa-shield-virus"></i>
                 </div>
                 <div>
                     <span class="text-2xl font-black tracking-tight text-gray-900">FUMILAB</span>
-                    <p class="text-[10px] uppercase tracking-widest text-brand-700 font-bold">Control Profesional de Plagas</p>
+                    <p class="text-[10px] uppercase tracking-widest text-brand-700 font-extrabold">Control Profesional de Plagas</p>
                 </div>
             </div>
 
-            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
-                <a href="#plagas" class="hover:text-brand-700 transition">Plagas</a>
-                <a href="#metodo" class="hover:text-brand-700 transition">Método MIP</a>
-                <a href="#empresas" class="hover:text-brand-700 transition">Empresas</a>
-                <a href="#residencial" class="hover:text-brand-700 transition">Residencial</a>
-                <a href="#faq" class="hover:text-brand-700 transition">Preguntas</a>
+            <nav class="hidden md:flex items-center space-x-8 text-sm font-semibold text-gray-600">
+                <a href="#plagas" class="hover:text-brand-700 transition">Tratamientos</a>
+                <a href="#metodo" class="hover:text-brand-700 transition">Metodología MIP</a>
+                <a href="#empresas" class="hover:text-brand-700 transition">Soluciones Comerciales</a>
+                <a href="#residencial" class="hover:text-brand-700 transition">Hogares</a>
+                <a href="#garantia" class="hover:text-brand-700 transition">Póliza y Garantía</a>
+                <a href="#faq" class="hover:text-brand-700 transition">Preguntas Frecuentes</a>
             </nav>
 
             <div class="flex items-center space-x-3">
-                <a href="https://wa.me/525614806293?text=Hola,%20solicito%20cotizaci%C3%B3n%20para%20control%20de%20plagas" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded-lg shadow-sm transition">
+                <a href="https://wa.me/?text=Hola%20Fumilab,%20solicito%20cotizaci%C3%B3n%20para%20un%20servicio%20profesional%20de%20control%20de%20plagas" target="_blank" class="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg shadow-sm transition">
                     <i class="fab fa-whatsapp text-lg"></i>
-                    <span class="hidden sm:inline">WhatsApp</span>
+                    <span>Canal Oficial</span>
                 </a>
-                <a href="#cotizador" class="px-5 py-2.5 bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold rounded-lg shadow-md transition">
-                    Cotizar
+                <a href="#cotizador" class="px-5 py-2.5 bg-brand-700 hover:bg-brand-800 text-white text-sm font-bold rounded-lg shadow-md transition">
+                    Solicitar Cotización
                 </a>
             </div>
         </div>
@@ -97,32 +98,41 @@
                 <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
                     <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold uppercase tracking-wider text-green-300">
                         <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-                        Hogares • Restaurantes • Farmacias • Comercios • Empresas
+                        Servicios Certificados: Residencial • Comercial • Industrial
                     </div>
                     <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
                         Protegemos tu hogar <br>
                         <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-emerald-400">y tu negocio</span>
                     </h1>
-                    <p class="text-lg text-gray-200 max-w-2xl font-light">
-                        Soluciones profesionales para el control y prevención de plagas mediante inspección, tratamiento y seguimiento continuo.
+                    <p class="text-lg text-gray-200 max-w-2xl font-light leading-relaxed">
+                        Soluciones profesionales para el control y prevención de plagas mediante inspección especializada, tratamiento técnico dirigido y seguimiento continuo.
                     </p>
-                    <p class="text-sm font-semibold text-green-300 italic">
+                    <p class="text-sm font-semibold text-green-300 italic tracking-wide">
                         "Resultados que se ven, clientes que se quedan."
                     </p>
 
                     <div class="pt-4 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                        <a href="https://wa.me/525614806293?text=Hola,%20solicito%20cotizaci%C3%B3n%20para%20control%20de%20plagas" target="_blank" class="inline-flex items-center justify-center px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-gray-950 font-bold rounded-xl shadow-lg transition text-base">
-                            <i class="fab fa-whatsapp mr-2 text-xl"></i> Solicitar Cotización por WhatsApp
+                        <a href="https://wa.me/?text=Hola%20Fumilab,%20solicito%20cotizaci%C3%B3n%20para%20un%20servicio%20profesional%20de%20control%20de%20plagas" target="_blank" class="inline-flex items-center justify-center px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-gray-950 font-bold rounded-xl shadow-lg transition text-base">
+                            <i class="fab fa-whatsapp mr-2 text-xl"></i> Atención Directa en WhatsApp
                         </a>
                         <a href="#cotizador" class="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white font-semibold rounded-xl transition text-base">
-                            Formulario Web
+                            <i class="fas fa-file-invoice mr-2 text-green-300"></i> Formulario de Cotización
                         </a>
                     </div>
 
-                    <div class="pt-6 border-t border-white/10 flex flex-wrap gap-6 justify-center lg:justify-start text-xs text-gray-300">
-                        <span><i class="fas fa-check text-green-400 mr-1.5"></i> Inspección detallada</span>
-                        <span><i class="fas fa-check text-green-400 mr-1.5"></i> Tratamientos dirigidos</span>
-                        <span><i class="fas fa-check text-green-400 mr-1.5"></i> Seguro para mascotas y niños</span>
+                    <div class="pt-6 border-t border-white/10 grid grid-cols-3 gap-4 text-center sm:text-left text-xs text-gray-300">
+                        <div>
+                            <p class="font-bold text-white text-sm"><i class="fas fa-microscope text-green-400 mr-1"></i> Diagnóstico Técnico</p>
+                            <p class="text-[11px] text-gray-300">Inspección de factores de riesgo</p>
+                        </div>
+                        <div>
+                            <p class="font-bold text-white text-sm"><i class="fas fa-paw text-green-400 mr-1"></i> Fórmulas Inodoras</p>
+                            <p class="text-[11px] text-gray-300">Seguro para niños y mascotas</p>
+                        </div>
+                        <div>
+                            <p class="font-bold text-white text-sm"><i class="fas fa-file-contract text-green-400 mr-1"></i> Garantía por Escrito</p>
+                            <p class="text-[11px] text-gray-300">Certificados para auditorías</p>
+                        </div>
                     </div>
                 </div>
 
@@ -130,25 +140,25 @@
                 <div class="lg:col-span-5" id="cotizador">
                     <div class="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 text-gray-800 border border-gray-100">
                         <div class="mb-5">
-                            <span class="text-xs font-bold uppercase tracking-wider text-brand-700 bg-brand-50 px-2.5 py-1 rounded">Atención Inmediata</span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-brand-700 bg-brand-50 px-2.5 py-1 rounded">Evaluación Inmediata</span>
                             <h3 class="text-2xl font-bold text-gray-900 mt-2">¿Tienes problemas con alguna plaga?</h3>
-                            <p class="text-xs text-gray-500 mt-1">Cuéntanos tu caso para seleccionar el tratamiento más adecuado.</p>
+                            <p class="text-xs text-gray-500 mt-1">Registra tu caso para seleccionar el tratamiento profesional idóneo.</p>
                         </div>
 
                         <form action="/solicitar_cotizacion" method="POST" class="space-y-4">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Nombre Completo</label>
-                                <input type="text" name="nombre" required placeholder="Ej. Juan Pérez" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-600 focus:bg-white focus:outline-none text-sm transition">
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nombre Completo o Empresa</label>
+                                <input type="text" name="nombre" required placeholder="Ej. Juan Pérez / Empresa SA" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-600 focus:bg-white focus:outline-none text-sm transition">
                             </div>
 
                             <div>
-                                <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Teléfono WhatsApp</label>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Número Celular (WhatsApp)</label>
                                 <input type="tel" name="telefono" required placeholder="Ej. 55 1234 5678" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-600 focus:bg-white focus:outline-none text-sm transition">
                             </div>
 
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Plaga a Tratar</label>
+                                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Plaga a Tratar</label>
                                     <select name="plaga" class="w-full px-3 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-600 focus:bg-white focus:outline-none text-sm transition">
                                         <option value="Cucarachas">Cucarachas</option>
                                         <option value="Roedores">Roedores (Ratas/Ratones)</option>
@@ -160,7 +170,7 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Inmueble</label>
+                                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Inmueble</label>
                                     <select name="inmueble" class="w-full px-3 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-600 focus:bg-white focus:outline-none text-sm transition">
                                         <option value="Hogar">Hogar / Departamento</option>
                                         <option value="Restaurante">Restaurante / Cocina</option>
@@ -173,12 +183,13 @@
                             </div>
 
                             <button type="submit" class="w-full py-4 bg-brand-700 hover:bg-brand-800 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
-                                <span>Solicitar Cotización</span>
+                                <span>Solicitar Cotización Sin Compromiso</span>
                                 <i class="fas fa-arrow-right text-sm"></i>
                             </button>
-                            <p class="text-center text-[11px] text-gray-400 mt-2">
-                                <i class="fas fa-map-marker-alt text-xs mr-1 text-brand-700"></i> Cobertura en CDMX y Estado de México.
-                            </p>
+                            <div class="flex items-center justify-center gap-2 text-[11px] text-gray-500 mt-2">
+                                <i class="fas fa-lock text-brand-700"></i>
+                                <span>Tus datos son tratados bajo estricta confidencialidad técnica.</span>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -190,63 +201,66 @@
     <section id="plagas" class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center max-w-3xl mx-auto mb-16">
-                <span class="text-brand-700 font-bold uppercase tracking-wider text-xs bg-brand-50 px-3 py-1 rounded-full">Tratamientos a Medida</span>
+                <span class="text-brand-700 font-bold uppercase tracking-wider text-xs bg-brand-50 px-3.5 py-1.5 rounded-full border border-brand-200">Tratamientos Focalizados</span>
                 <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-3">Plagas que controlamos</h2>
-                <p class="text-gray-600 mt-3 text-sm">
-                    En <strong>FUMILAB</strong> no aplicamos el mismo tratamiento para todos los casos. Primero identificamos la plaga, revisamos las condiciones del lugar y detectamos los factores que favorecen su presencia.
+                <p class="text-gray-600 mt-3 text-sm leading-relaxed">
+                    En <strong>FUMILAB</strong> no aplicamos el mismo tratamiento para todos los casos. Primero identificamos la plaga, revisamos las condiciones del lugar y detectamos los factores que pueden estar favoreciendo su presencia. Con esa información seleccionamos el tratamiento más adecuado.
                 </p>
             </div>
 
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- Cucarachas -->
-                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition">
+                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition shadow-sm hover:shadow-md">
                     <div class="text-3xl mb-4">🪳</div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">Cucarachas</h3>
-                    <p class="text-sm text-gray-600">Control de cucaracha alemana, americana y otras especies mediante tratamientos dirigidos a las áreas de actividad y refugio.</p>
+                    <p class="text-sm text-gray-600 leading-relaxed">Control de cucaracha alemana, americana y otras especies mediante tratamientos dirigidos a las áreas de actividad y refugio.</p>
                 </div>
 
                 <!-- Roedores -->
-                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition">
+                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition shadow-sm hover:shadow-md">
                     <div class="text-3xl mb-4">🐀</div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">Roedores</h3>
-                    <p class="text-sm text-gray-600">Inspección, monitoreo y control mediante estaciones y estrategias adaptadas a las condiciones del inmueble.</p>
+                    <p class="text-sm text-gray-600 leading-relaxed">Inspección, monitoreo y control mediante estaciones y estrategias adaptadas a las condiciones del inmueble.</p>
                 </div>
 
                 <!-- Chinches -->
-                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition">
+                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition shadow-sm hover:shadow-md">
                     <div class="text-3xl mb-4">🛏️</div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">Chinches de cama</h3>
-                    <p class="text-sm text-gray-600">Inspección detallada y tratamiento especializado de las áreas afectadas, con seguimiento cuando las condiciones del caso lo requieren.</p>
+                    <p class="text-sm text-gray-600 leading-relaxed">Inspección detallada y tratamiento especializado de las áreas afectadas, con seguimiento cuando las condiciones del caso lo requieren.</p>
                 </div>
 
                 <!-- Hormigas -->
-                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition">
+                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition shadow-sm hover:shadow-md">
                     <div class="text-3xl mb-4">🐜</div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">Hormigas y plagas rastreras</h3>
-                    <p class="text-sm text-gray-600">Identificación de áreas de ingreso, refugio y actividad para establecer un tratamiento focalizado.</p>
+                    <p class="text-sm text-gray-600 leading-relaxed">Identificación de áreas de ingreso, refugio y actividad para establecer un tratamiento focalizado.</p>
                 </div>
 
                 <!-- Moscas -->
-                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition">
+                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition shadow-sm hover:shadow-md">
                     <div class="text-3xl mb-4">🪰</div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">Moscas e insectos voladores</h3>
-                    <p class="text-sm text-gray-600">Identificación de factores de atracción y reproducción, acompañada de medidas de control y prevención.</p>
+                    <p class="text-sm text-gray-600 leading-relaxed">Identificación de factores de atracción y reproducción, acompañada de medidas de control y prevención.</p>
                 </div>
 
                 <!-- Alacranes -->
-                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition">
+                <div class="bg-gray-50 rounded-2xl p-7 border border-gray-100 hover:border-brand-600 transition shadow-sm hover:shadow-md">
                     <div class="text-3xl mb-4">🦂</div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">Alacranes y plagas ocasionales</h3>
-                    <p class="text-sm text-gray-600">Inspección de zonas de riesgo y aplicación de medidas de control de acuerdo con las características del inmueble.</p>
+                    <p class="text-sm text-gray-600 leading-relaxed">Inspección de zonas de riesgo y aplicación de medidas de control de acuerdo con las características del inmueble.</p>
                 </div>
             </div>
 
-            <!-- Llamado interactivo WhatsApp -->
-            <div class="mt-12 bg-brand-50 border border-brand-100 rounded-2xl p-8 text-center max-w-3xl mx-auto">
+            <!-- Identificación interactiva por WhatsApp -->
+            <div class="mt-12 bg-brand-50 border border-brand-200 rounded-2xl p-8 text-center max-w-3xl mx-auto shadow-sm">
+                <div class="w-12 h-12 bg-brand-700 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
+                    <i class="fas fa-camera"></i>
+                </div>
                 <h4 class="text-xl font-bold text-gray-900 mb-2">¿No sabes qué plaga tienes?</h4>
-                <p class="text-sm text-gray-600 mb-5">Envíanos fotografías o video por WhatsApp para orientarte y diagnosticar el problema.</p>
-                <a href="https://wa.me/525614806293?text=Hola,%20adjunto%20fotos/videos%20para%20identificar%20qu%C3%A9%20plaga%20tengo" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold text-sm rounded-xl transition shadow">
-                    <i class="fab fa-whatsapp text-lg"></i> Enviar fotos por WhatsApp
+                <p class="text-sm text-gray-600 mb-5">Envíanos fotografías o video por WhatsApp a nuestro canal de soporte técnico para orientarte de inmediato.</p>
+                <a href="https://wa.me/?text=Hola%20Fumilab,%20deseo%20enviar%20fotos%20o%20video%20para%20identificar%20la%20plaga" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold text-sm rounded-xl transition shadow">
+                    <i class="fab fa-whatsapp text-lg"></i> Enviar Fotos por WhatsApp
                 </a>
             </div>
         </div>
@@ -258,46 +272,46 @@
             <div class="text-center max-w-3xl mx-auto mb-16">
                 <span class="text-brand-700 font-bold uppercase tracking-wider text-xs">MÁS QUE FUMIGAR, CONTROLAMOS EL PROBLEMA</span>
                 <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-2">Manejo Integrado de Plagas (MIP)</h2>
-                <p class="text-gray-600 mt-3 text-sm">
-                    Identificamos las condiciones que permiten que la plaga encuentre alimento, agua, refugio o puntos de acceso.
+                <p class="text-gray-600 mt-3 text-sm leading-relaxed">
+                    Nuestro trabajo se basa en un enfoque de Manejo Integrado de Plagas. Esto significa que además del tratamiento, buscamos identificar las condiciones que están permitiendo que la plaga encuentre alimento, agua, refugio o puntos de acceso.
                 </p>
             </div>
 
             <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/60">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/80">
                     <span class="text-2xl font-black text-brand-700">01</span>
                     <h4 class="font-bold text-gray-900 mt-2 mb-2">Inspección</h4>
-                    <p class="text-xs text-gray-600">Revisamos las áreas afectadas, evidencias de actividad y puntos de ingreso, refugio y reproducción.</p>
+                    <p class="text-xs text-gray-600 leading-relaxed">Revisamos las áreas afectadas, identificamos evidencias de actividad y detectamos posibles puntos de ingreso, refugio y reproducción.</p>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/60">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/80">
                     <span class="text-2xl font-black text-brand-700">02</span>
                     <h4 class="font-bold text-gray-900 mt-2 mb-2">Tratamiento</h4>
-                    <p class="text-xs text-gray-600">Seleccionamos técnicas y productos adecuados según la plaga, nivel de actividad e inmueble.</p>
+                    <p class="text-xs text-gray-600 leading-relaxed">Seleccionamos las técnicas y productos adecuados de acuerdo con la plaga, nivel de actividad y características del inmueble.</p>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/60">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/80">
                     <span class="text-2xl font-black text-brand-700">03</span>
                     <h4 class="font-bold text-gray-900 mt-2 mb-2">Monitoreo</h4>
-                    <p class="text-xs text-gray-600">Utilizamos dispositivos para evaluar la actividad biológica y la evolución del tratamiento.</p>
+                    <p class="text-xs text-gray-600 leading-relaxed">Cuando el servicio lo requiere, utilizamos dispositivos de monitoreo para evaluar la actividad de las plagas y la evolución del tratamiento.</p>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/60">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/80">
                     <span class="text-2xl font-black text-brand-700">04</span>
                     <h4 class="font-bold text-gray-900 mt-2 mb-2">Recomendaciones</h4>
-                    <p class="text-xs text-gray-600">Señalamos condiciones de riesgo y proponemos medidas preventivas o correctivas.</p>
+                    <p class="text-xs text-gray-600 leading-relaxed">Señalamos condiciones que pueden favorecer la presencia de plagas y proponemos medidas preventivas o correctivas.</p>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/60">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200/80">
                     <span class="text-2xl font-black text-brand-700">05</span>
                     <h4 class="font-bold text-gray-900 mt-2 mb-2">Seguimiento</h4>
-                    <p class="text-xs text-gray-600">Evaluamos resultados y determinamos si son necesarias acciones adicionales.</p>
+                    <p class="text-xs text-gray-600 leading-relaxed">Evaluamos los resultados y determinamos si son necesarias acciones adicionales de acuerdo con las condiciones encontradas.</p>
                 </div>
             </div>
 
-            <!-- Métodos aplicados -->
-            <div class="mt-12 bg-white rounded-xl p-6 border border-gray-200 text-center">
-                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Métodos y técnicas utilizadas</h4>
+            <!-- Protocolos Técnicos -->
+            <div class="mt-12 bg-white rounded-xl p-6 border border-gray-200 text-center shadow-sm">
+                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Técnicas y Métodos de Precisión Aplicados</h4>
                 <p class="text-xs sm:text-sm text-gray-700 font-medium leading-relaxed">
                     Aplicación dirigida • Geles y cebos • Tratamientos en grietas y hendiduras • Polvos insecticidas • Estaciones para roedores • Trampas y dispositivos de monitoreo • Tratamientos especializados • Medidas preventivas
                 </p>
@@ -310,11 +324,11 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid lg:grid-cols-2 gap-12 items-center">
                 <div>
-                    <span class="text-brand-700 font-bold uppercase tracking-wider text-xs bg-brand-50 px-3 py-1 rounded-full">SOLUCIONES PARA EMPRESAS</span>
+                    <span class="text-brand-700 font-bold uppercase tracking-wider text-xs bg-brand-50 px-3 py-1 rounded-full border border-brand-200">SOLUCIONES PARA EMPRESAS</span>
                     <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-3 mb-4">
                         Manejo Integrado de Plagas para establecimientos
                     </h2>
-                    <p class="text-gray-600 text-sm mb-6">
+                    <p class="text-gray-600 text-sm mb-6 leading-relaxed">
                         Diseñamos programas de control de plagas adaptados a las necesidades y riesgos de cada establecimiento.
                     </p>
 
@@ -327,22 +341,22 @@
                         <div class="flex items-center"><i class="fas fa-industry text-brand-700 mr-2"></i> Instalaciones comerciales</div>
                     </div>
 
-                    <a href="https://wa.me/525614806293?text=Hola,%20deseo%20solicitar%20informaci%C3%B3n%20para%20mi%20negocio/empresa" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-700 hover:bg-brand-800 text-white font-bold text-sm rounded-lg transition shadow">
-                        Solicitar información para mi negocio
+                    <a href="https://wa.me/?text=Hola%20Fumilab,%20deseo%20informaci%C3%B3n%20sobre%20programas%20para%20empresas/establecimientos" target="_blank" class="inline-flex items-center gap-2 px-6 py-3.5 bg-brand-700 hover:bg-brand-800 text-white font-bold text-sm rounded-lg transition shadow">
+                        <i class="fas fa-briefcase text-sm"></i> Solicitar Información para mi Negocio
                     </a>
                 </div>
 
-                <div class="bg-gray-50 border border-gray-200 rounded-2xl p-7">
+                <div class="bg-gray-50 border border-gray-200 rounded-2xl p-7 shadow-sm">
                     <h3 class="text-lg font-bold text-gray-900 mb-2">Un programa que permite identificar riesgos</h3>
-                    <p class="text-xs text-gray-500 mb-4">No nos limitamos a tratar la plaga presente, buscamos identificar:</p>
+                    <p class="text-xs text-gray-500 mb-4">No nos limitamos a tratar la plaga presente. Buscamos identificar:</p>
                     <ul class="text-xs text-gray-600 space-y-2.5">
-                        <li class="flex items-center"><i class="fas fa-check text-brand-600 mr-2"></i> Puntos de ingreso</li>
-                        <li class="flex items-center"><i class="fas fa-check text-brand-600 mr-2"></i> Fuentes de alimento y agua</li>
-                        <li class="flex items-center"><i class="fas fa-check text-brand-600 mr-2"></i> Áreas de refugio</li>
-                        <li class="flex items-center"><i class="fas fa-check text-brand-600 mr-2"></i> Condiciones estructurales de riesgo</li>
-                        <li class="flex items-center"><i class="fas fa-check text-brand-600 mr-2"></i> Evidencias de actividad</li>
-                        <li class="flex items-center"><i class="fas fa-check text-brand-600 mr-2"></i> Necesidades de monitoreo</li>
-                        <li class="flex items-center"><i class="fas fa-check text-brand-600 mr-2"></i> Acciones correctivas recomendadas</li>
+                        <li class="flex items-center"><i class="fas fa-check-circle text-brand-600 mr-2"></i> Puntos de ingreso</li>
+                        <li class="flex items-center"><i class="fas fa-check-circle text-brand-600 mr-2"></i> Fuentes de alimento y agua</li>
+                        <li class="flex items-center"><i class="fas fa-check-circle text-brand-600 mr-2"></i> Áreas de refugio</li>
+                        <li class="flex items-center"><i class="fas fa-check-circle text-brand-600 mr-2"></i> Condiciones estructurales de riesgo</li>
+                        <li class="flex items-center"><i class="fas fa-check-circle text-brand-600 mr-2"></i> Evidencias de actividad biológica</li>
+                        <li class="flex items-center"><i class="fas fa-check-circle text-brand-600 mr-2"></i> Necesidades de monitoreo continuo</li>
+                        <li class="flex items-center"><i class="fas fa-check-circle text-brand-600 mr-2"></i> Acciones correctivas recomendadas</li>
                     </ul>
                 </div>
             </div>
@@ -354,34 +368,34 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-3xl">
             <span class="text-brand-700 font-bold uppercase tracking-wider text-xs">SERVICIO RESIDENCIAL</span>
             <h2 class="text-3xl font-extrabold text-gray-900 mt-2 mb-3">Protege tu hogar</h2>
-            <p class="text-sm text-gray-600 mb-6">
-                Cada vivienda presenta condiciones diferentes. Antes de recomendar un tratamiento consideramos el tipo de plaga, áreas afectadas, nivel de actividad y características del inmueble. Te explicamos las indicaciones necesarias antes y después del servicio, incluyendo las medidas cuando existen niños o mascotas.
+            <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+                Cada vivienda presenta condiciones diferentes. Antes de recomendar un tratamiento consideramos el tipo de plaga, áreas afectadas, nivel de actividad y características del inmueble. Te explicamos las indicaciones necesarias antes y después del servicio, incluyendo las medidas correspondientes cuando existen niños o mascotas.
             </p>
             <a href="#cotizador" class="inline-flex items-center gap-2 px-8 py-3.5 bg-brand-700 hover:bg-brand-800 text-white font-bold text-sm rounded-lg transition shadow">
-                Cotizar servicio para mi hogar
+                <i class="fas fa-home text-sm"></i> Cotizar Servicio Residencial
             </a>
         </div>
     </section>
 
-    <!-- DOCUMENTACIÓN Y SEGUIMIENTO -->
-    <section class="py-16 bg-white border-b border-gray-200">
+    <!-- DOCUMENTACIÓN Y GARANTÍA -->
+    <section id="garantia" class="py-16 bg-white border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-brand-dark text-white rounded-2xl p-8 sm:p-12">
+            <div class="bg-brand-dark text-white rounded-2xl p-8 sm:p-12 shadow-xl">
                 <div class="grid lg:grid-cols-2 gap-8 items-center">
                     <div>
-                        <span class="text-xs font-bold uppercase tracking-wider text-green-400">CONTROL COMERCIAL</span>
-                        <h3 class="text-2xl sm:text-3xl font-bold mt-2 mb-4">Documentación y Seguimiento</h3>
-                        <p class="text-sm text-gray-300">
-                            En servicios comerciales proporcionamos documentación conforme a las características y alcance del servicio contratado para auditorías y control interno.
+                        <span class="text-xs font-bold uppercase tracking-wider text-green-400">DOCUMENTACIÓN OFICIAL Y SEGUIMIENTO</span>
+                        <h3 class="text-2xl sm:text-3xl font-bold mt-2 mb-4">Garantía por Escrito y Respaldo Sanitario</h3>
+                        <p class="text-sm text-gray-300 leading-relaxed">
+                            En servicios comerciales podemos proporcionar documentación formal de acuerdo con las características y alcance del servicio contratado, respaldando auditorías y trámites oficiales.
                         </p>
                     </div>
                     <div class="grid sm:grid-cols-2 gap-3 text-xs text-gray-200">
-                        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Reporte de servicio</div>
+                        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Reporte técnico de servicio</div>
                         <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Evidencias de inspección</div>
                         <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Registro de dispositivos</div>
-                        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Observaciones encontradas</div>
-                        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Medidas correctivas</div>
-                        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Carpeta para auditorías</div>
+                        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Observaciones técnicas</div>
+                        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Recomendaciones correctivas</div>
+                        <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Carpeta para control sanitario</div>
                     </div>
                 </div>
             </div>
@@ -397,29 +411,29 @@
             </div>
 
             <div class="space-y-4">
-                <div class="bg-white p-6 rounded-xl border border-gray-200">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <h4 class="font-bold text-gray-900 mb-2">¿Cuánto cuesta un servicio?</h4>
-                    <p class="text-sm text-gray-600">El costo depende de la plaga, dimensiones del inmueble, nivel de infestación, ubicación y tratamiento necesario. Podemos solicitar fotografías, video o realizar una inspección cuando sea necesario antes de determinar el tratamiento.</p>
+                    <p class="text-sm text-gray-600 leading-relaxed">El costo depende de la plaga, dimensiones del inmueble, nivel de infestación, ubicación y tratamiento necesario. Podemos solicitar fotografías, video o realizar una inspección cuando sea necesario antes de determinar el tratamiento.</p>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl border border-gray-200">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <h4 class="font-bold text-gray-900 mb-2">¿Tengo que salir durante el servicio?</h4>
-                    <p class="text-sm text-gray-600">Depende del tratamiento utilizado. Antes de comenzar te indicaremos las medidas de seguridad y el tiempo de reingreso correspondiente al producto y procedimiento empleado.</p>
+                    <p class="text-sm text-gray-600 leading-relaxed">Depende del tratamiento utilizado. Antes de comenzar te indicaremos las medidas de seguridad y el tiempo de reingreso correspondiente al producto y procedimiento empleado.</p>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl border border-gray-200">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <h4 class="font-bold text-gray-900 mb-2">¿Es seguro si tengo mascotas?</h4>
-                    <p class="text-sm text-gray-600">Infórmanos qué mascotas se encuentran en el inmueble. Te proporcionaremos las indicaciones necesarias antes, durante y después del tratamiento.</p>
+                    <p class="text-sm text-gray-600 leading-relaxed">Infórmanos qué mascotas se encuentran en el inmueble. Te proporcionaremos las indicaciones necesarias antes, durante y después del tratamiento.</p>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl border border-gray-200">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <h4 class="font-bold text-gray-900 mb-2">¿Una sola aplicación elimina el problema?</h4>
-                    <p class="text-sm text-gray-600">Depende de la plaga y del nivel de infestación. Algunos casos pueden requerir seguimiento, refuerzo, monitoreo y medidas correctivas adicionales.</p>
+                    <p class="text-sm text-gray-600 leading-relaxed">Depende de la plaga y del nivel de infestación. Algunos casos pueden requerir seguimiento, refuerzo, monitoreo y medidas correctivas adicionales.</p>
                 </div>
 
-                <div class="bg-white p-6 rounded-xl border border-gray-200">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <h4 class="font-bold text-gray-900 mb-2">¿Atienden negocios?</h4>
-                    <p class="text-sm text-gray-600">Sí. Contamos con servicios para establecimientos comerciales y programas de Manejo Integrado de Plagas.</p>
+                    <p class="text-sm text-gray-600 leading-relaxed">Sí. Contamos con servicios para establecimientos comerciales y programas de Manejo Integrado de Plagas.</p>
                 </div>
             </div>
         </div>
@@ -429,13 +443,13 @@
     <section class="py-16 bg-white border-t border-gray-200 text-center">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-extrabold text-gray-900 mb-3">¿Necesitas ayuda con una plaga?</h2>
-            <p class="text-sm text-gray-600 mb-6">Cuéntanos qué está sucediendo. Puedes enviarnos fotografías o video del problema para recibir orientación y determinar el siguiente paso.</p>
+            <p class="text-sm text-gray-600 mb-6">Cuéntanos qué está sucediendo. Puedes enviarnos fotografías o video del problema para recibir orientación técnica y determinar el siguiente paso.</p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="https://wa.me/525614806293?text=Hola,%20deseo%20orientaci%C3%B3n%20sobre%20un%20problema%20de%20plagas" target="_blank" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow transition">
-                    <i class="fab fa-whatsapp text-xl"></i> Hablar por WhatsApp
+                <a href="https://wa.me/?text=Hola%20Fumilab,%20solicito%20atenci%C3%B3n%20para%20un%20servicio%20profesional%20de%20plagas" target="_blank" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow transition">
+                    <i class="fab fa-whatsapp text-xl"></i> Hablar por WhatsApp Oficial
                 </a>
                 <a href="#cotizador" class="inline-flex items-center justify-center px-8 py-3.5 bg-brand-700 hover:bg-brand-800 text-white font-bold rounded-xl shadow transition">
-                    Solicitar Cotización
+                    Solicitar Cotización en Línea
                 </a>
             </div>
         </div>
@@ -449,17 +463,17 @@
                 <p class="text-green-400 italic mt-0.5">Resultados que se ven, clientes que se quedan.</p>
             </div>
             <div class="space-y-1">
-                <p><i class="fas fa-map-marker-alt text-green-400 mr-1"></i> CDMX y Estado de México</p>
-                <p><i class="fas fa-phone-alt text-green-400 mr-1"></i> 56 1480 6293</p>
+                <p><i class="fas fa-map-marker-alt text-green-400 mr-1"></i> Cobertura Técnica: CDMX y Estado de México</p>
+                <p><i class="fas fa-shield-alt text-green-400 mr-1"></i> Cumplimiento Normativo Oficial</p>
             </div>
         </div>
         <div class="max-w-7xl mx-auto px-4 mt-6 pt-6 border-t border-gray-800 text-center text-gray-500">
-            &copy; 2026 FUMILAB. Todos los derechos reservados.
+            &copy; 2026 FUMILAB CONTROL DE PLAGAS. Todos los derechos reservados.
         </div>
     </footer>
 
     <!-- BOTÓN FLOTANTE WHATSAPP -->
-    <a href="https://wa.me/525614806293?text=Hola,%20solicito%20cotizaci%C3%B3n%20para%20control%20de%20plagas" target="_blank" class="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-2xl transition transform hover:scale-110 pulse-whatsapp" title="WhatsApp FUMILAB">
+    <a href="https://wa.me/?text=Hola%20Fumilab,%20solicito%20cotizaci%C3%B3n%20para%20control%20de%20plagas" target="_blank" class="fixed bottom-6 right-6 z-50 bg-green-600 hover:bg-green-700 text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-2xl transition transform hover:scale-110 pulse-whatsapp" title="Canal Oficial de WhatsApp">
         <i class="fab fa-whatsapp"></i>
     </a>
 
