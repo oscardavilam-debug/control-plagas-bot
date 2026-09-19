@@ -5,11 +5,22 @@ import csv
 import urllib.request
 import urllib.error
 from functools import wraps
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, session, Response
 
 app = Flask(__name__)
 app.secret_key = "fumilab_clave_secreta_super_segura_2026"
+
+# =========================================================================
+# CONFIGURACIÓN ZONA HORARIA MÉXICO (UTC -6)
+# =========================================================================
+TZ_MEXICO = timezone(timedelta(hours=-6))
+
+def obtener_hora_mexico():
+    return datetime.now(TZ_MEXICO).strftime("%Y-%m-%d %H:%M:%S")
+
+def obtener_fecha_hoy_mexico():
+    return datetime.now(TZ_MEXICO).strftime("%Y-%m-%d")
 
 # =========================================================================
 # CONFIGURACIÓN META Y SHEETS
@@ -94,13 +105,11 @@ def inicializar_bd():
                 notas TEXT
             )
         ''')
-        # Verificar columna costo
         cur = conn.execute("PRAGMA table_info(servicios)")
         cols_serv = [c[1] for c in cur.fetchall()]
         if 'costo' not in cols_serv:
             conn.execute("ALTER TABLE servicios ADD COLUMN costo REAL DEFAULT 0.0")
 
-        # Tabla de Productos / Inventario
         conn.execute('''
             CREATE TABLE IF NOT EXISTS productos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -110,7 +119,6 @@ def inicializar_bd():
             )
         ''')
 
-        # Tabla de Gastos
         conn.execute('''
             CREATE TABLE IF NOT EXISTS gastos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -198,7 +206,7 @@ def enviar_mensaje_whatsapp(destinatario, texto):
         return None
 
 def registrar_en_sheets_y_notificar(contacto, plaga, inmueble, origen="Formulario Web"):
-    fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    fecha_actual = obtener_hora_mexico()
     if GOOGLE_SHEETS_WEBHOOK_URL and GOOGLE_SHEETS_WEBHOOK_URL.startswith("http"):
         try:
             payload = json.dumps({
@@ -293,7 +301,7 @@ def solicitar_cotizacion():
     inmueble = datos.get('inmueble', 'Inmueble')
     
     contacto = f"{nombre} - {telefono}" if nombre else telefono
-    fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    fecha_actual = obtener_hora_mexico()
 
     try:
         conn = get_db_connection()
@@ -368,7 +376,7 @@ def dashboard_financiero():
             margen_ganancia=margen,
             gastos_por_cat=gastos_por_cat,
             gastos=gastos,
-            fecha_hoy=date.today().strftime("%Y-%m-%d")
+            fecha_hoy=obtener_fecha_hoy_mexico()
         )
     except Exception as e:
         return f"Error cargando el dashboard financiero: {e}", 500
@@ -376,7 +384,7 @@ def dashboard_financiero():
 @app.route('/registrar_gasto', methods=['POST'])
 @login_required
 def registrar_gasto():
-    fecha = request.form.get('fecha') or date.today().strftime("%Y-%m-%d")
+    fecha = request.form.get('fecha') or obtener_fecha_hoy_mexico()
     categoria = request.form.get('categoria', 'Gastos Adicionales')
     concepto = request.form.get('concepto', '')
     monto = float(request.form.get('monto', 0.0))
@@ -521,7 +529,7 @@ def eliminar_prospecto(prospecto_id=None):
     return redirect(url_for('ver_prospectos'))
 
 # =========================================================================
-# MÓDULO DE INVENTARIO Y ALMACÉN (RESUELVE ERROR 404)
+# MÓDULO DE INVENTARIO Y ALMACÉN
 # =========================================================================
 @app.route('/inventario', methods=['GET', 'POST'])
 @app.route('/inventarios', methods=['GET', 'POST'])
@@ -751,7 +759,7 @@ def webhook_whatsapp():
                 plaga = USER_SESSIONS.get(f"{remitente}_plaga", "General")
                 tipos = {'1': 'Casa / Depto', '2': 'Negocio / Restaurante', '3': 'Bodega / Empresa'}
                 inmueble_elegido = tipos.get(texto, texto)
-                fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                fecha_actual = obtener_hora_mexico()
 
                 try:
                     conn = get_db_connection()
