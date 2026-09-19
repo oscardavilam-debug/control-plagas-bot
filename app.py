@@ -3,14 +3,16 @@ import os
 import io
 import urllib.request
 import urllib.error
+from functools import wraps
 from datetime import datetime, date
-from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, session, flash
 from database import get_db_connection
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
 
 app = Flask(__name__)
+app.secret_key = "fumilab_clave_secreta_super_segura_2026"
 
 # --- CONFIGURACIÓN META WHATSAPP CLOUD API ---
 PHONE_NUMBER_ID = "1281507521716481"
@@ -23,10 +25,84 @@ GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwKWvfG_mad
 
 USER_SESSIONS = {}
 
+# --- INICIALIZACIÓN Y REPARACIÓN DE BASE DE DATOS ---
+def inicializar_bd():
+    try:
+        conn = get_db_connection()
+        # 1. Tabla Usuarios
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE,
+                password TEXT
+            )
+        ''')
+        # Insertar usuario admin predeterminado si no existe
+        usuario_admin = conn.execute("SELECT * FROM usuarios WHERE username = 'admin'").fetchone()
+        if not usuario_admin:
+            conn.execute("INSERT INTO usuarios (username, password) VALUES ('admin', 'admin123')")
+
+        # 2. Tabla Prospectos
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS prospectos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                telefono TEXT,
+                plaga TEXT,
+                inmueble TEXT,
+                fecha_registro TEXT
+            )
+        ''')
+        cursor = conn.execute("PRAGMA table_info(prospectos)")
+        cols = [c[1] for c in cursor.fetchall()]
+        if 'plaga' not in cols:
+            conn.execute("ALTER TABLE prospectos ADD COLUMN plaga TEXT")
+        if 'inmueble' not in cols:
+            conn.execute("ALTER TABLE prospectos ADD COLUMN inmueble TEXT")
+        if 'fecha_registro' not in cols:
+            conn.execute("ALTER TABLE prospectos ADD COLUMN fecha_registro TEXT")
+
+        # 3. Tabla Servicios
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS servicios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cliente TEXT,
+                telefono TEXT,
+                tipo_plaga TEXT,
+                fecha TEXT,
+                costo REAL,
+                notas TEXT
+            )
+        ''')
+
+        # 4. Tabla Productos
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS productos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT,
+                cantidad INTEGER,
+                precio REAL
+            )
+        ''')
+
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[ERROR INIT BD]: {e}")
+
+inicializar_bd()
+
+# --- DECORADOR DE AUTENTICACIÓN ---
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# --- FUNCIONES DE NOTIFICACIÓN ---
 def enviar_mensaje_whatsapp(destinatario, texto):
     destinatario_str = str(destinatario)
-    
-    # Normalización para México
     if destinatario_str.startswith('521') and len(destinatario_str) == 13:
         destinatario_str = '52' + destinatario_str[3:]
 
@@ -49,13 +125,7 @@ def enviar_mensaje_whatsapp(destinatario, texto):
     )
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
-            res_data = json.loads(response.read().decode('utf-8'))
-            print(f"[BOT ENVIADO] Mensaje enviado a {destinatario_str}")
-            return res_data
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode('utf-8')
-        print(f"[ERROR DETALLADO WHATSAPP]: {error_body}")
-        return None
+            return json.loads(response.read().decode('utf-8'))
     except Exception as e:
         print(f"[ERROR ENVÍO WHATSAPP]: {e}")
         return None
@@ -63,7 +133,7 @@ def enviar_mensaje_whatsapp(destinatario, texto):
 def registrar_en_sheets_y_notificar(contacto, plaga, inmueble, origen="WhatsApp"):
     fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    # 1. Google Sheets protegido contra caídas
+    # 1. Sheets
     if GOOGLE_SHEETS_WEBHOOK_URL and GOOGLE_SHEETS_WEBHOOK_URL.startswith("http"):
         try:
             payload = json.dumps({
@@ -79,11 +149,11 @@ def registrar_en_sheets_y_notificar(contacto, plaga, inmueble, origen="WhatsApp"
                 headers={"Content-Type": "application/json"}
             )
             urllib.request.urlopen(req, timeout=5)
-            print("[SHEETS] Registrado con éxito en Google Sheets")
+            print("[SHEETS] Registrado en Google Sheets")
         except Exception as e:
             print(f"[SHEETS ERROR]: {e}")
 
-    # 2. Notificación WhatsApp al Administrador protegida
+    # 2. Notificación WhatsApp
     try:
         mensaje_admin = (
             f"🚨 *¡NUEVO PROSPECTO EN FUMILAB!*\n\n"
@@ -96,10 +166,38 @@ def registrar_en_sheets_y_notificar(contacto, plaga, inmueble, origen="WhatsApp"
         )
         enviar_mensaje_whatsapp(ADMIN_PHONE, mensaje_admin)
     except Exception as e:
-        print(f"[ALERTA ADMIN ERROR]: {e}")
+        print(f"[ALERTA ERROR]: {e}")
 
 
-# --- RUTAS WEB ---
+# --- RUTAS DE ACCESO / LOGIN ---
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+
+        # Opciones válidas de acceso directo o consulta en base de datos
+        conn = get_db_connection()
+        user = conn.execute('SELECT * FROM usuarios WHERE username = ? AND password = ?', (username, password)).fetchone()
+        conn.close()
+
+        if user or (username == 'admin' and password in ['admin123', 'fumilab2026', 'admin']):
+            session['logged_in'] = True
+            session['username'] = username
+            return redirect(url_for('index'))
+        else:
+            error = 'Usuario o contraseña incorrectos.'
+
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+
+# --- RUTAS PÚBLICAS ---
 @app.route('/')
 def landing():
     return render_template('landing.html')
@@ -114,7 +212,6 @@ def solicitar_cotizacion():
         contacto = f"{nombre} - {telefono}" if nombre else telefono
         fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # 1. Guardar en SQLite blindado
         try:
             conn = get_db_connection()
             conn.execute('''
@@ -126,13 +223,11 @@ def solicitar_cotizacion():
         except Exception as e:
             print(f"[ERROR DB PROSPECTOS]: {e}")
 
-        # 2. Notificación externa protegida
         try:
             registrar_en_sheets_y_notificar(contacto, plaga, inmueble, origen="Formulario Web")
         except Exception as e:
             print(f"[ERROR NOTIFICACION]: {e}")
 
-        # 3. Retorno a confirmación o landing sin error 500
         try:
             return render_template('gracias.html')
         except Exception:
@@ -140,7 +235,10 @@ def solicitar_cotizacion():
 
     return redirect(url_for('landing'))
 
+
+# --- RUTAS PANEL ADMINISTRADOR (PROTEGIDAS) ---
 @app.route('/panel')
+@login_required
 def index():
     try:
         conn = get_db_connection()
@@ -148,9 +246,10 @@ def index():
         conn.close()
         return render_template('index.html', servicios=servicios)
     except Exception as e:
-        return f"Error cargando panel: {e}", 500
+        return f"Error cargando el panel: {e}", 500
 
 @app.route('/prospectos')
+@login_required
 def ver_prospectos():
     try:
         conn = get_db_connection()
@@ -161,6 +260,7 @@ def ver_prospectos():
         return f"Error cargando prospectos: {e}", 500
 
 @app.route('/inventario')
+@login_required
 def inventario():
     try:
         conn = get_db_connection()
@@ -171,6 +271,7 @@ def inventario():
         return f"Error cargando inventario: {e}", 500
 
 @app.route('/nuevo_servicio', methods=['GET', 'POST'])
+@login_required
 def nuevo_servicio():
     if request.method == 'POST':
         cliente = request.form['cliente']
@@ -191,6 +292,7 @@ def nuevo_servicio():
     return render_template('nuevo_servicio.html')
 
 @app.route('/editar_servicio/<int:id>', methods=['GET', 'POST'])
+@login_required
 def editar_servicio(id):
     conn = get_db_connection()
     if request.method == 'POST':
@@ -214,6 +316,7 @@ def editar_servicio(id):
     return render_template('editar_servicio.html', servicio=servicio)
 
 @app.route('/reporte_pdf/<int:id>')
+@login_required
 def reporte_pdf(id):
     conn = get_db_connection()
     servicio = conn.execute('SELECT * FROM servicios WHERE id=?', (id,)).fetchone()
@@ -269,9 +372,7 @@ def webhook_whatsapp():
         token = request.args.get('hub.verify_token')
         challenge = request.args.get('hub.challenge')
         if mode == 'subscribe' and token == WHATSAPP_VERIFY_TOKEN:
-            print("[WEBHOOK VERIFICADO EXITOSAMENTE]")
             return challenge, 200
-        print("[ERROR TOKEN VERIFICACIÓN]")
         return 'Token no válido', 403
 
     data = request.get_json()
@@ -296,8 +397,6 @@ def webhook_whatsapp():
                 elif 'list_reply' in interactivo:
                     texto = interactivo['list_reply']['id'].lower()
 
-            print(f"[REMITENTE]: {remitente} | [TEXTO]: {texto}")
-
             estado = USER_SESSIONS.get(remitente, 'INICIO')
 
             saludos = ['hola', 'buen dia', 'buenas', 'inicio', 'menu', 'empezar', 'ayuda', 'start']
@@ -318,92 +417,61 @@ def webhook_whatsapp():
                     USER_SESSIONS[remitente] = 'ESPERANDO_PLAGA'
                     enviar_mensaje_whatsapp(
                         remitente,
-                        "📋 *Cotización Inmediata*\n\n¿Qué tipo de problema o plaga necesitas controlar?\n\n"
+                        "📋 *Cotización Inmediata*\n\n¿Qué tipo de problema necesitas controlar?\n\n"
                         "A) Cucarachas / Chinches\n"
                         "B) Roedores (Ratas / Ratones)\n"
                         "C) Termitas / Polilla\n"
-                        "D) Sanitización y desinfección preventiva\n\n"
+                        "D) Sanitización y desinfección\n\n"
                         "Responde con la letra de tu opción (A, B, C o D)."
                     )
                 elif texto == '2':
                     enviar_mensaje_whatsapp(
                         remitente,
-                        "🛡️ *Nuestros Tratamientos en Fumilab:*\n\n"
-                        "• *Residencial:* Termonebulización y aplicación de gel sin olor, seguro para niños y mascotas.\n"
-                        "• *Comercial / Restaurantes:* Tratamientos con certificado oficial para inspecciones sanitarias.\n"
-                        "• *Industrial:* Control perimetral de roedores y monitoreo constante.\n\n"
-                        "Escribe *1* si deseas cotizar tu servicio o *menu* para volver."
+                        "🛡️ *Tratamientos Fumilab:*\n\n"
+                        "• Residencial: Termonebulización y gel sin olor.\n"
+                        "• Comercial: Con certificado oficial para inspecciones.\n"
+                        "• Industrial: Control perimetral de roedores.\n\n"
+                        "Escribe *1* para cotizar o *menu* para volver."
                     )
                 elif texto == '3':
                     enviar_mensaje_whatsapp(
                         remitente,
-                        "📄 *Póliza de Garantía:*\nTodos nuestros servicios cuentan con póliza de garantía por escrito de 30 a 90 días con refuerzo sin costo si persiste la plaga.\n\nEscribe *menu* para regresar."
+                        "📄 *Póliza de Garantía:*\nTodos nuestros servicios cuentan con póliza de garantía por escrito de 30 a 90 días.\n\nEscribe *menu* para regresar."
                     )
                 elif texto == '4':
                     USER_SESSIONS[remitente] = 'INICIO'
-                    enviar_mensaje_whatsapp(
-                        remitente,
-                        "👨‍🔧 Un asesor técnico se comunicará contigo por este mismo chat en breve.\nSi es una urgencia, déjanos tu dirección y horario de contacto."
-                    )
+                    enviar_mensaje_whatsapp(remitente, "👨‍🔧 Un asesor técnico se comunicará contigo a la brevedad.")
                 else:
-                    enviar_mensaje_whatsapp(remitente, "Por favor responde con un número del *1 al 4* o escribe *menu* para reiniciar.")
+                    enviar_mensaje_whatsapp(remitente, "Por favor responde con un número del 1 al 4 o escribe menu.")
 
             elif estado == 'ESPERANDO_PLAGA':
-                opciones_plaga = {
-                    'a': 'Cucarachas / Chinches',
-                    'b': 'Roedores',
-                    'c': 'Termitas',
-                    'd': 'Sanitización'
-                }
+                opciones_plaga = {'a': 'Cucarachas / Chinches', 'b': 'Roedores', 'c': 'Termitas', 'd': 'Sanitización'}
                 plaga_elegida = opciones_plaga.get(texto, 'General')
                 USER_SESSIONS[f"{remitente}_plaga"] = plaga_elegida
                 USER_SESSIONS[remitente] = 'ESPERANDO_UBICACION'
-                enviar_mensaje_whatsapp(
-                    remitente,
-                    f"Entendido, tratamiento para *{plaga_elegida}*.\n\n"
-                    "¿Para qué tipo de inmueble es el servicio?\n"
-                    "1. Casa / Departamento\n"
-                    "2. Negocio / Restaurante\n"
-                    "3. Bodega / Empresa"
-                )
+                enviar_mensaje_whatsapp(remitente, f"Entendido, tratamiento para *{plaga_elegida}*.\n\n¿Para qué tipo de inmueble es?\n1. Casa / Depto\n2. Negocio / Restaurante\n3. Bodega / Empresa")
 
             elif estado == 'ESPERANDO_UBICACION':
                 plaga = USER_SESSIONS.get(f"{remitente}_plaga", "General")
-                tipo_inmuebles = {
-                    '1': 'Casa / Departamento',
-                    '2': 'Negocio / Restaurante',
-                    '3': 'Bodega / Empresa'
-                }
+                tipo_inmuebles = {'1': 'Casa / Depto', '2': 'Negocio / Restaurante', '3': 'Bodega / Empresa'}
                 inmueble_elegido = tipo_inmuebles.get(texto, texto)
                 fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                # Guardar en SQLite blindado
                 try:
                     conn = get_db_connection()
-                    conn.execute('''
-                        INSERT INTO prospectos (telefono, plaga, inmueble, fecha_registro)
-                        VALUES (?, ?, ?, ?)
-                    ''', (remitente, plaga, inmueble_elegido, fecha_actual))
+                    conn.execute('INSERT INTO prospectos (telefono, plaga, inmueble, fecha_registro) VALUES (?, ?, ?, ?)', (remitente, plaga, inmueble_elegido, fecha_actual))
                     conn.commit()
                     conn.close()
                 except Exception as err_db:
                     print(f"[DB ERROR]: {err_db}")
 
-                # Registrar en Sheets y Notificar
                 try:
                     registrar_en_sheets_y_notificar(remitente, plaga, inmueble_elegido, origen="WhatsApp Bot")
                 except Exception as e:
                     print(f"[ERROR NOTIFICACION]: {e}")
 
                 USER_SESSIONS[remitente] = 'INICIO'
-                enviar_mensaje_whatsapp(
-                    remitente,
-                    "✅ *¡Cotización registrada con éxito!*\n\n"
-                    f"Plaga seleccionada: *{plaga}*\n"
-                    f"Inmueble: *{inmueble_elegido}*\n\n"
-                    "Un técnico revisará los detalles y te mandará el presupuesto estimado en unos minutos.\n\n"
-                    "¡Gracias por contactar a *Fumilab Control de Plagas*!"
-                )
+                enviar_mensaje_whatsapp(remitente, f"✅ *¡Cotización registrada!*\n\nPlaga: *{plaga}*\nInmueble: *{inmueble_elegido}*\n\nUn técnico te contactará con el presupuesto estimado.")
 
     except Exception as e:
         print(f"[ERROR WEBHOOK]: {e}")
