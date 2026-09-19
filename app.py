@@ -60,6 +60,9 @@ try:
 except ImportError:
     PDF_HABILITADO = False
 
+# =========================================================================
+# MIGRACIÓN AUTOMÁTICA DE BASE DE DATOS (EVITA 'No item with that key')
+# =========================================================================
 def inicializar_bd():
     try:
         conn = get_db_connection()
@@ -87,30 +90,37 @@ def inicializar_bd():
                 telefono TEXT,
                 tipo_plaga TEXT,
                 fecha TEXT,
-                costo REAL,
+                costo REAL DEFAULT 0.0,
                 notas TEXT
             )
         ''')
-        conn.execute('''
-            CREATE TABLE IF NOT EXISTS productos (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT,
-                cantidad INTEGER,
-                precio REAL
-            )
-        ''')
-        # TABLA DE GASTOS Y EGRESOS (Gasolina, Insumos, Sueldos, Adicionales)
+        # Verificar y agregar 'costo' a servicios si la tabla es antigua
+        cur = conn.execute("PRAGMA table_info(servicios)")
+        cols_serv = [c[1] for c in cur.fetchall()]
+        if 'costo' not in cols_serv:
+            conn.execute("ALTER TABLE servicios ADD COLUMN costo REAL DEFAULT 0.0")
+
+        # Tabla de Gastos
         conn.execute('''
             CREATE TABLE IF NOT EXISTS gastos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 fecha TEXT,
                 categoria TEXT,
                 concepto TEXT,
-                monto REAL,
+                monto REAL DEFAULT 0.0,
                 responsable TEXT,
                 notas TEXT
             )
         ''')
+        cur_g = conn.execute("PRAGMA table_info(gastos)")
+        cols_gastos = [c[1] for c in cur_g.fetchall()]
+        for col_name, col_type in [
+            ('fecha', 'TEXT'), ('categoria', 'TEXT'), ('concepto', 'TEXT'),
+            ('monto', 'REAL DEFAULT 0.0'), ('responsable', 'TEXT'), ('notas', 'TEXT')
+        ]:
+            if col_name not in cols_gastos:
+                conn.execute(f"ALTER TABLE gastos ADD COLUMN {col_name} {col_type}")
+
         conn.commit()
         conn.close()
     except Exception as e:
@@ -130,8 +140,8 @@ def calcular_metricas(servicios, prospectos):
     ingresos = 0.0
     for s in servicios:
         try:
-            val = float(s['costo']) if s['costo'] is not None else 0.0
-            ingresos += val
+            val = s.get('costo') if isinstance(s, dict) else s['costo']
+            ingresos += float(val or 0.0)
         except Exception:
             pass
     tot_serv = len(servicios)
@@ -303,7 +313,7 @@ def solicitar_cotizacion():
     return redirect(url_for('landing'))
 
 # =========================================================================
-# DASHBOARD FINANCIERO COMPLETO (INGRESOS, GASTOS, BALANCE Y UTILIDAD)
+# DASHBOARD FINANCIERO (CON CONVERSIÓN SEGURA A DICCIONARIOS)
 # =========================================================================
 @app.route('/dashboard')
 @app.route('/dashboard-financiero')
@@ -313,23 +323,41 @@ def solicitar_cotizacion():
 def dashboard_financiero():
     try:
         conn = get_db_connection()
-        servicios = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
-        gastos = conn.execute('SELECT * FROM gastos ORDER BY id DESC').fetchall()
+        servicios_raw = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
+        gastos_raw = conn.execute('SELECT * FROM gastos ORDER BY id DESC').fetchall()
         conn.close()
 
-        # Calcular Ingresos
-        total_ingresos = sum(float(s['costo'] or 0.0) for s in servicios)
-        
+        # Conversión a diccionarios seguros para blindar contra 'No item with that key'
+        servicios = [dict(s) for s in servicios_raw]
+        gastos = [dict(g) for g in gastos_raw]
+
+        # Calcular Ingresos de forma tolerante a columnas faltantes
+        total_ingresos = 0.0
+        for s in servicios:
+            try:
+                val = s.get('costo') or s.get('precio') or s.get('monto') or 0.0
+                total_ingresos += float(val)
+            except Exception:
+                pass
+
         # Calcular Gastos y desglose por categoría
         total_gastos = 0.0
-        gastos_por_cat = {}
+        gastos_por_cat = {
+            'Insumos y Químicos': 0.0,
+            'Gasolina / Transporte': 0.0,
+            'Sueldos / Técnicos': 0.0,
+            'Gastos Adicionales': 0.0,
+            'Mantenimiento / Equipos': 0.0
+        }
         for g in gastos:
-            m = float(g['monto'] or 0.0)
-            total_gastos += m
-            cat = g['categoria'] or 'Otros'
-            gastos_por_cat[cat] = gastos_por_cat.get(cat, 0.0) + m
+            try:
+                m = float(g.get('monto') or 0.0)
+                total_gastos += m
+                cat = g.get('categoria') or 'Gastos Adicionales'
+                gastos_por_cat[cat] = gastos_por_cat.get(cat, 0.0) + m
+            except Exception:
+                pass
 
-        # Utilidad Neta y Margen
         utilidad_neta = total_ingresos - total_gastos
         margen = round((utilidad_neta / total_ingresos * 100), 1) if total_ingresos > 0 else 0.0
 
@@ -382,7 +410,7 @@ def eliminar_gasto(id):
     return redirect(url_for('dashboard_financiero'))
 
 # =========================================================================
-# BITÁCORA TÉCNICA DE APLICACIONES (INDEX ORIGINAL)
+# BITÁCORA TÉCNICA DE APLICACIONES
 # =========================================================================
 @app.route('/panel')
 @app.route('/bitacora')
@@ -390,9 +418,13 @@ def eliminar_gasto(id):
 def index():
     try:
         conn = get_db_connection()
-        servicios = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
-        prospectos = conn.execute('SELECT * FROM prospectos ORDER BY id DESC').fetchall()
+        servicios_raw = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
+        prospectos_raw = conn.execute('SELECT * FROM prospectos ORDER BY id DESC').fetchall()
         conn.close()
+
+        servicios = [dict(s) for s in servicios_raw]
+        prospectos = [dict(p) for p in prospectos_raw]
+
         metricas = calcular_metricas(servicios, prospectos)
         return render_template('index.html', servicios=servicios, prospectos=prospectos, metricas=metricas)
     except Exception as e:
@@ -410,21 +442,22 @@ def certificados():
 def exportar_csv():
     try:
         conn = get_db_connection()
-        servicios = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
+        servicios_raw = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
         conn.close()
 
+        servicios = [dict(s) for s in servicios_raw]
         output = io.StringIO()
         writer = csv.writer(output)
         writer.writerow(['ID', 'Cliente', 'Telefono', 'Plaga', 'Fecha', 'Costo', 'Notas'])
         for s in servicios:
             writer.writerow([
-                s['id'] if 'id' in s.keys() else '',
-                s['cliente'] if 'cliente' in s.keys() else '',
-                s['telefono'] if 'telefono' in s.keys() else '',
-                s['tipo_plaga'] if 'tipo_plaga' in s.keys() else '',
-                s['fecha'] if 'fecha' in s.keys() else '',
-                s['costo'] if 'costo' in s.keys() else '',
-                s['notas'] if 'notas' in s.keys() else ''
+                s.get('id', ''),
+                s.get('cliente', ''),
+                s.get('telefono', ''),
+                s.get('tipo_plaga', ''),
+                s.get('fecha', ''),
+                s.get('costo', 0.0),
+                s.get('notas', '')
             ])
 
         output.seek(0)
@@ -446,9 +479,13 @@ def exportar_csv():
 def ver_prospectos():
     try:
         conn = get_db_connection()
-        prospectos = conn.execute('SELECT * FROM prospectos ORDER BY id DESC').fetchall()
-        servicios = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
+        prospectos_raw = conn.execute('SELECT * FROM prospectos ORDER BY id DESC').fetchall()
+        servicios_raw = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
         conn.close()
+
+        prospectos = [dict(p) for p in prospectos_raw]
+        servicios = [dict(s) for s in servicios_raw]
+
         metricas = calcular_metricas(servicios, prospectos)
         return render_template('prospectos.html', prospectos=prospectos, metricas=metricas)
     except Exception as e:
@@ -495,7 +532,7 @@ def nuevo_servicio():
         telefono = request.form['telefono']
         tipo_plaga = request.form['tipo_plaga']
         fecha = request.form['fecha']
-        costo = request.form['costo']
+        costo = request.form.get('costo', 0.0)
         notas = request.form.get('notas', '')
 
         conn = get_db_connection()
@@ -519,7 +556,7 @@ def editar_servicio(id=None):
         telefono = request.form.get('telefono', '')
         tipo_plaga = request.form.get('tipo_plaga', '')
         fecha = request.form.get('fecha', '')
-        costo = request.form.get('costo', 0)
+        costo = request.form.get('costo', 0.0)
         notas = request.form.get('notas', '')
         conn.execute('''
             UPDATE servicios SET cliente=?, telefono=?, tipo_plaga=?, fecha=?, costo=?, notas=?
@@ -528,8 +565,9 @@ def editar_servicio(id=None):
         conn.commit()
         conn.close()
         return redirect(url_for('index'))
-    servicio = conn.execute('SELECT * FROM servicios WHERE id=?', (sid,)).fetchone() if sid else None
+    servicio_raw = conn.execute('SELECT * FROM servicios WHERE id=?', (sid,)).fetchone() if sid else None
     conn.close()
+    servicio = dict(servicio_raw) if servicio_raw else None
     return render_template('editar_servicio.html', servicio=servicio) if servicio else redirect(url_for('index'))
 
 @app.route('/eliminar_servicio/<int:id>', methods=['GET', 'POST'])
@@ -559,12 +597,13 @@ def reporte_pdf(id=None):
         return redirect(url_for('index'))
 
     conn = get_db_connection()
-    servicio = conn.execute('SELECT * FROM servicios WHERE id=?', (sid,)).fetchone()
+    servicio_raw = conn.execute('SELECT * FROM servicios WHERE id=?', (sid,)).fetchone()
     conn.close()
 
-    if not servicio:
+    if not servicio_raw:
         return "Servicio no encontrado", 404
 
+    servicio = dict(servicio_raw)
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
     p.setTitle(f"Certificado_Servicio_{sid}")
@@ -578,13 +617,13 @@ def reporte_pdf(id=None):
 
     p.setFillColor(colors.black)
     p.setFont("Helvetica-Bold", 12)
-    p.drawString(50, 680, f"Folio del Servicio: #{servicio['id']}")
+    p.drawString(50, 680, f"Folio del Servicio: #{servicio.get('id', sid)}")
     p.setFont("Helvetica", 11)
-    p.drawString(50, 650, f"Cliente: {servicio['cliente']}")
-    p.drawString(50, 630, f"Teléfono: {servicio['telefono']}")
-    p.drawString(50, 610, f"Tipo de Plaga: {servicio['tipo_plaga']}")
-    p.drawString(50, 590, f"Fecha: {servicio['fecha']}")
-    p.drawString(50, 570, f"Costo: ${servicio['costo']}")
+    p.drawString(50, 650, f"Cliente: {servicio.get('cliente', '')}")
+    p.drawString(50, 630, f"Teléfono: {servicio.get('telefono', '')}")
+    p.drawString(50, 610, f"Tipo de Plaga: {servicio.get('tipo_plaga', '')}")
+    p.drawString(50, 590, f"Fecha: {servicio.get('fecha', '')}")
+    p.drawString(50, 570, f"Costo: ${servicio.get('costo', 0.0)}")
 
     p.showPage()
     p.save()
