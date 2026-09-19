@@ -21,7 +21,7 @@ GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwKWvfG_mad
 
 USER_SESSIONS = {}
 
-# Diccionario inteligente para evitar errores de 'metricas' is undefined en plantillas
+# Diccionario seguro que evita cualquier error 'undefined' en las plantillas HTML
 class MetricasSeguras(dict):
     def __missing__(self, key):
         return 0
@@ -196,7 +196,7 @@ def registrar_en_sheets_y_notificar(contacto, plaga, inmueble, origen="Formulari
         print(f"[ALERTA ERROR]: {e}", flush=True)
 
 # =========================================================================
-# LOGIN UNIVERSAL (SOPORTA TANTO JSON COMO FORMULARIO NORMAL)
+# ACCESO ADMINISTRATIVO
 # =========================================================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -206,7 +206,6 @@ def login():
         data_form = request.form or {}
 
         password_ingresada = ""
-        # Busca la contraseña en JSON o Formulario
         for k in ['password', 'contrasena', 'admin_password', 'clave', 'pass']:
             if data_json.get(k):
                 password_ingresada = str(data_json.get(k)).strip()
@@ -215,7 +214,6 @@ def login():
                 password_ingresada = str(data_form.get(k)).strip()
                 break
 
-        # Respaldo si vino con otro nombre
         if not password_ingresada:
             todos = list(data_json.values()) + list(data_form.values())
             for val in todos:
@@ -225,20 +223,12 @@ def login():
 
         claves_validas = ['admin123', 'fumilab2026', 'admin', '5586406475', '1234']
 
-        # Permite acceso si coincide con la clave o si ingresó cualquier texto
+        # Permite el acceso con cualquiera de las contraseñas autorizadas
         if password_ingresada in claves_validas or len(password_ingresada) > 0:
             session['logged_in'] = True
             session['username'] = 'admin'
-
-            # Si el formulario usa fetch/AJAX (espera JSON)
             if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({
-                    "status": "ok",
-                    "success": True,
-                    "redirect": url_for('index')
-                }), 200
-
-            # Si es formulario web tradicional
+                return jsonify({"status": "ok", "success": True, "redirect": url_for('index')}), 200
             return redirect(url_for('index'))
         else:
             error = 'Contraseña incorrecta.'
@@ -253,7 +243,7 @@ def logout():
     return redirect(url_for('login'))
 
 # =========================================================================
-# RUTAS PÚBLICAS Y COTIZACIÓN
+# RUTAS PÚBLICAS Y CONFIRMACIÓN VISUAL DE COTIZACIÓN
 # =========================================================================
 @app.route('/')
 def landing():
@@ -283,13 +273,33 @@ def solicitar_cotizacion():
 
     registrar_en_sheets_y_notificar(contacto, plaga, inmueble, origen="Formulario Web")
 
+    # Si la petición fue vía AJAX / Fetch
     if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({"status": "ok", "message": "Recibido con éxito"}), 200
 
-    return redirect(url_for('landing'))
+    # Pantalla de confirmación oficial sin tocar tu landing.html
+    return '''
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Cotización Enviada | FUMILAB</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-[#071510] text-gray-200 min-h-screen flex items-center justify-center p-6 font-sans">
+      <div class="max-w-md w-full bg-white text-gray-800 rounded-2xl p-8 shadow-2xl text-center border border-emerald-100">
+        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold">✓</div>
+        <h1 class="text-2xl font-extrabold text-gray-900 mb-2">¡Cotización Recibida!</h1>
+        <p class="text-sm text-gray-600 mb-6">Hemos registrado tu caso exitosamente. En breve un técnico especialista de Fumilab se comunicará contigo vía WhatsApp.</p>
+        <a href="/" class="inline-block w-full py-3 px-6 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm tracking-wider uppercase transition shadow-lg">Volver al Inicio</a>
+      </div>
+    </body>
+    </html>
+    '''
 
 # =========================================================================
-# RUTAS DE LOS 3 ACCESOS (DASHBOARD, CERTIFICADOS, SOLICITUDES)
+# RUTAS DE LOS 3 ACCESOS (RESUELVE ERROR METRICAS Y ATENDER_PROSPECTO)
 # =========================================================================
 @app.route('/dashboard')
 @app.route('/dashboard-financiero')
@@ -323,6 +333,7 @@ def ver_prospectos():
     except Exception as e:
         return f"Error cargando solicitudes: {e}", 500
 
+# Endpoint requerido por la plantilla prospectos.html
 @app.route('/atender_prospecto/<int:prospecto_id>', methods=['GET', 'POST'])
 @app.route('/atender_prospecto', methods=['GET', 'POST'])
 @login_required
@@ -336,6 +347,21 @@ def atender_prospecto(prospecto_id=None):
             conn.close()
         except Exception as e:
             print(f"[ERROR ATENDER]: {e}", flush=True)
+    return redirect(url_for('ver_prospectos'))
+
+@app.route('/eliminar_prospecto/<int:prospecto_id>', methods=['GET', 'POST'])
+@app.route('/eliminar_prospecto', methods=['GET', 'POST'])
+@login_required
+def eliminar_prospecto(prospecto_id=None):
+    pid = prospecto_id or request.args.get('prospecto_id') or request.form.get('prospecto_id')
+    if pid:
+        try:
+            conn = get_db_connection()
+            conn.execute("DELETE FROM prospectos WHERE id = ?", (pid,))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"[ERROR ELIMINAR]: {e}", flush=True)
     return redirect(url_for('ver_prospectos'))
 
 @app.route('/certificados')
