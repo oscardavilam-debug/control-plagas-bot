@@ -5,7 +5,7 @@ import csv
 import urllib.request
 import urllib.error
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, date
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, session, Response
 
 app = Flask(__name__)
@@ -22,11 +22,8 @@ GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwKWvfG_mad
 
 USER_SESSIONS = {}
 
-# =========================================================================
-# ESCUDO PROTECTOR DE PLANTILLAS: EVITA ERRORES 500 POR ENLACES FALTANTES
-# =========================================================================
+# Diccionario seguro anti-errores en templates
 class MetricasSeguras(dict):
-    """Evita cualquier error de 'metricas is undefined' en el HTML."""
     def __missing__(self, key):
         return 0
     def __getattr__(self, key):
@@ -34,7 +31,6 @@ class MetricasSeguras(dict):
 
 @app.context_processor
 def utility_processor():
-    """Evita caídas por 'Could not build url for endpoint'. Si falta un endpoint, devuelve la ruta limpia sin romper la página."""
     def safe_url_for(endpoint, **values):
         try:
             return url_for(endpoint, **values)
@@ -101,6 +97,18 @@ def inicializar_bd():
                 nombre TEXT,
                 cantidad INTEGER,
                 precio REAL
+            )
+        ''')
+        # TABLA DE GASTOS Y EGRESOS (Gasolina, Insumos, Sueldos, Adicionales)
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS gastos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha TEXT,
+                categoria TEXT,
+                concepto TEXT,
+                monto REAL,
+                responsable TEXT,
+                notas TEXT
             )
         ''')
         conn.commit()
@@ -244,8 +252,8 @@ def login():
             session['logged_in'] = True
             session['username'] = 'admin'
             if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({"status": "ok", "success": True, "redirect": url_for('index')}), 200
-            return redirect(url_for('index'))
+                return jsonify({"status": "ok", "success": True, "redirect": url_for('dashboard_financiero')}), 200
+            return redirect(url_for('dashboard_financiero'))
         else:
             error = 'Contraseña incorrecta.'
             if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -292,41 +300,92 @@ def solicitar_cotizacion():
     if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({"status": "ok", "message": "Recibido con éxito"}), 200
 
-    return '''
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-      <meta charset="UTF-8">
-      <title>Cotización Enviada - FUMILAB</title>
-      <style>
-        body { font-family: Arial, sans-serif; background-color: #071510; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .box { background: #ffffff; color: #333333; padding: 40px; border-radius: 16px; text-align: center; max-width: 440px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .icon { font-size: 48px; color: #15803d; margin-bottom: 12px; }
-        h2 { margin: 0 0 10px; color: #15803d; font-size: 24px; }
-        p { font-size: 14px; line-height: 1.6; color: #555555; }
-        .btn { display: inline-block; margin-top: 24px; padding: 12px 28px; background: #15803d; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; }
-        .btn:hover { background: #166534; }
-      </style>
-    </head>
-    <body>
-      <div class="box">
-        <div class="icon">✅</div>
-        <h2>¡Cotización Enviada!</h2>
-        <p>Hemos recibido tus datos con éxito. En breve un técnico especialista de <strong>Fumilab</strong> te contactará directamente por WhatsApp.</p>
-        <a href="/" class="btn">Volver a la Página</a>
-      </div>
-    </body>
-    </html>
-    '''
+    return redirect(url_for('landing'))
 
 # =========================================================================
-# DASHBOARD FINANCIERO Y CERTIFICADOS (100% REPARADOS)
+# DASHBOARD FINANCIERO COMPLETO (INGRESOS, GASTOS, BALANCE Y UTILIDAD)
 # =========================================================================
 @app.route('/dashboard')
 @app.route('/dashboard-financiero')
 @app.route('/dashboard_financiero')
-@app.route('/panel')
 @app.route('/finanzas')
+@login_required
+def dashboard_financiero():
+    try:
+        conn = get_db_connection()
+        servicios = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
+        gastos = conn.execute('SELECT * FROM gastos ORDER BY id DESC').fetchall()
+        conn.close()
+
+        # Calcular Ingresos
+        total_ingresos = sum(float(s['costo'] or 0.0) for s in servicios)
+        
+        # Calcular Gastos y desglose por categoría
+        total_gastos = 0.0
+        gastos_por_cat = {}
+        for g in gastos:
+            m = float(g['monto'] or 0.0)
+            total_gastos += m
+            cat = g['categoria'] or 'Otros'
+            gastos_por_cat[cat] = gastos_por_cat.get(cat, 0.0) + m
+
+        # Utilidad Neta y Margen
+        utilidad_neta = total_ingresos - total_gastos
+        margen = round((utilidad_neta / total_ingresos * 100), 1) if total_ingresos > 0 else 0.0
+
+        return render_template(
+            'dashboard_financiero.html',
+            total_ingresos=total_ingresos,
+            total_servicios=len(servicios),
+            total_gastos=total_gastos,
+            utilidad_neta=utilidad_neta,
+            margen_ganancia=margen,
+            gastos_por_cat=gastos_por_cat,
+            gastos=gastos,
+            fecha_hoy=date.today().strftime("%Y-%m-%d")
+        )
+    except Exception as e:
+        return f"Error cargando el dashboard financiero: {e}", 500
+
+@app.route('/registrar_gasto', methods=['POST'])
+@login_required
+def registrar_gasto():
+    fecha = request.form.get('fecha') or date.today().strftime("%Y-%m-%d")
+    categoria = request.form.get('categoria', 'Gastos Adicionales')
+    concepto = request.form.get('concepto', '')
+    monto = float(request.form.get('monto', 0.0))
+    responsable = request.form.get('responsable', '')
+
+    try:
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO gastos (fecha, categoria, concepto, monto, responsable)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (fecha, categoria, concepto, monto, responsable))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[ERROR REGISTRAR GASTO]: {e}", flush=True)
+
+    return redirect(url_for('dashboard_financiero'))
+
+@app.route('/eliminar_gasto/<int:id>')
+@login_required
+def eliminar_gasto(id):
+    try:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM gastos WHERE id = ?', (id,))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[ERROR ELIMINAR GASTO]: {e}", flush=True)
+    return redirect(url_for('dashboard_financiero'))
+
+# =========================================================================
+# BITÁCORA TÉCNICA DE APLICACIONES (INDEX ORIGINAL)
+# =========================================================================
+@app.route('/panel')
+@app.route('/bitacora')
 @login_required
 def index():
     try:
@@ -337,30 +396,16 @@ def index():
         metricas = calcular_metricas(servicios, prospectos)
         return render_template('index.html', servicios=servicios, prospectos=prospectos, metricas=metricas)
     except Exception as e:
-        return f"Error cargando el panel: {e}", 500
+        return f"Error cargando bitácora: {e}", 500
 
 @app.route('/certificados')
 @app.route('/certificados-pdf')
-@app.route('/reportes')
 @login_required
 def certificados():
-    try:
-        conn = get_db_connection()
-        servicios = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
-        prospectos = conn.execute('SELECT * FROM prospectos ORDER BY id DESC').fetchall()
-        conn.close()
-        metricas = calcular_metricas(servicios, prospectos)
-        return render_template('index.html', servicios=servicios, prospectos=prospectos, metricas=metricas)
-    except Exception as e:
-        return f"Error cargando certificados: {e}", 500
+    return redirect(url_for('index'))
 
-# =========================================================================
-# EXPORTACIÓN CSV
-# =========================================================================
 @app.route('/exportar_csv')
 @app.route('/exportar-csv')
-@app.route('/exportar_prospectos_csv')
-@app.route('/exportar_servicios_csv')
 @login_required
 def exportar_csv():
     try:
@@ -392,7 +437,7 @@ def exportar_csv():
         return f"Error exportando CSV: {e}", 500
 
 # =========================================================================
-# SOLICITUDES WEB Y PROSPECTOS
+# BANDEJA DE PROSPECTOS WEB
 # =========================================================================
 @app.route('/solicitudes')
 @app.route('/solicitudes-web')
@@ -440,7 +485,7 @@ def eliminar_prospecto(prospecto_id=None):
     return redirect(url_for('ver_prospectos'))
 
 # =========================================================================
-# GESTIÓN DE SERVICIOS Y PDF
+# GESTIÓN DE SERVICIOS Y CERTIFICADOS PDF
 # =========================================================================
 @app.route('/nuevo_servicio', methods=['GET', 'POST'])
 @login_required
@@ -545,17 +590,6 @@ def reporte_pdf(id=None):
     p.save()
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name=f"Certificado_Fumilab_{sid}.pdf", mimetype='application/pdf')
-
-@app.route('/inventario')
-@login_required
-def inventario():
-    try:
-        conn = get_db_connection()
-        productos = conn.execute('SELECT * FROM productos ORDER BY nombre ASC').fetchall()
-        conn.close()
-        return render_template('inventario.html', productos=productos)
-    except Exception as e:
-        return f"Error cargando inventario: {e}", 500
 
 # =========================================================================
 # WEBHOOK DE WHATSAPP
