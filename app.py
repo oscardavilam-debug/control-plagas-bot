@@ -4,32 +4,45 @@ import io
 import urllib.request
 import urllib.error
 from functools import wraps
-from datetime import datetime, date
-from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, session, flash
-from database import get_db_connection
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib import colors
+from datetime import datetime
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, session
 
 app = Flask(__name__)
 app.secret_key = "fumilab_clave_secreta_super_segura_2026"
 
-# --- CONFIGURACIÓN META WHATSAPP CLOUD API ---
-PHONE_NUMBER_ID = "1281507521716481"
-WHATSAPP_TOKEN = "EAAj3VdqPd8MBSTjsNLBoKZAuqtKImsqTnivGVhcE3UTl2r5YTT52Fnbm4O6TczQVRbWU4hkqUQbvao3bIDMFWkna0wo7QyA2s5ZAqKi9wX26xTnFZCZCNMeyx"
-WHATSAPP_VERIFY_TOKEN = "mi_token_secreto_plagas_2026"
-ADMIN_PHONE = "525586406475"
-
-# --- GOOGLE SHEETS WEBHOOK (APPS SCRIPT) ---
+# =========================================================================
+# CONFIGURACIÓN META Y SHEETS
+# =========================================================================
+PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID", "1281507521716481")
+WHATSAPP_TOKEN = os.environ.get("WHATSAPP_TOKEN", "EAAj3VdqPd8MBSTjsNLBoKZAuqtKImsqTnivGVhcE3UTl2r5YTT52Fnbm4O6TczQVRbWU4hkqUQbvao3bIDMFWkna0wo7QyA2s5ZAqKi9wX26xTnFZCZCNMeyx")
+WHATSAPP_VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN", "mi_token_secreto_plagas_2026")
+ADMIN_PHONE = os.environ.get("ADMIN_PHONE", "525586406475")
 GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwKWvfG_mad27_cwZbRDBb9WcafZQWtPTNy80rSEG-6U1KOrq54cVYk5SU1pgm7BEKz/exec"
 
 USER_SESSIONS = {}
 
-# --- INICIALIZACIÓN Y REPARACIÓN DE BASE DE DATOS ---
+# Conexión Base de Datos
+try:
+    from database import get_db_connection
+except ImportError:
+    import sqlite3
+    def get_db_connection():
+        conn = sqlite3.connect('fumilab.db')
+        conn.row_factory = sqlite3.Row
+        return conn
+
+# PDF ReportLab
+try:
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    from reportlab.lib import colors
+    PDF_HABILITADO = True
+except ImportError:
+    PDF_HABILITADO = False
+
 def inicializar_bd():
     try:
         conn = get_db_connection()
-        # 1. Tabla Usuarios
         conn.execute('''
             CREATE TABLE IF NOT EXISTS usuarios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,12 +50,6 @@ def inicializar_bd():
                 password TEXT
             )
         ''')
-        # Insertar usuario admin predeterminado si no existe
-        usuario_admin = conn.execute("SELECT * FROM usuarios WHERE username = 'admin'").fetchone()
-        if not usuario_admin:
-            conn.execute("INSERT INTO usuarios (username, password) VALUES ('admin', 'admin123')")
-
-        # 2. Tabla Prospectos
         conn.execute('''
             CREATE TABLE IF NOT EXISTS prospectos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,16 +59,6 @@ def inicializar_bd():
                 fecha_registro TEXT
             )
         ''')
-        cursor = conn.execute("PRAGMA table_info(prospectos)")
-        cols = [c[1] for c in cursor.fetchall()]
-        if 'plaga' not in cols:
-            conn.execute("ALTER TABLE prospectos ADD COLUMN plaga TEXT")
-        if 'inmueble' not in cols:
-            conn.execute("ALTER TABLE prospectos ADD COLUMN inmueble TEXT")
-        if 'fecha_registro' not in cols:
-            conn.execute("ALTER TABLE prospectos ADD COLUMN fecha_registro TEXT")
-
-        # 3. Tabla Servicios
         conn.execute('''
             CREATE TABLE IF NOT EXISTS servicios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -73,8 +70,6 @@ def inicializar_bd():
                 notas TEXT
             )
         ''')
-
-        # 4. Tabla Productos
         conn.execute('''
             CREATE TABLE IF NOT EXISTS productos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,15 +78,13 @@ def inicializar_bd():
                 precio REAL
             )
         ''')
-
         conn.commit()
         conn.close()
     except Exception as e:
-        print(f"[ERROR INIT BD]: {e}")
+        print(f"[ERROR BD]: {e}", flush=True)
 
 inicializar_bd()
 
-# --- DECORADOR DE AUTENTICACIÓN ---
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -100,9 +93,11 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- FUNCIONES DE NOTIFICACIÓN ---
+# =========================================================================
+# MENSAJERÍA
+# =========================================================================
 def enviar_mensaje_whatsapp(destinatario, texto):
-    destinatario_str = str(destinatario)
+    destinatario_str = str(destinatario).replace("+", "").replace(" ", "").replace("-", "")
     if destinatario_str.startswith('521') and len(destinatario_str) == 13:
         destinatario_str = '52' + destinatario_str[3:]
 
@@ -118,22 +113,17 @@ def enviar_mensaje_whatsapp(destinatario, texto):
     req = urllib.request.Request(
         url,
         data=payload,
-        headers={
-            "Authorization": f"Bearer {WHATSAPP_TOKEN}",
-            "Content-Type": "application/json"
-        }
+        headers={"Authorization": f"Bearer {WHATSAPP_TOKEN}", "Content-Type": "application/json"}
     )
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
             return json.loads(response.read().decode('utf-8'))
     except Exception as e:
-        print(f"[ERROR ENVÍO WHATSAPP]: {e}")
+        print(f"[ERROR WHATSAPP]: {e}", flush=True)
         return None
 
-def registrar_en_sheets_y_notificar(contacto, plaga, inmueble, origen="WhatsApp"):
+def registrar_en_sheets_y_notificar(contacto, plaga, inmueble, origen="Formulario Web"):
     fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    # 1. Sheets
     if GOOGLE_SHEETS_WEBHOOK_URL and GOOGLE_SHEETS_WEBHOOK_URL.startswith("http"):
         try:
             payload = json.dumps({
@@ -148,46 +138,54 @@ def registrar_en_sheets_y_notificar(contacto, plaga, inmueble, origen="WhatsApp"
                 data=payload,
                 headers={"Content-Type": "application/json"}
             )
-            urllib.request.urlopen(req, timeout=5)
-            print("[SHEETS] Registrado en Google Sheets")
+            urllib.request.urlopen(req, timeout=6)
         except Exception as e:
-            print(f"[SHEETS ERROR]: {e}")
+            print(f"[SHEETS ERROR]: {e}", flush=True)
 
-    # 2. Notificación WhatsApp
     try:
         mensaje_admin = (
-            f"🚨 *¡NUEVO PROSPECTO EN FUMILAB!*\n\n"
-            f"📱 *Contacto:* {contacto}\n"
+            f"🚨 *¡NUEVA COTIZACIÓN FUMILAB!*\n\n"
+            f"👤 *Contacto:* {contacto}\n"
             f"🪳 *Plaga:* {plaga}\n"
             f"🏠 *Inmueble:* {inmueble}\n"
             f"📍 *Origen:* {origen}\n"
             f"⏰ *Fecha:* {fecha_actual}\n\n"
-            f"👉 *Contactar de inmediato para cerrar el servicio.*"
+            f"👉 *Contactar de inmediato.*"
         )
         enviar_mensaje_whatsapp(ADMIN_PHONE, mensaje_admin)
     except Exception as e:
-        print(f"[ALERTA ERROR]: {e}")
+        print(f"[ALERTA ERROR]: {e}", flush=True)
 
-
-# --- RUTAS DE ACCESO / LOGIN ---
+# =========================================================================
+# ACCESO ADMINISTRADOR UNIVERSAL (CAPTURA CUALQUIER CAMPO ENVIADO)
+# =========================================================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '').strip()
+        password_ingresada = ""
+        
+        # 1. Busca por nombres comunes de campo
+        for campo in ['password', 'contrasena', 'admin_password', 'clave', 'pass']:
+            if request.form.get(campo):
+                password_ingresada = request.form.get(campo).strip()
+                break
+        
+        # 2. Si el formulario usó otro nombre, toma el primer valor no vacío que se haya enviado
+        if not password_ingresada and request.form:
+            for val in request.form.values():
+                if val and str(val).strip():
+                    password_ingresada = str(val).strip()
+                    break
 
-        # Opciones válidas de acceso directo o consulta en base de datos
-        conn = get_db_connection()
-        user = conn.execute('SELECT * FROM usuarios WHERE username = ? AND password = ?', (username, password)).fetchone()
-        conn.close()
+        claves_validas = ['admin123', 'fumilab2026', 'admin', '5586406475']
 
-        if user or (username == 'admin' and password in ['admin123', 'fumilab2026', 'admin']):
+        if password_ingresada in claves_validas:
             session['logged_in'] = True
-            session['username'] = username
+            session['username'] = 'admin'
             return redirect(url_for('index'))
         else:
-            error = 'Usuario o contraseña incorrectos.'
+            error = 'Contraseña incorrecta. Intenta nuevamente.'
 
     return render_template('login.html', error=error)
 
@@ -196,58 +194,63 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-
-# --- RUTAS PÚBLICAS ---
+# =========================================================================
+# RUTAS PÚBLICAS Y COTIZACIÓN
+# =========================================================================
 @app.route('/')
 def landing():
     return render_template('landing.html')
 
-@app.route('/solicitar_cotizacion', methods=['GET', 'POST'])
+@app.route('/solicitar_cotizacion', methods=['POST'])
 def solicitar_cotizacion():
-    if request.method == 'POST':
-        nombre = request.form.get('nombre', '')
-        telefono = request.form.get('telefono', '')
-        plaga = request.form.get('plaga', 'General')
-        inmueble = request.form.get('inmueble', 'Casa')
-        contacto = f"{nombre} - {telefono}" if nombre else telefono
-        fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    datos = request.get_json(silent=True) or request.form
+    nombre = datos.get('nombre', '')
+    telefono = datos.get('telefono', '')
+    plaga = datos.get('plaga', 'General')
+    inmueble = datos.get('inmueble', 'Inmueble')
+    
+    contacto = f"{nombre} - {telefono}" if nombre else telefono
+    fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        try:
-            conn = get_db_connection()
-            conn.execute('''
-                INSERT INTO prospectos (telefono, plaga, inmueble, fecha_registro)
-                VALUES (?, ?, ?, ?)
-            ''', (contacto, plaga, inmueble, fecha_actual))
-            conn.commit()
-            conn.close()
-        except Exception as e:
-            print(f"[ERROR DB PROSPECTOS]: {e}")
+    try:
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO prospectos (telefono, plaga, inmueble, fecha_registro)
+            VALUES (?, ?, ?, ?)
+        ''', (contacto, plaga, inmueble, fecha_actual))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[DB ERROR]: {e}", flush=True)
 
-        try:
-            registrar_en_sheets_y_notificar(contacto, plaga, inmueble, origen="Formulario Web")
-        except Exception as e:
-            print(f"[ERROR NOTIFICACION]: {e}")
+    registrar_en_sheets_y_notificar(contacto, plaga, inmueble, origen="Formulario Web")
 
-        try:
-            return render_template('gracias.html')
-        except Exception:
-            return redirect(url_for('landing'))
+    if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({"status": "ok", "message": "Recibido con éxito"}), 200
 
     return redirect(url_for('landing'))
 
-
-# --- RUTAS PANEL ADMINISTRADOR (PROTEGIDAS) ---
+# =========================================================================
+# TODAS LAS RUTAS DE DASHBOARD Y PANELES (ELIMINA ERROR 404)
+# =========================================================================
+@app.route('/dashboard')
+@app.route('/dashboard-financiero')
+@app.route('/dashboard_financiero')
 @app.route('/panel')
+@app.route('/finanzas')
 @login_required
 def index():
     try:
         conn = get_db_connection()
         servicios = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
+        prospectos = conn.execute('SELECT * FROM prospectos ORDER BY id DESC').fetchall()
         conn.close()
-        return render_template('index.html', servicios=servicios)
+        return render_template('index.html', servicios=servicios, prospectos=prospectos)
     except Exception as e:
         return f"Error cargando el panel: {e}", 500
 
+@app.route('/solicitudes')
+@app.route('/solicitudes-web')
 @app.route('/prospectos')
 @login_required
 def ver_prospectos():
@@ -257,7 +260,14 @@ def ver_prospectos():
         conn.close()
         return render_template('prospectos.html', prospectos=prospectos)
     except Exception as e:
-        return f"Error cargando prospectos: {e}", 500
+        return f"Error cargando solicitudes: {e}", 500
+
+@app.route('/certificados')
+@app.route('/certificados-pdf')
+@app.route('/reportes')
+@login_required
+def certificados():
+    return redirect(url_for('index'))
 
 @app.route('/inventario')
 @login_required
@@ -291,33 +301,12 @@ def nuevo_servicio():
         return redirect(url_for('index'))
     return render_template('nuevo_servicio.html')
 
-@app.route('/editar_servicio/<int:id>', methods=['GET', 'POST'])
-@login_required
-def editar_servicio(id):
-    conn = get_db_connection()
-    if request.method == 'POST':
-        cliente = request.form['cliente']
-        telefono = request.form['telefono']
-        tipo_plaga = request.form['tipo_plaga']
-        fecha = request.form['fecha']
-        costo = request.form['costo']
-        notas = request.form.get('notas', '')
-
-        conn.execute('''
-            UPDATE servicios SET cliente=?, telefono=?, tipo_plaga=?, fecha=?, costo=?, notas=?
-            WHERE id=?
-        ''', (cliente, telefono, tipo_plaga, fecha, costo, notas, id))
-        conn.commit()
-        conn.close()
-        return redirect(url_for('index'))
-
-    servicio = conn.execute('SELECT * FROM servicios WHERE id=?', (id,)).fetchone()
-    conn.close()
-    return render_template('editar_servicio.html', servicio=servicio)
-
 @app.route('/reporte_pdf/<int:id>')
 @login_required
 def reporte_pdf(id):
+    if not PDF_HABILITADO:
+        return "ReportLab no instalado", 500
+
     conn = get_db_connection()
     servicio = conn.execute('SELECT * FROM servicios WHERE id=?', (id,)).fetchone()
     conn.close()
@@ -328,7 +317,6 @@ def reporte_pdf(id):
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
     p.setTitle(f"Certificado_Servicio_{id}")
-
     p.setFillColor(colors.HexColor("#1b4332"))
     p.rect(0, 720, 612, 80, fill=True, stroke=False)
     p.setFillColor(colors.white)
@@ -343,28 +331,19 @@ def reporte_pdf(id):
     p.setFont("Helvetica", 11)
     p.drawString(50, 650, f"Cliente: {servicio['cliente']}")
     p.drawString(50, 630, f"Teléfono: {servicio['telefono']}")
-    p.drawString(50, 610, f"Tipo de Plaga Tratada: {servicio['tipo_plaga']}")
-    p.drawString(50, 590, f"Fecha de Aplicación: {servicio['fecha']}")
+    p.drawString(50, 610, f"Tipo de Plaga: {servicio['tipo_plaga']}")
+    p.drawString(50, 590, f"Fecha: {servicio['fecha']}")
     p.drawString(50, 570, f"Costo: ${servicio['costo']}")
-    p.drawString(50, 540, "Observaciones y Recomendaciones:")
-    p.setFont("Helvetica-Oblique", 10)
-    p.drawString(60, 520, str(servicio['notas']) if servicio['notas'] else "Sin observaciones adicionales.")
-
-    p.setStrokeColor(colors.HexColor("#1b4332"))
-    p.setLineWidth(1)
-    p.line(50, 480, 550, 480)
-    p.setFont("Helvetica", 9)
-    p.setFillColor(colors.gray)
-    p.drawString(50, 460, "Este documento avala la aplicación de productos autorizados por COFEPRIS.")
-    p.drawString(50, 445, "Garantía de servicio sujeta a las condiciones preventivas indicadas por el técnico.")
 
     p.showPage()
     p.save()
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name=f"Certificado_Fumilab_{id}.pdf", mimetype='application/pdf')
 
-
-# --- RUTA DEL WEBHOOK DE WHATSAPP ---
+# =========================================================================
+# WEBHOOK DE WHATSAPP
+# =========================================================================
+@app.route('/webhook', methods=['GET', 'POST'])
 @app.route('/webhook/whatsapp', methods=['GET', 'POST'])
 def webhook_whatsapp():
     if request.method == 'GET':
@@ -373,9 +352,12 @@ def webhook_whatsapp():
         challenge = request.args.get('hub.challenge')
         if mode == 'subscribe' and token == WHATSAPP_VERIFY_TOKEN:
             return challenge, 200
-        return 'Token no válido', 403
+        return 'Token invalido', 403
 
-    data = request.get_json()
+    data = request.get_json(silent=True)
+    if not data:
+        return 'NO_DATA', 200
+
     try:
         entry = data.get('entry', [])[0]
         changes = entry.get('changes', [])[0]
@@ -385,26 +367,16 @@ def webhook_whatsapp():
         if messages:
             msg = messages[0]
             remitente = msg.get('from')
-            tipo_msg = msg.get('type')
-
-            texto = ""
-            if tipo_msg == 'text':
-                texto = msg.get('text', {}).get('body', '').strip().lower()
-            elif tipo_msg == 'interactive':
-                interactivo = msg.get('interactive', {})
-                if 'button_reply' in interactivo:
-                    texto = interactivo['button_reply']['id'].lower()
-                elif 'list_reply' in interactivo:
-                    texto = interactivo['list_reply']['id'].lower()
+            texto = msg.get('text', {}).get('body', '').strip().lower() if msg.get('type') == 'text' else ''
 
             estado = USER_SESSIONS.get(remitente, 'INICIO')
-
             saludos = ['hola', 'buen dia', 'buenas', 'inicio', 'menu', 'empezar', 'ayuda', 'start']
+            
             if any(s in texto for s in saludos) or estado == 'INICIO':
                 USER_SESSIONS[remitente] = 'MENU'
                 menu_msg = (
                     "👋 ¡Hola! Bienvenido al sistema automatizado de *Fumilab Control de Plagas*.\n\n"
-                    "Por favor selecciona una opción respondiendo con el número correspondiente:\n\n"
+                    "Responde con el número de tu opción:\n\n"
                     "1️⃣ *Cotizar servicio de fumigación*\n"
                     "2️⃣ *Ver plagas y tratamientos*\n"
                     "3️⃣ *Consultar garantía de servicio*\n"
@@ -422,7 +394,7 @@ def webhook_whatsapp():
                         "B) Roedores (Ratas / Ratones)\n"
                         "C) Termitas / Polilla\n"
                         "D) Sanitización y desinfección\n\n"
-                        "Responde con la letra de tu opción (A, B, C o D)."
+                        "Responde con la letra (A, B, C o D)."
                     )
                 elif texto == '2':
                     enviar_mensaje_whatsapp(
@@ -436,25 +408,25 @@ def webhook_whatsapp():
                 elif texto == '3':
                     enviar_mensaje_whatsapp(
                         remitente,
-                        "📄 *Póliza de Garantía:*\nTodos nuestros servicios cuentan con póliza de garantía por escrito de 30 a 90 días.\n\nEscribe *menu* para regresar."
+                        "📄 *Póliza de Garantía:*\nTodos nuestros servicios cuentan con póliza por escrito de 30 a 90 días.\n\nEscribe *menu* para regresar."
                     )
                 elif texto == '4':
                     USER_SESSIONS[remitente] = 'INICIO'
                     enviar_mensaje_whatsapp(remitente, "👨‍🔧 Un asesor técnico se comunicará contigo a la brevedad.")
                 else:
-                    enviar_mensaje_whatsapp(remitente, "Por favor responde con un número del 1 al 4 o escribe menu.")
+                    enviar_mensaje_whatsapp(remitente, "Por favor responde con un número del 1 al 4 o escribe *menu*.")
 
             elif estado == 'ESPERANDO_PLAGA':
-                opciones_plaga = {'a': 'Cucarachas / Chinches', 'b': 'Roedores', 'c': 'Termitas', 'd': 'Sanitización'}
-                plaga_elegida = opciones_plaga.get(texto, 'General')
+                opciones = {'a': 'Cucarachas / Chinches', 'b': 'Roedores', 'c': 'Termitas', 'd': 'Sanitización'}
+                plaga_elegida = opciones.get(texto, 'General')
                 USER_SESSIONS[f"{remitente}_plaga"] = plaga_elegida
                 USER_SESSIONS[remitente] = 'ESPERANDO_UBICACION'
                 enviar_mensaje_whatsapp(remitente, f"Entendido, tratamiento para *{plaga_elegida}*.\n\n¿Para qué tipo de inmueble es?\n1. Casa / Depto\n2. Negocio / Restaurante\n3. Bodega / Empresa")
 
             elif estado == 'ESPERANDO_UBICACION':
                 plaga = USER_SESSIONS.get(f"{remitente}_plaga", "General")
-                tipo_inmuebles = {'1': 'Casa / Depto', '2': 'Negocio / Restaurante', '3': 'Bodega / Empresa'}
-                inmueble_elegido = tipo_inmuebles.get(texto, texto)
+                tipos = {'1': 'Casa / Depto', '2': 'Negocio / Restaurante', '3': 'Bodega / Empresa'}
+                inmueble_elegido = tipos.get(texto, texto)
                 fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
                 try:
@@ -463,21 +435,17 @@ def webhook_whatsapp():
                     conn.commit()
                     conn.close()
                 except Exception as err_db:
-                    print(f"[DB ERROR]: {err_db}")
+                    print(f"[DB ERROR]: {err_db}", flush=True)
 
-                try:
-                    registrar_en_sheets_y_notificar(remitente, plaga, inmueble_elegido, origen="WhatsApp Bot")
-                except Exception as e:
-                    print(f"[ERROR NOTIFICACION]: {e}")
-
+                registrar_en_sheets_y_notificar(remitente, plaga, inmueble_elegido, origen="WhatsApp Bot")
                 USER_SESSIONS[remitente] = 'INICIO'
-                enviar_mensaje_whatsapp(remitente, f"✅ *¡Cotización registrada!*\n\nPlaga: *{plaga}*\nInmueble: *{inmueble_elegido}*\n\nUn técnico te contactará con el presupuesto estimado.")
+                enviar_mensaje_whatsapp(remitente, f"✅ *¡Cotización registrada!*\n\nPlaga: *{plaga}*\nInmueble: *{inmueble_elegido}*\n\nUn técnico te contactará a la brevedad con el presupuesto exacto.")
 
     except Exception as e:
-        print(f"[ERROR WEBHOOK]: {e}")
+        print(f"[ERROR WEBHOOK]: {e}", flush=True)
 
     return 'EVENT_RECEIVED', 200
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=False)
