@@ -61,7 +61,7 @@ except ImportError:
     PDF_HABILITADO = False
 
 # =========================================================================
-# MIGRACIÓN AUTOMÁTICA DE BASE DE DATOS (EVITA 'No item with that key')
+# MIGRACIÓN Y REPARACIÓN DE BASE DE DATOS
 # =========================================================================
 def inicializar_bd():
     try:
@@ -94,11 +94,21 @@ def inicializar_bd():
                 notas TEXT
             )
         ''')
-        # Verificar y agregar 'costo' a servicios si la tabla es antigua
+        # Verificar columna costo
         cur = conn.execute("PRAGMA table_info(servicios)")
         cols_serv = [c[1] for c in cur.fetchall()]
         if 'costo' not in cols_serv:
             conn.execute("ALTER TABLE servicios ADD COLUMN costo REAL DEFAULT 0.0")
+
+        # Tabla de Productos / Inventario
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS productos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT,
+                cantidad INTEGER DEFAULT 0,
+                precio REAL DEFAULT 0.0
+            )
+        ''')
 
         # Tabla de Gastos
         conn.execute('''
@@ -112,15 +122,6 @@ def inicializar_bd():
                 notas TEXT
             )
         ''')
-        cur_g = conn.execute("PRAGMA table_info(gastos)")
-        cols_gastos = [c[1] for c in cur_g.fetchall()]
-        for col_name, col_type in [
-            ('fecha', 'TEXT'), ('categoria', 'TEXT'), ('concepto', 'TEXT'),
-            ('monto', 'REAL DEFAULT 0.0'), ('responsable', 'TEXT'), ('notas', 'TEXT')
-        ]:
-            if col_name not in cols_gastos:
-                conn.execute(f"ALTER TABLE gastos ADD COLUMN {col_name} {col_type}")
-
         conn.commit()
         conn.close()
     except Exception as e:
@@ -313,7 +314,7 @@ def solicitar_cotizacion():
     return redirect(url_for('landing'))
 
 # =========================================================================
-# DASHBOARD FINANCIERO (CON CONVERSIÓN SEGURA A DICCIONARIOS)
+# DASHBOARD FINANCIERO COMPLETO
 # =========================================================================
 @app.route('/dashboard')
 @app.route('/dashboard-financiero')
@@ -327,11 +328,9 @@ def dashboard_financiero():
         gastos_raw = conn.execute('SELECT * FROM gastos ORDER BY id DESC').fetchall()
         conn.close()
 
-        # Conversión a diccionarios seguros para blindar contra 'No item with that key'
         servicios = [dict(s) for s in servicios_raw]
         gastos = [dict(g) for g in gastos_raw]
 
-        # Calcular Ingresos de forma tolerante a columnas faltantes
         total_ingresos = 0.0
         for s in servicios:
             try:
@@ -340,7 +339,6 @@ def dashboard_financiero():
             except Exception:
                 pass
 
-        # Calcular Gastos y desglose por categoría
         total_gastos = 0.0
         gastos_por_cat = {
             'Insumos y Químicos': 0.0,
@@ -410,7 +408,7 @@ def eliminar_gasto(id):
     return redirect(url_for('dashboard_financiero'))
 
 # =========================================================================
-# BITÁCORA TÉCNICA DE APLICACIONES
+# BITÁCORA TÉCNICA Y REPORTES
 # =========================================================================
 @app.route('/panel')
 @app.route('/bitacora')
@@ -470,11 +468,12 @@ def exportar_csv():
         return f"Error exportando CSV: {e}", 500
 
 # =========================================================================
-# BANDEJA DE PROSPECTOS WEB
+# BANDEJA DE PROSPECTOS / LEADS WEB
 # =========================================================================
 @app.route('/solicitudes')
 @app.route('/solicitudes-web')
 @app.route('/prospectos')
+@app.route('/leads')
 @login_required
 def ver_prospectos():
     try:
@@ -520,6 +519,41 @@ def eliminar_prospecto(prospecto_id=None):
         except Exception as e:
             print(f"[ERROR ELIMINAR]: {e}", flush=True)
     return redirect(url_for('ver_prospectos'))
+
+# =========================================================================
+# MÓDULO DE INVENTARIO Y ALMACÉN (RESUELVE ERROR 404)
+# =========================================================================
+@app.route('/inventario', methods=['GET', 'POST'])
+@app.route('/inventarios', methods=['GET', 'POST'])
+@login_required
+def inventario():
+    conn = get_db_connection()
+    if request.method == 'POST':
+        nombre = request.form.get('nombre', '')
+        cantidad = int(request.form.get('cantidad', 0))
+        precio = float(request.form.get('precio', 0.0))
+        if nombre:
+            conn.execute('INSERT INTO productos (nombre, cantidad, precio) VALUES (?, ?, ?)', (nombre, cantidad, precio))
+            conn.commit()
+        conn.close()
+        return redirect(url_for('inventario'))
+
+    productos_raw = conn.execute('SELECT * FROM productos ORDER BY nombre ASC').fetchall()
+    conn.close()
+    productos = [dict(p) for p in productos_raw]
+    return render_template('inventario.html', productos=productos)
+
+@app.route('/eliminar_producto/<int:id>')
+@login_required
+def eliminar_producto(id):
+    try:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM productos WHERE id = ?', (id,))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[ERROR ELIMINAR PRODUCTO]: {e}", flush=True)
+    return redirect(url_for('inventario'))
 
 # =========================================================================
 # GESTIÓN DE SERVICIOS Y CERTIFICADOS PDF
