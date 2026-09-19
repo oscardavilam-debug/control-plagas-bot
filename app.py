@@ -23,6 +23,71 @@ def obtener_fecha_hoy_mexico():
     return datetime.now(TZ_MEXICO).strftime("%Y-%m-%d")
 
 # =========================================================================
+# PANTALLA OFICIAL DE ÉXITO TRAS ENVIAR COTIZACIÓN
+# =========================================================================
+PAGINA_EXITO_HTML = """<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>¡Cotización Enviada! | FUMILAB</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Inter', sans-serif; background-color: #071510; }</style>
+</head>
+<body class="text-gray-200 min-h-screen flex flex-col justify-between items-center p-6">
+  <header class="w-full max-w-4xl py-6 flex items-center justify-between border-b border-emerald-900/40">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full border-2 border-emerald-500/60 p-0.5 bg-white flex items-center justify-center overflow-hidden">
+        <img src="/static/logo.png" onerror="this.onerror=null; this.src='/static/logo.jpg';" alt="FUMILAB" class="w-full h-full object-contain">
+      </div>
+      <div class="flex flex-col">
+        <span class="text-xl font-extrabold tracking-wider text-white">FUMILAB</span>
+        <span class="text-[9px] uppercase tracking-widest text-emerald-400 font-semibold">Control Profesional de Plagas</span>
+      </div>
+    </div>
+    <span class="text-xs text-emerald-400 font-semibold uppercase tracking-wider bg-emerald-950/80 px-3 py-1 rounded-full border border-emerald-800/60">
+      Atención Inmediata
+    </span>
+  </header>
+
+  <main class="w-full max-w-lg my-auto py-10">
+    <div class="bg-white text-gray-800 rounded-3xl p-8 sm:p-10 shadow-2xl border border-emerald-100 text-center">
+      <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl font-bold border-2 border-emerald-200 shadow-inner">
+        ✓
+      </div>
+      <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-bold tracking-widest rounded-full uppercase mb-3">
+        SOLICITUD REGISTRADA
+      </span>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-3">
+        ¡Cotización Enviada con Éxito!
+      </h1>
+      <p class="text-sm text-gray-600 leading-relaxed mb-8">
+        Hemos recibido tu solicitud correctamente. Uno de nuestros técnicos especialistas de <strong class="text-emerald-700">FUMILAB</strong> se comunicará contigo vía WhatsApp para detallar el presupuesto y la garantía por escrito de tu tratamiento.
+      </p>
+      <div class="flex flex-col gap-3">
+        <a href="https://wa.me/525586406475?text=Hola,%20acabo%20de%20enviar%20mi%20solicitud%20de%20cotizaci%C3%B3n%20en%20su%20p%C3%A1gina%20web" 
+           target="_blank"
+           class="w-full py-3.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider transition shadow-lg flex items-center justify-center gap-2">
+          <span>Hablar de inmediato por WhatsApp</span>
+          <span>→</span>
+        </a>
+        <a href="/" class="w-full py-3 px-6 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs tracking-wider transition text-center">
+          Volver a la Página Principal
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="w-full max-w-4xl py-6 text-center text-xs text-gray-500 border-t border-emerald-950/40">
+    © 2026 FUMILAB CONTROL DE PLAGAS. Todos los derechos reservados.
+  </footer>
+</body>
+</html>"""
+
+# =========================================================================
 # CONFIGURACIÓN META Y SHEETS
 # =========================================================================
 PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID", "1281507521716481")
@@ -286,7 +351,7 @@ def logout():
     return redirect(url_for('login'))
 
 # =========================================================================
-# RUTAS PÚBLICAS
+# RUTAS PÚBLICAS Y FORMULARIO DE COTIZACIÓN CON PANTALLA DE ÉXITO
 # =========================================================================
 @app.route('/')
 def landing():
@@ -316,10 +381,12 @@ def solicitar_cotizacion():
 
     registrar_en_sheets_y_notificar(contacto, plaga, inmueble, origen="Formulario Web")
 
+    # Si fue petición AJAX / JavaScript
     if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({"status": "ok", "message": "Recibido con éxito"}), 200
 
-    return redirect(url_for('landing'))
+    # Si fue envío de formulario estándar, muestra la pantalla oficial de confirmación
+    return PAGINA_EXITO_HTML
 
 # =========================================================================
 # DASHBOARD FINANCIERO COMPLETO
