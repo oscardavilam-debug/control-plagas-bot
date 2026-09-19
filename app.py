@@ -1,11 +1,12 @@
 import json
 import os
 import io
+import csv
 import urllib.request
 import urllib.error
 from functools import wraps
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, session
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, session, Response
 
 app = Flask(__name__)
 app.secret_key = "fumilab_clave_secreta_super_segura_2026"
@@ -21,7 +22,7 @@ GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwKWvfG_mad
 
 USER_SESSIONS = {}
 
-# Diccionario seguro que evita cualquier error 'undefined' en las plantillas HTML
+# Diccionario inteligente para blindar contra cualquier variable no definida en HTML
 class MetricasSeguras(dict):
     def __missing__(self, key):
         return 0
@@ -196,7 +197,7 @@ def registrar_en_sheets_y_notificar(contacto, plaga, inmueble, origen="Formulari
         print(f"[ALERTA ERROR]: {e}", flush=True)
 
 # =========================================================================
-# ACCESO ADMINISTRATIVO (SOPORTA JSON Y FORMULARIO TRADICIONAL)
+# ACCESO ADMINISTRATIVO
 # =========================================================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -242,7 +243,7 @@ def logout():
     return redirect(url_for('login'))
 
 # =========================================================================
-# RUTAS PÚBLICAS Y CONFIRMACIÓN DE COTIZACIÓN
+# RUTAS PÚBLICAS
 # =========================================================================
 @app.route('/')
 def landing():
@@ -275,13 +276,11 @@ def solicitar_cotizacion():
     if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({"status": "ok", "message": "Recibido con éxito"}), 200
 
-    # Pantalla de confirmación directa (sin tocar tu landing.html)
     return '''
     <!DOCTYPE html>
     <html lang="es">
     <head>
       <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Cotización Enviada - FUMILAB</title>
       <style>
         body { font-family: Arial, sans-serif; background-color: #071510; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
@@ -305,7 +304,7 @@ def solicitar_cotizacion():
     '''
 
 # =========================================================================
-# RUTAS DE LOS 3 ACCESOS (RESUELVE ERROR METRICAS Y ATENDER_PROSPECTO)
+# RUTAS DE DASHBOARD, REPORTES Y EXPORTACIÓN CSV
 # =========================================================================
 @app.route('/dashboard')
 @app.route('/dashboard-financiero')
@@ -323,6 +322,39 @@ def index():
         return render_template('index.html', servicios=servicios, prospectos=prospectos, metricas=metricas)
     except Exception as e:
         return f"Error cargando el panel: {e}", 500
+
+@app.route('/exportar_csv')
+@app.route('/exportar-csv')
+@app.route('/exportar_prospectos_csv')
+@login_required
+def exportar_csv():
+    try:
+        conn = get_db_connection()
+        servicios = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
+        conn.close()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['ID', 'Cliente', 'Telefono', 'Plaga', 'Fecha', 'Costo', 'Notas'])
+        for s in servicios:
+            writer.writerow([
+                s['id'],
+                s['cliente'] if 'cliente' in s.keys() else '',
+                s['telefono'] if 'telefono' in s.keys() else '',
+                s['tipo_plaga'] if 'tipo_plaga' in s.keys() else '',
+                s['fecha'] if 'fecha' in s.keys() else '',
+                s['costo'] if 'costo' in s.keys() else '',
+                s['notas'] if 'notas' in s.keys() else ''
+            ])
+
+        output.seek(0)
+        return Response(
+            output.getvalue(),
+            mimetype="text/csv",
+            headers={"Content-Disposition": "attachment;filename=servicios_fumilab.csv"}
+        )
+    except Exception as e:
+        return f"Error exportando CSV: {e}", 500
 
 @app.route('/solicitudes')
 @app.route('/solicitudes-web')
