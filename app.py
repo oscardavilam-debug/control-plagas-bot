@@ -521,6 +521,56 @@ def descargar_reporte_pdf(servicio_id):
     except Exception as e:
         return f"Error al generar Certificado: {str(e)}", 500
 
+
+@app.route('/servicio_exitoso/<folio>')
+def servicio_exitoso(folio):
+    try:
+        with get_db() as conn:
+            srv_row = conn.execute("SELECT * FROM servicios WHERE folio = ?", (folio,)).fetchone()
+            if not srv_row:
+                return redirect('/tecnico')
+            srv = dict(srv_row)
+            
+            c_row = conn.execute("SELECT * FROM clientes WHERE id = ?", (srv.get('cliente_id', 1),)).fetchone()
+            cliente = dict(c_row) if c_row else {'nombre_comercial': 'Cliente General', 'contacto': 'Responsable', 'telefono': '5586406475'}
+
+        tel_limpio = "".join([c for c in str(cliente.get('telefono') or '5586406475') if c.isdigit()])
+        if len(tel_limpio) == 10:
+            wa_tel = f"52{tel_limpio}"
+        else:
+            wa_tel = tel_limpio or "525586406475"
+
+        url_certificado = f"https://control-plagas-bot.onrender.com/ver_certificado/{folio}"
+        mensaje_texto = (
+            f"Hola {cliente.get('contacto') or cliente.get('nombre_comercial')}, le compartimos su "
+            f"Certificado Oficial de Manejo Integral de Plagas (Folio #{folio}) emitido por Fumilab Control Integral "
+            f"bajo Licencia Sanitaria COFEPRIS: {url_certificado}"
+        )
+        wa_mensaje_encoded = urllib.parse.quote(mensaje_texto)
+
+        return render_template('servicio_exitoso.html', 
+                               folio=folio,
+                               cliente_nombre=cliente.get('nombre_comercial'),
+                               cliente_telefono=cliente.get('telefono'),
+                               wa_telefono=wa_tel,
+                               wa_mensaje=wa_mensaje_encoded)
+    except Exception as e:
+        return f"Error en confirmación de servicio: {str(e)}", 500
+
+@app.route('/ver_certificado/<folio>')
+def ver_certificado_publico(folio):
+    """Permite al cliente descargar su certificado con el enlace que recibe por WhatsApp sin requerir login."""
+    try:
+        with get_db() as conn:
+            srv_row = conn.execute("SELECT id FROM servicios WHERE folio = ?", (folio,)).fetchone()
+            if not srv_row:
+                return "Certificado sanitario no encontrado con el folio especificado.", 404
+            srv_id = srv_row['id']
+        return descargar_reporte_pdf(srv_id)
+    except Exception as e:
+        return f"Error al recuperar certificado: {str(e)}", 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+

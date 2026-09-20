@@ -135,7 +135,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'ok') {
-                    window.location.href = '/certificados';
+                    window.location.href = '/servicio_exitoso/' + data.folio;
                 } else {
                     alert('Error: ' + data.message);
                     btn.disabled = false;
@@ -151,3 +151,4 @@
     </script>
 </body>
 </html>
+

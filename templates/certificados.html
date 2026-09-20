@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FumilabControl | Emisión de Certificados PDF</title>
+    <title>FumilabControl | Certificados Sanitarios Oficiales</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 
     <header class="bg-slate-950/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
+            <a href="/" class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-emerald-500/20">
                     <i class="fa-solid fa-shield-virus text-lg"></i>
                 </div>
@@ -21,12 +21,20 @@
                     <span class="text-base font-black tracking-tight text-white block">FUMILAB<span class="text-emerald-400">CONTROL</span></span>
                     <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Sistema Operativo Sanitario</span>
                 </div>
-            </div>
+            </a>
             
             <nav class="flex items-center space-x-2">
+                <a href="/" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-700/60 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-house text-emerald-400"></i>
+                    <span>Ver Landing</span>
+                </a>
                 <a href="/dashboard" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center space-x-1.5">
                     <i class="fa-solid fa-chart-line text-emerald-400"></i>
                     <span>Finanzas</span>
+                </a>
+                <a href="/inventarios" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-boxes-stacked text-indigo-400"></i>
+                    <span>Inventarios</span>
                 </a>
                 <a href="/prospectos" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center space-x-1.5">
                     <i class="fa-solid fa-inbox text-cyan-400"></i>
@@ -40,17 +48,20 @@
                     <i class="fa-solid fa-mobile-screen"></i>
                     <span>App Técnico</span>
                 </a>
+                <a href="/logout" class="px-3 py-2 rounded-xl text-xs font-bold text-rose-400 hover:bg-rose-500/10 border border-rose-500/20 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Salir</span>
+                </a>
             </nav>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        
         <div class="flex flex-col md:flex-row justify-between md:items-end gap-4 border-b border-slate-800 pb-6">
             <div>
-                <span class="text-xs font-bold text-amber-400 uppercase tracking-widest block mb-1">Inocuidad & Cumplimiento Sanitario</span>
+                <span class="text-xs font-bold text-amber-400 uppercase tracking-widest block mb-1">Cumplimiento Sanitario & NOM-256</span>
                 <h1 class="text-3xl font-black text-white tracking-tight">Expedientes & Certificados Oficiales</h1>
-                <p class="text-xs text-slate-400 mt-1">Licencia Sanitaria COFEPRIS 2009-15A013 • Descarga inmediata en formato PDF con firma y evidencia técnica.</p>
+                <p class="text-xs text-slate-400 mt-1">Licencia Sanitaria COFEPRIS 2009-15A013 • Emisión y entrega inmediata por WhatsApp y PDF.</p>
             </div>
             <a href="/reporte_campo" class="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2">
                 <i class="fa-solid fa-plus"></i>
@@ -58,37 +69,61 @@
             </a>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {% for s in servicios %}
-            <div class="bg-slate-800/50 border border-slate-700/60 rounded-3xl p-6 backdrop-blur-xl space-y-4 hover:border-slate-600 transition flex flex-col justify-between">
-                <div class="space-y-3">
-                    <div class="flex justify-between items-start">
-                        <span class="px-3 py-1 rounded-full text-[10px] font-mono font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            FOLIO #{{ s.folio }}
-                        </span>
-                        <span class="text-[10px] text-slate-400 font-semibold">{{ s.fecha_servicio }}</span>
-                    </div>
+        <div class="bg-slate-800/50 border border-slate-700/60 rounded-3xl overflow-hidden backdrop-blur-xl">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-900/70 text-slate-400 font-bold uppercase tracking-wider border-b border-slate-700/60">
+                        <tr>
+                            <th class="px-6 py-4">Folio / Fecha</th>
+                            <th class="px-6 py-4">Cliente / Inmueble</th>
+                            <th class="px-6 py-4">Tratamiento Técnico</th>
+                            <th class="px-6 py-4">Producto / Dosis</th>
+                            <th class="px-6 py-4">Estatus</th>
+                            <th class="px-6 py-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/40 text-slate-300">
+                        {% for s in servicios %}
+                        <tr class="hover:bg-slate-700/30 transition">
+                            <td class="px-6 py-4">
+                                <span class="font-mono font-black text-emerald-400 block">#{{ s.folio }}</span>
+                                <span class="text-[10px] text-slate-400">{{ s.fecha_servicio }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="font-bold text-white block">{{ s.cliente_nombre }}</span>
+                                <span class="text-[10px] text-slate-400">{{ s.cliente_direccion }}</span>
+                            </td>
+                            <td class="px-6 py-4 font-semibold text-slate-200">
+                                {{ s.tipo_servicio }}
+                            </td>
+                            <td class="px-6 py-4 text-slate-300">
+                                <span class="block font-semibold">{{ s.quimico_utilizado or 'DEMAND DUO' }}</span>
+                                <span class="text-[10px] text-emerald-400 font-mono">{{ s.dosis_aplicada or '4 ml / L' }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    {{ s.estatus }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right space-x-2">
+                                <!-- Botón WhatsApp -->
+                                <a href="https://wa.me/52{{ s.cliente_telefono or '5586406475' }}?text=Hola%20le%20compartimos%20su%20Certificado%20Oficial%20Fumilab%20Folio%20%23{{ s.folio }}%3A%20https%3A%2F%2Fcontrol-plagas-bot.onrender.com%2Fver_certificado%2F{{ s.folio }}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 border border-emerald-500/30 rounded-xl text-xs font-bold transition space-x-1.5" title="Enviar enlace por WhatsApp">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i>
+                                    <span>WhatsApp</span>
+                                </a>
 
-                    <div>
-                        <h3 class="font-black text-white text-base tracking-tight leading-snug">{{ s.tipo_servicio }}</h3>
-                        <p class="text-xs text-emerald-400 font-bold mt-1">{{ s.cliente_nombre or 'Cliente General' }}</p>
-                    </div>
-
-                    <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-700/40 text-xs space-y-1 text-slate-300">
-                        <p><strong class="text-slate-400">Producto:</strong> {{ s.quimico_utilizado or 'DEMAND DUO' }}</p>
-                        <p><strong class="text-slate-400">Dosis:</strong> {{ s.dosis_aplicada or '4 ml / L' }}</p>
-                        <p><strong class="text-slate-400">Reentrada:</strong> <span class="text-amber-300 font-semibold">{{ s.tiempo_reentrada or '2 Horas' }}</span></p>
-                    </div>
-                </div>
-
-                <a href="/descargar_reporte_pdf/{{ s.id }}" target="_blank" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-xs font-black flex items-center justify-center space-x-2 transition border border-slate-600/60">
-                    <i class="fa-solid fa-file-pdf text-rose-400 text-sm"></i>
-                    <span>Descargar Certificado Oficial</span>
-                </a>
+                                <!-- Botón PDF -->
+                                <a href="/ver_certificado/{{ s.folio }}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-xl text-xs font-black transition space-x-1">
+                                    <i class="fa-solid fa-file-pdf text-rose-400"></i>
+                                    <span>PDF</span>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            {% endfor %}
         </div>
-
     </main>
 </body>
 </html>
