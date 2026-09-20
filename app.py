@@ -60,126 +60,131 @@ def get_db():
     conn.execute("PRAGMA journal_mode=WAL;")
     return conn
 
-def asegurar_columna(conn, tabla, columna, tipo_def):
-    try:
-        cursor = conn.execute(f"PRAGMA table_info({tabla})")
-        columnas = [fila[1] for fila in cursor.fetchall()]
-        if columna not in columnas:
-            conn.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {tipo_def}")
-    except Exception:
-        pass
-
 def init_db():
+    conn = sqlite3.connect(DB_FILE, timeout=30.0)
+    conn.row_factory = sqlite3.Row
     try:
-        with get_db() as conn:
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS clientes (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    nombre_comercial TEXT NOT NULL,
-                    contacto TEXT,
-                    telefono TEXT,
-                    direccion TEXT,
-                    tipo_inmueble TEXT
+        cur = conn.cursor()
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS clientes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre_comercial TEXT NOT NULL,
+                contacto TEXT,
+                telefono TEXT,
+                direccion TEXT,
+                tipo_inmueble TEXT
+            )
+        ''')
+
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS servicios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                folio TEXT UNIQUE,
+                cliente_id INTEGER,
+                tipo_servicio TEXT,
+                fecha_servicio TEXT,
+                hora_inicio TEXT,
+                hora_fin TEXT,
+                costo REAL DEFAULT 1400.0,
+                gasto_quimicos REAL DEFAULT 250.0,
+                gasto_gasolina REAL DEFAULT 180.0,
+                gasto_nomina REAL DEFAULT 350.0,
+                gasto_equipo REAL DEFAULT 80.0,
+                quimico_utilizado TEXT,
+                ingrediente_activo TEXT,
+                dosis_aplicada TEXT,
+                equipo_utilizado TEXT,
+                tiempo_reentrada TEXT,
+                actividades_realizadas TEXT,
+                recomendaciones TEXT,
+                firma_cliente TEXT,
+                estatus TEXT DEFAULT 'Terminado'
+            )
+        ''')
+
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS prospectos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                folio TEXT,
+                nombre TEXT,
+                telefono TEXT,
+                tipo_inmueble TEXT,
+                plaga TEXT,
+                fecha_solicitud TEXT,
+                estatus TEXT DEFAULT 'Pendiente',
+                notas TEXT
+            )
+        ''')
+
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS inventario (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tipo TEXT,
+                nombre TEXT NOT NULL,
+                registro_cofepris TEXT,
+                stock_actual REAL,
+                unidad TEXT,
+                costo_unitario REAL,
+                estado TEXT DEFAULT 'Disponible'
+            )
+        ''')
+
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS servicio_fotos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                servicio_id INTEGER,
+                ruta_imagen TEXT
+            )
+        ''')
+        conn.commit()
+
+        # Sembrado forzado con transacciones independientes
+        c_count = cur.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
+        if c_count == 0:
+            cur.executemany('''
+                INSERT INTO clientes (nombre_comercial, contacto, telefono, direccion, tipo_inmueble) VALUES (?, ?, ?, ?, ?)
+            ''', [
+                ('Farmacia Similares 3509 Ecatepec', 'Nancy Padilla Garcia', '5541419369', 'Av. Jardines de Morelos Mz. 316', 'Comercial'),
+                ('Purificadora Hidropura', 'Elizabeth Carbajal', '5534842783', 'Cuautitlan Izcalli EdoMex', 'Industrial'),
+                ('Restaurante Aloha Mar y Tierra', 'Mauricio Garduño', '5632326172', 'Blvd. Valle San Felipe', 'Alimentos')
+            ])
+            conn.commit()
+
+        inv_count = cur.execute("SELECT COUNT(*) FROM inventario").fetchone()[0]
+        if inv_count == 0:
+            cur.executemany('''
+                INSERT INTO inventario (tipo, nombre, registro_cofepris, stock_actual, unidad, costo_unitario, estado) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', [
+                ('Quimico', 'DEMAND DUO (Syngenta)', 'RSCO-URB-INAC-111-315-009-0.02', 12.5, 'Litros', 850.0, 'Disponible'),
+                ('Quimico', 'RODILON BLOQUE (Bayer)', 'RSCO-URB-ROD-0101-322-005-0.0025', 18.0, 'Kg', 420.0, 'Disponible'),
+                ('Quimico', 'BIOCIDAL PLUS 5TA GEN', 'RSCO-DOM-DES-0102-301-002-10', 25.0, 'Litros', 310.0, 'Disponible'),
+                ('Equipo', 'Aspersora Manual Swissmex 15L', 'NOM-STPS', 4.0, 'Piezas', 1200.0, 'Disponible'),
+                ('Equipo', 'Termonebulizador en Frío ULV', 'CE-ISO', 2.0, 'Piezas', 4800.0, 'Disponible')
+            ])
+            conn.commit()
+
+        srv_count = cur.execute("SELECT COUNT(*) FROM servicios WHERE folio = '3501'").fetchone()[0]
+        if srv_count == 0:
+            cur.execute('''
+                INSERT INTO servicios (
+                    folio, cliente_id, tipo_servicio, fecha_servicio, hora_inicio, hora_fin,
+                    costo, gasto_quimicos, gasto_gasolina, gasto_nomina, gasto_equipo,
+                    quimico_utilizado, ingrediente_activo, dosis_aplicada, equipo_utilizado, tiempo_reentrada,
+                    actividades_realizadas, recomendaciones, estatus
+                ) VALUES (
+                    '3501', 1, 'MANEJO INTEGRAL DE CUCARACHAS (MIP)', '2026-09-20', '08:30 AM', '09:45 AM',
+                    1400.0, 180.0, 150.0, 350.0, 50.0,
+                    'DEMAND DUO', 'LAMBDA CYHALOTRINA 9.7%', '4 ml / L de agua', 'Aspersora Manual Swissmex', '2 Horas',
+                    'Aspersión perimetral focalizada y colocación de gel cucarachicida en zoclos y contactos.',
+                    'No realizar aseo profundo en áreas tratadas por 24 horas. Mantener ventilación previa al reingreso.',
+                    'Terminado'
                 )
             ''')
-            asegurar_columna(conn, "clientes", "tipo_inmueble", "TEXT")
-
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS servicios (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    folio TEXT UNIQUE,
-                    cliente_id INTEGER,
-                    tipo_servicio TEXT,
-                    fecha_servicio TEXT,
-                    hora_inicio TEXT,
-                    hora_fin TEXT,
-                    costo REAL DEFAULT 1400.0,
-                    gasto_quimicos REAL DEFAULT 250.0,
-                    gasto_gasolina REAL DEFAULT 180.0,
-                    gasto_nomina REAL DEFAULT 350.0,
-                    gasto_equipo REAL DEFAULT 80.0,
-                    quimico_utilizado TEXT,
-                    ingrediente_activo TEXT,
-                    dosis_aplicada TEXT,
-                    equipo_utilizado TEXT,
-                    tiempo_reentrada TEXT,
-                    actividades_realizadas TEXT,
-                    recomendaciones TEXT,
-                    firma_cliente TEXT,
-                    estatus TEXT DEFAULT 'Terminado'
-                )
-            ''')
-
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS prospectos (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    folio TEXT,
-                    nombre TEXT,
-                    telefono TEXT,
-                    tipo_inmueble TEXT,
-                    plaga TEXT,
-                    fecha_solicitud TEXT,
-                    estatus TEXT DEFAULT 'Pendiente',
-                    notas TEXT
-                )
-            ''')
-
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS inventario (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    tipo TEXT,
-                    nombre TEXT NOT NULL,
-                    registro_cofepris TEXT,
-                    stock_actual REAL,
-                    unidad TEXT,
-                    costo_unitario REAL,
-                    estado TEXT DEFAULT 'Disponible'
-                )
-            ''')
-
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS servicio_fotos (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    servicio_id INTEGER,
-                    ruta_imagen TEXT
-                )
-            ''')
-
-            if conn.execute("SELECT COUNT(*) FROM clientes").fetchone()[0] == 0:
-                conn.execute('''
-                    INSERT INTO clientes (nombre_comercial, contacto, telefono, direccion, tipo_inmueble) VALUES 
-                    ('Farmacia Similares 3509 Ecatepec', 'Nancy Padilla Garcia', '5541419369', 'Av. Jardines de Morelos Mz. 316', 'Comercial'),
-                    ('Purificadora Hidropura', 'Elizabeth Carbajal', '5534842783', 'Cuautitlan Izcalli EdoMex', 'Industrial'),
-                    ('Restaurante Aloha Mar y Tierra', 'Mauricio Garduño', '5632326172', 'Blvd. Valle San Felipe', 'Alimentos')
-                ''')
-
-            if conn.execute("SELECT COUNT(*) FROM inventario").fetchone()[0] == 0:
-                conn.execute('''
-                    INSERT INTO inventario (tipo, nombre, registro_cofepris, stock_actual, unidad, costo_unitario, estado) VALUES
-                    ('Quimico', 'DEMAND DUO (Syngenta)', 'RSCO-URB-INAC-111-315-009-0.02', 12.5, 'Litros', 850.0, 'Disponible'),
-                    ('Quimico', 'RODILON BLOQUE (Bayer)', 'RSCO-URB-ROD-0101-322-005-0.0025', 18.0, 'Kg', 420.0, 'Disponible'),
-                    ('Quimico', 'BIOCIDAL PLUS 5TA GEN', 'RSCO-DOM-DES-0102-301-002-10', 25.0, 'Litros', 310.0, 'Disponible'),
-                    ('Equipo', 'Aspersora Manual Swissmex 15L', 'NOM-STPS', 4.0, 'Piezas', 1200.0, 'Disponible'),
-                    ('Equipo', 'Termonebulizador en Frío ULV', 'CE-ISO', 2.0, 'Piezas', 4800.0, 'Disponible')
-                ''')
-
-            if conn.execute("SELECT COUNT(*) FROM servicios WHERE folio = '3501'").fetchone()[0] == 0:
-                conn.execute('''
-                    INSERT INTO servicios (
-                        folio, cliente_id, tipo_servicio, fecha_servicio, hora_inicio, hora_fin,
-                        costo, gasto_quimicos, gasto_gasolina, gasto_nomina, gasto_equipo,
-                        quimico_utilizado, ingrediente_activo, dosis_aplicada, equipo_utilizado, tiempo_reentrada,
-                        actividades_realizadas, recomendaciones, estatus
-                    ) VALUES 
-                    ('3501', 1, 'MANEJO INTEGRAL DE CUCARACHAS (MIP)', '2026-09-20', '08:30 AM', '09:45 AM',
-                     1400.0, 180.0, 150.0, 350.0, 50.0,
-                     'DEMAND DUO', 'LAMBDA CYHALOTRINA 9.7%', '4 ml / L de agua', 'Aspersora Manual Swissmex', '2 Horas',
-                     'Aspersión perimetral focalizada y colocación de gel cucarachicida en zoclos y contactos.',
-                     'No realizar aseo profundo en áreas tratadas por 24 horas. Mantener ventilación previa al reingreso.',
-                     'Terminado')
-                ''')
+            conn.commit()
     except Exception as e:
         print(f"Init DB error: {e}")
+    finally:
+        conn.close()
 
 init_db()
 
@@ -210,6 +215,11 @@ def logout():
 def home():
     return render_template('landing.html')
 
+@app.route('/panel')
+@login_requerido
+def panel_redirect():
+    return redirect(url_for('dashboard_financiero'))
+
 @app.route('/tecnico')
 def tecnico():
     return render_template('tecnico_home.html')
@@ -218,6 +228,7 @@ def tecnico():
 @app.route('/reporte_campo/')
 def reporte_campo():
     try:
+        init_db()
         with get_db() as conn:
             clientes = [dict(c) for c in conn.execute("SELECT * FROM clientes").fetchall()]
             quimicos = [dict(q) for q in conn.execute("SELECT * FROM inventario WHERE tipo = 'Quimico'").fetchall()]
@@ -272,6 +283,7 @@ def solicitar_cotizacion():
                     INSERT INTO prospectos (folio, nombre, telefono, tipo_inmueble, plaga, fecha_solicitud, estatus, notas)
                     VALUES (?, ?, ?, ?, ?, ?, 'Pendiente', ?)
                 ''', (folio, nombre, telefono, tipo_inmueble, plaga, fecha_str, notas))
+                conn.commit()
 
             contacto_formateado = f"{nombre} - {telefono}" if telefono else nombre
             datos_sheet = {
@@ -302,6 +314,7 @@ def cotizacion_exitosa():
 @login_requerido
 def dashboard_financiero():
     try:
+        init_db()
         hoy = datetime.now().date()
         with get_db() as conn:
             filas = conn.execute("SELECT * FROM servicios ORDER BY id DESC").fetchall()
@@ -400,6 +413,7 @@ def dashboard_financiero():
 @login_requerido
 def inventarios():
     try:
+        init_db()
         with get_db() as conn:
             items = [dict(i) for i in conn.execute("SELECT * FROM inventario ORDER BY tipo DESC, nombre ASC").fetchall()]
         return render_template('inventarios.html', items=items)
@@ -410,6 +424,7 @@ def inventarios():
 @login_requerido
 def prospectos():
     try:
+        init_db()
         with get_db() as conn:
             leads = [dict(f) for f in conn.execute("SELECT * FROM prospectos ORDER BY id DESC").fetchall()]
         return render_template('prospectos.html', leads=leads)
@@ -420,6 +435,7 @@ def prospectos():
 @login_requerido
 def certificados():
     try:
+        init_db()
         with get_db() as conn:
             filas = conn.execute('''
                 SELECT s.*, 
@@ -451,6 +467,7 @@ def agregar_inventario():
                 INSERT INTO inventario (tipo, nombre, registro_cofepris, stock_actual, unidad, costo_unitario, estado)
                 VALUES (?, ?, ?, ?, ?, ?, 'Disponible')
             ''', (tipo, nombre, registro, stock, unidad, costo))
+            conn.commit()
 
         return redirect('/inventarios')
     except Exception as e:
@@ -497,6 +514,7 @@ def guardar_reporte():
                 SET stock_actual = MAX(0, ROUND(stock_actual - 0.25, 2)) 
                 WHERE tipo = 'Quimico' AND nombre LIKE ?
             ''', (f"%{producto_nombre}%",))
+            conn.commit()
 
         return jsonify({'status': 'ok', 'servicio_id': srv_id, 'folio': folio})
     except Exception as e:
@@ -559,9 +577,6 @@ def ver_certificado_publico(folio):
 def imprimir_stickers_qr(cliente_id):
     try:
         import qrcode
-        from reportlab.lib.pagesizes import letter
-        from reportlab.pdfgen import canvas
-        from reportlab.lib import colors
 
         with get_db() as conn:
             c_row = conn.execute("SELECT * FROM clientes WHERE id = ?", (cliente_id,)).fetchone()
@@ -580,7 +595,6 @@ def imprimir_stickers_qr(cliente_id):
         matrix = qr.get_matrix()
         matrix_size = len(matrix)
 
-        # Posiciones 2x2 en la hoja tamaño carta
         posiciones = [
             (35, 410),
             (315, 410),
@@ -592,12 +606,10 @@ def imprimir_stickers_qr(cliente_id):
         h_box = 345
 
         for idx, (x, y) in enumerate(posiciones, start=1):
-            # Contenedor del sticker
             pdf.setFillColor(colors.HexColor("#f8fafc"))
             pdf.setStrokeColor(colors.HexColor("#064e3b"))
             pdf.roundRect(x, y, w_box, h_box, 8, stroke=1, fill=1)
 
-            # Encabezado institucional
             pdf.setFillColor(colors.HexColor("#064e3b"))
             pdf.roundRect(x, y + h_box - 50, w_box, 50, 6, stroke=0, fill=1)
 
@@ -609,7 +621,6 @@ def imprimir_stickers_qr(cliente_id):
             pdf.setFont("Helvetica-Bold", 8)
             pdf.drawRightString(x + w_box - 10, y + h_box - 32, f"ESTACIÓN #{idx:02d}")
 
-            # Datos del cliente
             pdf.setFillColor(colors.HexColor("#0f172a"))
             pdf.setFont("Helvetica-Bold", 8.5)
             pdf.drawString(x + 10, y + h_box - 65, str(cliente.get('nombre_comercial'))[:36])
@@ -617,7 +628,6 @@ def imprimir_stickers_qr(cliente_id):
             pdf.setFillColor(colors.HexColor("#64748b"))
             pdf.drawString(x + 10, y + h_box - 75, f"Ubicación: {str(cliente.get('direccion'))[:40]}")
 
-            # Dibujo vectorial nítido del QR directamente en el canvas
             qr_display_size = 110.0
             scale = qr_display_size / matrix_size
             qr_origin_x = x + (w_box - qr_display_size) / 2.0
@@ -636,7 +646,6 @@ def imprimir_stickers_qr(cliente_id):
                             fill=1
                         )
 
-            # Recuadro de bitácora técnica de inspección
             pdf.setFillColor(colors.HexColor("#e2e8f0"))
             pdf.setStrokeColor(colors.HexColor("#94a3b8"))
             pdf.rect(x + 10, y + 42, w_box - 20, 88, fill=0, stroke=1)
@@ -650,7 +659,6 @@ def imprimir_stickers_qr(cliente_id):
             pdf.drawString(x + 15, y + 70, "Fecha: ____/____/2026   | Consumo: [ ] 0%  [ ] 50%  [ ] 100%")
             pdf.drawString(x + 15, y + 54, "Fecha: ____/____/2026   | Consumo: [ ] 0%  [ ] 50%  [ ] 100%")
 
-            # Advertencias normativas
             pdf.setFillColor(colors.HexColor("#b91c1c"))
             pdf.setFont("Helvetica-Bold", 6.5)
             pdf.drawCentredString(x + (w_box / 2.0), y + 26, "DISPOSITIVO DE MONITOREO SANITARIO • NO RETIRAR")
@@ -686,6 +694,7 @@ def marcar_atendido(lead_id):
     try:
         with get_db() as conn:
             conn.execute("UPDATE prospectos SET estatus = 'Atendido' WHERE id = ?", (lead_id,))
+            conn.commit()
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -829,4 +838,3 @@ def pwa_service_worker():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
-
