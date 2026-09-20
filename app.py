@@ -17,22 +17,34 @@ app = Flask(__name__)
 app.secret_key = "fumilab_control_pro_secret_key_2026"
 
 DB_FILE = 'fumilab.db'
+
+# Pega tu URL de Google Apps Script (o se toma de Render Environment si existe)
 SHEETS_WEBHOOK_URL = os.environ.get('SHEETS_WEBHOOK_URL', '')
 
 def enviar_a_google_sheets(datos):
-    if not SHEETS_WEBHOOK_URL:
+    """Envía los datos a Google Sheets siguiendo la redirección 302 de Google."""
+    url = SHEETS_WEBHOOK_URL.strip()
+    if not url:
+        print("Aviso: SHEETS_WEBHOOK_URL no configurada")
         return
     try:
-        req_data = json.dumps(datos).encode('utf-8')
-        req = urllib.request.Request(
-            SHEETS_WEBHOOK_URL, 
-            data=req_data, 
-            headers={'Content-Type': 'application/json'},
-            method='POST'
-        )
-        urllib.request.urlopen(req, timeout=5)
+        payload = json.dumps(datos).encode('utf-8')
+        headers = {
+            'Content-Type': 'application/json; charset=utf-8',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+        }
+        
+        # Clase para seguir redirecciones conservando el POST y contenido
+        class RedirectHandler(urllib.request.HTTPRedirectHandler):
+            def http_error_302(self, req, fp, code, msg, headers):
+                return urllib.request.HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)
+
+        opener = urllib.request.build_opener(RedirectHandler)
+        req = urllib.request.Request(url, data=payload, headers=headers, method='POST')
+        with opener.open(req, timeout=8) as resp:
+            print(f"Respuesta Sheets: {resp.status}")
     except Exception as e:
-        print(f"Error envio Sheets: {e}")
+        print(f"Error envio a Sheets: {e}")
 
 def get_db():
     conn = sqlite3.connect(DB_FILE, timeout=30.0)
@@ -277,8 +289,8 @@ def escaner_qr():
 def solicitar_cotizacion():
     if request.method == 'POST':
         try:
-            nombre = (request.form.get('nombre') or request.form.get('nombre_completo') or 'Cliente').strip()
-            telefono = (request.form.get('telefono') or request.form.get('celular') or '').strip()
+            nombre = (request.form.get('nombre') or request.form.get('nombre_completo') or 'Cliente Web').strip()
+            telefono = (request.form.get('telefono') or request.form.get('celular') or '5500000000').strip()
             tipo_inmueble = (request.form.get('tipo_inmueble') or request.form.get('inmueble') or 'Hogar').strip()
             plaga = (request.form.get('plaga') or request.form.get('plaga_tratar') or 'Cucarachas').strip()
             notas = request.form.get('notas', '')
@@ -293,10 +305,11 @@ def solicitar_cotizacion():
                     VALUES (?, ?, ?, ?, ?, ?, 'Pendiente', ?)
                 ''', (folio, nombre, telefono, tipo_inmueble, plaga, fecha_str, notas))
 
-            # Compatible con las variables de tu Google Apps Script
+            # Enviar a Google Sheets usando los nombres de tu script:
+            # sheet.appendRow([data.fecha, data.contacto, data.telefono, data.plaga, data.inmueble, data.origen])
             datos_sheet = {
                 "fecha": fecha_str,
-                "contacto": nombre,
+                "contacto": f"{nombre} - {telefono}",
                 "telefono": telefono,
                 "plaga": plaga,
                 "inmueble": tipo_inmueble,
@@ -455,7 +468,6 @@ def descargar_reporte_pdf(servicio_id):
         pdf.setFillColor(colors.HexColor("#b91c1c"))
         pdf.drawString(465, y_tbl - 18, str(srv.get('tiempo_reentrada') or '2 Horas'))
 
-        # Firma
         firma_data = srv.get('firma_cliente')
         if firma_data and ',' in firma_data:
             try:
