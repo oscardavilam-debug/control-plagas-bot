@@ -317,6 +317,7 @@ def cotizacion_exitosa():
 @login_requerido
 def dashboard_financiero():
     try:
+        hoy = datetime.now().date()
         with get_db() as conn:
             filas = conn.execute("SELECT * FROM servicios ORDER BY id DESC").fetchall()
             servicios = [dict(f) for f in filas]
@@ -332,8 +333,72 @@ def dashboard_financiero():
             clientes_count = conn.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
             inv_count = conn.execute("SELECT COUNT(*) FROM inventario").fetchone()[0]
 
+            # Auditoría de vigencias sanitarias (re-compra a 30 días)
+            clientes_raw = conn.execute("SELECT * FROM clientes").fetchall()
+            polizas_control = []
+            for cl in clientes_raw:
+                c_dict = dict(cl)
+                ult_srv = conn.execute(
+                    "SELECT folio, fecha_servicio FROM servicios WHERE cliente_id = ? ORDER BY id DESC LIMIT 1",
+                    (c_dict['id'],)
+                ).fetchone()
+
+                if ult_srv and ult_srv['fecha_servicio']:
+                    folio_ult = ult_srv['folio']
+                    try:
+                        fecha_srv = datetime.strptime(ult_srv['fecha_servicio'][:10], "%Y-%m-%d").date()
+                        dias_pasados = (hoy - fecha_srv).days
+                    except Exception:
+                        dias_pasados = 15
+                else:
+                    folio_ult = "S/N"
+                    dias_pasados = 32
+
+                dias_restantes = max(0, 30 - dias_pasados)
+                if dias_pasados <= 22:
+                    estado_vigencia = "Vigente"
+                    badge_color = "emerald"
+                elif dias_pasados <= 30:
+                    estado_vigencia = "Por Vencer"
+                    badge_color = "amber"
+                else:
+                    estado_vigencia = "Vencido"
+                    badge_color = "rose"
+
+                tel_raw = "".join([d for d in str(c_dict.get('telefono') or '5586406475') if d.isdigit()])
+                wa_tel = f"52{tel_raw}" if len(tel_raw) == 10 else (tel_raw or "525586406475")
+                contacto_nom = c_dict.get('contacto') or c_dict.get('nombre_comercial')
+
+                if estado_vigencia == "Vencido":
+                    txt_wa = (
+                        f"Hola {contacto_nom}, le saludamos de Fumilab Control Integral. Le informamos que "
+                        f"la vigencia sanitaria de su establecimiento ({c_dict.get('nombre_comercial')}) "
+                        f"ha concluido (hace {dias_pasados} días). Para mantener su cumplimiento ante auditorías sanitarias, "
+                        f"¿le agendamos su servicio de renovación esta semana?"
+                    )
+                else:
+                    txt_wa = (
+                        f"Hola {contacto_nom}, le saludamos de Fumilab Control Integral. Le recordamos que "
+                        f"restan {dias_restantes} días de vigencia de su Certificado #{folio_ult} ({c_dict.get('nombre_comercial')}). "
+                        f"¿Gusta que reservemos fecha para su refuerzo preventivo?"
+                    )
+
+                polizas_control.append({
+                    'id': c_dict['id'],
+                    'nombre': c_dict['nombre_comercial'],
+                    'contacto': contacto_nom,
+                    'telefono': c_dict.get('telefono'),
+                    'folio_ultimo': folio_ult,
+                    'dias_pasados': dias_pasados,
+                    'dias_restantes': dias_restantes,
+                    'estado': estado_vigencia,
+                    'badge_color': badge_color,
+                    'wa_link': f"https://wa.me/{wa_tel}?text={urllib.parse.quote(txt_wa)}"
+                })
+
         return render_template('dashboard_financiero.html',
                                servicios=servicios,
+                               polizas=polizas_control,
                                ingresos_totales=f"{ingresos_totales:,.2f}",
                                gasto_quimicos=f"{gasto_quimicos:,.2f}",
                                gasto_gasolina=f"{gasto_gasolina:,.2f}",
@@ -670,5 +735,6 @@ def descargar_backup_db():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
