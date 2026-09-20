@@ -458,7 +458,8 @@ def descargar_reporte_pdf(servicio_id):
         pdf.drawRightString(572, 738, f"FECHA: {srv.get('fecha_servicio') or '2026-09-19'}")
 
         pdf.setFillColor(colors.HexColor("#f8fafc"))
-        pdf.roundRect(35, 605, 542, 90, 6, fill=True, stroke=colors.HexColor("#cbd5e1"))
+        pdf.setStrokeColor(colors.HexColor('#cbd5e1'))
+        pdf.roundRect(35, 605, 542, 90, 6, stroke=1, fill=1)
         pdf.setFillColor(colors.HexColor("#0f172a"))
         pdf.setFont("Helvetica-Bold", 8)
         pdf.drawString(45, 675, "Razón Social / Cliente:")
@@ -573,4 +574,5 @@ def ver_certificado_publico(folio):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
