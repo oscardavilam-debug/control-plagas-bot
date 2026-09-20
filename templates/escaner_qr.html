@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fumilab | Monitoreo QR de Estaciones</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col justify-between p-4">
+
+    <div class="text-center py-2">
+        <h1 class="text-lg font-black tracking-tight">Monitoreo de Cebaderos & Lámparas</h1>
+        <p class="text-xs text-slate-400 mt-0.5">Apunta la cámara al código QR de la estación</p>
+    </div>
+
+    <!-- Contenedor del Lector QR con mira roja -->
+    <div class="relative w-full max-w-sm mx-auto overflow-hidden rounded-3xl border-2 border-emerald-500 bg-black aspect-square shadow-2xl">
+        <div id="reader" class="w-full h-full"></div>
+        <div class="absolute inset-x-8 top-1/2 -translate-y-1/2 h-0.5 bg-rose-500 animate-pulse pointer-events-none"></div>
+    </div>
+
+    <!-- Datos de la Estación Escaneada -->
+    <div id="resultado_scan" class="bg-slate-800 p-4 rounded-2xl max-w-sm mx-auto w-full border border-slate-700 hidden">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-xs font-bold text-emerald-400 uppercase">Estación Detectada</span>
+            <span id="qr_id" class="text-xs font-mono bg-slate-900 px-2 py-0.5 rounded text-white"></span>
+        </div>
+        <div class="space-y-2 text-xs">
+            <div class="flex justify-between"><span class="text-slate-400">Área:</span> <strong id="qr_area">Cocina / Almacén</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400">Estado de Cebo:</span>
+                <select id="qr_consumo" class="bg-slate-900 text-white px-2 py-1 rounded border border-slate-700">
+                    <option>Sin Consumo (100% Cebo)</option>
+                    <option>Consumo Parcial (50%)</option>
+                    <option>Consumo Total (0% - Requiere Reemplazo)</option>
+                    <option>Estación Dañada / Obstruida</option>
+                </select>
+            </div>
+            <button onclick="guardarRevisionEstacion()" class="w-full py-2.5 bg-emerald-500 text-slate-950 font-bold rounded-xl mt-2">
+                Confirmar Registro
+            </button>
+        </div>
+    </div>
+
+    <div class="text-center py-3">
+        <a href="/reporte_campo" class="text-xs font-semibold text-slate-400 hover:text-white transition">← Volver al Reporte de Campo</a>
+    </div>
+
+    <script>
+        function onScanSuccess(decodedText, decodedResult) {
+            html5QrcodeScanner.clear();
+            document.getElementById('resultado_scan').classList.remove('hidden');
+            document.getElementById('qr_id').textContent = decodedText;
+        }
+
+        const html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", { fps: 10, qrbox: { width: 220, height: 220 } }, false);
+        html5QrcodeScanner.render(onScanSuccess);
+
+        function guardarRevisionEstacion() {
+            alert('¡Inspección de la estación registrada con éxito!');
+            window.location.href = '/reporte_campo';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FumilabControl | Reporte de Servicio de Campo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+</head>
+<body class="bg-slate-100 text-slate-900 pb-12">
+
+    <!-- Header Verde Plagap -->
+    <header class="bg-emerald-600 text-white p-4 sticky top-0 z-30 shadow-md">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-bars text-lg"></i>
+                <div>
+                    <h1 class="font-extrabold text-sm tracking-tight leading-none">Reporte de Servicio</h1>
+                    <span class="text-[10px] text-emerald-100 font-semibold uppercase">FumilabControl Oficial</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 text-sm">
+                <i class="fa-solid fa-bell"></i>
+                <i class="fa-solid fa-gear"></i>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-lg mx-auto p-4 space-y-4">
+
+        <!-- Selector de Evento y Navegación GPS -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Cliente / Establecimiento *</label>
+            <select id="cliente_select" class="w-full p-3 rounded-xl border border-slate-300 font-bold text-slate-800 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                <option value="1" data-dir="Av. Jardines de Morelos Mz. 316, Ecatepec EdoMex" data-tel="5541419369">Farmacia Similares 3509 Ecatepec</option>
+                <option value="2" data-dir="Purificadora Hidropura, Ecatepec">Purificadora Hidropura</option>
+                <option value="3" data-dir="Blvd. Valle San Felipe Mz 14, Val">ALOHA MAR Y TIERRA</option>
+            </select>
+
+            <div class="mt-3 flex items-center justify-between pt-3 border-t border-slate-100">
+                <span id="cliente_dir" class="text-xs text-slate-500 truncate max-w-[200px]">Av. Jardines de Morelos Mz. 316</span>
+                <a id="btn_llevame" href="https://maps.google.com/?q=Av.+Jardines+de+Morelos+Mz.+316+Ecatepec" target="_blank" class="px-3 py-1.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-lg flex items-center space-x-1 hover:bg-emerald-200 transition">
+                    <i class="fa-solid fa-location-arrow"></i>
+                    <span>Llévame</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Check-In / Check-Out Timers -->
+        <div class="grid grid-cols-2 gap-3 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Hora Inicio</label>
+                <input type="time" id="hora_inicio" class="w-full mt-1 p-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-bold">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Hora Fin</label>
+                <input type="time" id="hora_fin" class="w-full mt-1 p-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-bold">
+            </div>
+            <div class="col-span-2 flex space-x-2 pt-1">
+                <button type="button" onclick="marcarCheckIn()" class="flex-1 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-sm active:scale-95 transition">
+                    <i class="fa-solid fa-play mr-1"></i> Check In
+                </button>
+                <button type="button" onclick="marcarCheckOut()" class="flex-1 py-2 bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm active:scale-95 transition">
+                    <i class="fa-solid fa-stop mr-1"></i> Check Out
+                </button>
+            </div>
+        </div>
+
+        <!-- Datos Técnicos del Servicio -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+            <div>
+                <label class="text-[11px] font-bold text-slate-500 uppercase">Tipo de Visita *</label>
+                <select id="tipo_visita" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold mt-1">
+                    <option>MANEJO INTEGRAL DE CUCARACHAS (MIP)</option>
+                    <option>Fumigación General e Insectos Rastreros</option>
+                    <option>Desinfección Patógena / Sanitización</option>
+                    <option>Control de Roedores / Desratización</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="text-[11px] font-bold text-slate-500 uppercase">Producto Químico Utilizado *</label>
+                <select id="producto_utilizado" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold mt-1">
+                    <option value="DEMAND DUO">DEMAND DUO (Lambda Cyhalotrina + Tiametoxam)</option>
+                    <option value="MAXFORCE FORTE">MAXFORCE FORTE GEL (Fipronil 0.05%)</option>
+                    <option value="VALENT">VALENT GEL (Clotianidin y Piriproxifen)</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">Dosis Aplicada</label>
+                    <input type="text" id="dosis" value="4 ml / litro de agua" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium mt-1">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">Tiempo Reentrada</label>
+                    <input type="text" id="tiempo_reentrada" value="2 Horas" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium mt-1">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[11px] font-bold text-slate-500 uppercase">Áreas Cubiertas & Actividades</label>
+                <textarea id="actividades" rows="2" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium mt-1" placeholder="Aspersión perimetral, focalizada y colocación de gel en grietas"></textarea>
+            </div>
+        </div>
+
+        <!-- Evidencia Fotográfica (Galería) -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-center mb-2">
+                <label class="text-[11px] font-bold text-slate-500 uppercase">Reporte Fotográfico</label>
+                <span class="text-[10px] text-slate-400 font-semibold">Máximo 6 fotos</span>
+            </div>
+            <input type="file" id="fotos_input" accept="image/*" multiple capture="environment" class="hidden" onchange="procesarFotos(this)">
+            <button type="button" onclick="document.getElementById('fotos_input').click()" class="w-full py-3 bg-emerald-50 border-2 border-dashed border-emerald-300 text-emerald-700 rounded-xl text-xs font-bold flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-camera text-base"></i>
+                <span>Tomar / Seleccionar Fotos de Evidencia</span>
+            </button>
+            <div id="preview_fotos" class="grid grid-cols-3 gap-2 mt-3"></div>
+        </div>
+
+        <!-- Firma Digital del Cliente (Canvas Táctil) -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-center mb-2">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase block">Firma de Conformidad del Cliente *</label>
+                    <span class="text-[10px] text-slate-400">Firmar con el dedo sobre el recuadro</span>
+                </div>
+                <button type="button" onclick="signaturePad.clear()" class="text-xs text-rose-500 font-bold">
+                    <i class="fa-solid fa-eraser mr-1"></i>Limpiar
+                </button>
+            </div>
+            <div class="border-2 border-emerald-500 rounded-xl overflow-hidden bg-white">
+                <canvas id="signature-pad" class="w-full h-44 touch-none"></canvas>
+            </div>
+        </div>
+
+        <!-- Botón de Envío y Generación -->
+        <button type="button" onclick="enviarReporte()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-2xl text-sm shadow-lg shadow-emerald-600/30 transition flex items-center justify-center space-x-2 active:scale-95">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>ENVIAR REPORTE & GENERAR CERTIFICADO</span>
+        </button>
+
+    </main>
+
+    <script>
+        // Inicializar Lienzo de Firma
+        const canvas = document.getElementById('signature-pad');
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+        }
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+
+        const signaturePad = new SignaturePad(canvas, {
+            penColor: "rgb(15, 23, 42)",
+            minWidth: 1.5,
+            maxWidth: 3.5
+        });
+
+        function marcarCheckIn() {
+            const ahora = new Date();
+            document.getElementById('hora_inicio').value = ahora.toTimeString().substring(0, 5);
+        }
+
+        function marcarCheckOut() {
+            const ahora = new Date();
+            document.getElementById('hora_fin').value = ahora.toTimeString().substring(0, 5);
+        }
+
+        let fotosBase64 = [];
+        function procesarFotos(input) {
+            const contenedor = document.getElementById('preview_fotos');
+            contenedor.innerHTML = '';
+            fotosBase64 = [];
+            Array.from(input.files).slice(0, 6).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    fotosBase64.push(e.target.result);
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'w-full h-20 object-cover rounded-lg border border-slate-200';
+                    contenedor.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function enviarReporte() {
+            if (signaturePad.isEmpty()) {
+                alert("Es obligatoria la firma del cliente antes de generar el certificado.");
+                return;
+            }
+            const firmaData = signaturePad.toDataURL();
+            
+            const payload = {
+                cliente_id: document.getElementById('cliente_select').value,
+                hora_inicio: document.getElementById('hora_inicio').value,
+                hora_fin: document.getElementById('hora_fin').value,
+                tipo_visita: document.getElementById('tipo_visita').value,
+                producto: document.getElementById('producto_utilizado').value,
+                dosis: document.getElementById('dosis').value,
+                reentrada: document.getElementById('tiempo_reentrada').value,
+                actividades: document.getElementById('actividades').value,
+                firma: firmaData,
+                fotos: fotosBase64
+            };
+
+            fetch('/api/guardar_reporte_servicio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    window.location.href = `/descargar_reporte_pdf/${data.servicio_id}`;
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(err => alert('Error de conexión con el servidor.'));
+        }
+    </script>
+</body>
+</html>
