@@ -402,6 +402,28 @@ def descargar_reporte_pdf(servicio_id):
     except Exception as e:
         return f"Error al generar Certificado: {str(e)}", 500
 
+
+@app.route('/api/inventario/agregar', methods=['POST'])
+def agregar_inventario():
+    try:
+        tipo = request.form.get('tipo', 'Quimico')
+        nombre = request.form.get('nombre', '').strip()
+        registro = request.form.get('registro_cofepris', '').strip()
+        stock = float(request.form.get('stock_actual') or 0)
+        unidad = request.form.get('unidad', 'Piezas').strip()
+        costo = float(request.form.get('costo_unitario') or 0)
+
+        with get_db() as conn:
+            conn.execute('''
+                INSERT INTO inventario (tipo, nombre, registro_cofepris, stock_actual, unidad, costo_unitario, estado)
+                VALUES (?, ?, ?, ?, ?, ?, 'Disponible')
+            ''', (tipo, nombre, registro, stock, unidad, costo))
+
+        return redirect('/inventarios')
+    except Exception as e:
+        return f"Error al guardar insumo: {str(e)}", 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+

@@ -2,90 +2,78 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FumilabControl | App Técnico</title>
-    <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#059669">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FumilabControl | App Técnico en Campo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    </style>
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col justify-between p-4">
+<body class="bg-slate-950 text-white min-h-screen flex flex-col justify-between p-4 max-w-md mx-auto">
 
-    <!-- Top Bar -->
-    <div class="flex justify-between items-center py-2 px-1">
-        <div class="flex items-center space-x-2">
-            <span class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
-            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Modo Técnico En Campo</span>
-        </div>
-        <a href="/admin" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
-            Panel Web
+    <!-- Header Móvil -->
+    <div class="flex justify-between items-center py-2 border-b border-slate-800">
+        <a href="/" class="text-xs font-bold text-emerald-400 flex items-center space-x-1">
+            <i class="fa-solid fa-chevron-left"></i>
+            <span>Portal Web</span>
+        </a>
+        <a href="/dashboard" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold">
+            Panel Central
         </a>
     </div>
 
-    <!-- Branding Central -->
-    <div class="text-center my-4">
-        <div class="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-tr from-emerald-600 to-teal-500 p-1 shadow-xl shadow-emerald-600/20 flex items-center justify-center">
-            <div class="w-full h-full bg-white rounded-[22px] flex items-center justify-center">
-                <i class="fa-solid fa-shield-virus text-4xl text-emerald-600"></i>
-            </div>
+    <!-- Identidad Central -->
+    <div class="text-center my-6 space-y-3">
+        <div class="w-20 h-20 bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 rounded-3xl flex items-center justify-center text-4xl font-black mx-auto shadow-xl shadow-emerald-500/20">
+            <i class="fa-solid fa-shield-virus"></i>
         </div>
-        <h1 class="text-2xl font-black text-slate-900 mt-4 tracking-tight">FUMILABCONTROL</h1>
-        <p class="text-xs text-slate-500 font-medium">Desinfección & Manejo Integral de Plagas</p>
+        <h1 class="text-2xl font-black tracking-tight">FUMILAB<span class="text-emerald-400">CONTROL</span></h1>
+        <p class="text-xs text-slate-400">App Operativa de Campo • Jonathan Dávila (Técnico)</p>
     </div>
 
-    <!-- Cuadrícula 2x2 de Módulos Operativos (Idéntico a Plagap) -->
-    <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto w-full my-auto">
-        <!-- 1. Reporte de Servicio -->
-        <a href="/reporte_campo" class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-md hover:shadow-xl transition flex flex-col items-center justify-center text-center space-y-3 active:scale-95 group">
-            <div class="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl group-hover:bg-emerald-600 group-hover:text-white transition shadow-sm">
-                <i class="fa-solid fa-file-pen"></i>
+    <!-- Menú Táctil 2x2 Corregido -->
+    <div class="grid grid-cols-2 gap-4 my-auto">
+        <!-- Reporte / Firma -->
+        <a href="/reporte_campo" class="bg-slate-900 border border-slate-800 hover:border-emerald-500/50 p-6 rounded-3xl flex flex-col items-center text-center space-y-3 shadow-lg active:scale-95 transition">
+            <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center text-xl">
+                <i class="fa-solid fa-file-signature"></i>
             </div>
-            <span class="font-extrabold text-xs text-slate-800 tracking-tight">Reporte / Firma</span>
+            <span class="text-xs font-black">Reporte / Firma</span>
         </a>
 
-        <!-- 2. Escáner QR de Cebaderos -->
-        <a href="/escaner_qr" class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-md hover:shadow-xl transition flex flex-col items-center justify-center text-center space-y-3 active:scale-95 group">
-            <div class="w-16 h-16 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-2xl group-hover:bg-cyan-600 group-hover:text-white transition shadow-sm">
+        <!-- Escanear QR -->
+        <a href="/escaner_qr" class="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 p-6 rounded-3xl flex flex-col items-center text-center space-y-3 shadow-lg active:scale-95 transition">
+            <div class="w-12 h-12 bg-cyan-500/10 text-cyan-400 rounded-2xl flex items-center justify-center text-xl">
                 <i class="fa-solid fa-qrcode"></i>
             </div>
-            <span class="font-extrabold text-xs text-slate-800 tracking-tight">Escanear QR</span>
+            <span class="text-xs font-black">Escanear QR</span>
         </a>
 
-        <!-- 3. Agenda de Citas / Check-in -->
-        <a href="/admin" class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-md hover:shadow-xl transition flex flex-col items-center justify-center text-center space-y-3 active:scale-95 group">
-            <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl group-hover:bg-amber-600 group-hover:text-white transition shadow-sm">
+        <!-- Agenda / Citas -->
+        <a href="/prospectos" class="bg-slate-900 border border-slate-800 hover:border-amber-500/50 p-6 rounded-3xl flex flex-col items-center text-center space-y-3 shadow-lg active:scale-95 transition">
+            <div class="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center text-xl">
                 <i class="fa-solid fa-calendar-check"></i>
             </div>
-            <span class="font-extrabold text-xs text-slate-800 tracking-tight">Agenda / Citas</span>
+            <span class="text-xs font-black">Agenda / Citas</span>
         </a>
 
-        <!-- 4. Fotos y Evidencia -->
-        <a href="/reporte_campo" class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-md hover:shadow-xl transition flex flex-col items-center justify-center text-center space-y-3 active:scale-95 group">
-            <div class="w-16 h-16 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center text-2xl group-hover:bg-violet-600 group-hover:text-white transition shadow-sm">
+        <!-- Cámara Evidencia Directa -->
+        <label class="bg-slate-900 border border-slate-800 hover:border-indigo-500/50 p-6 rounded-3xl flex flex-col items-center text-center space-y-3 shadow-lg active:scale-95 transition cursor-pointer">
+            <input type="file" accept="image/*" capture="environment" class="hidden" onchange="alert('Foto capturada correctamente. Abre el Reporte de Campo para adjuntarla al certificado.')">
+            <div class="w-12 h-12 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center text-xl">
                 <i class="fa-solid fa-camera"></i>
             </div>
-            <span class="font-extrabold text-xs text-slate-800 tracking-tight">Cámara Evidencia</span>
-        </a>
+            <span class="text-xs font-black">Cámara Evidencia</span>
+        </label>
     </div>
 
-    <!-- Soporte y Registro PWA -->
-    <div class="max-w-sm mx-auto w-full pt-4 text-center">
-        <a href="https://wa.me/525586406475" target="_blank" class="inline-flex items-center space-x-2 text-xs font-bold text-emerald-600 bg-white px-4 py-2 rounded-full border border-emerald-200 shadow-sm">
-            <i class="fa-brands fa-whatsapp text-sm"></i>
+    <!-- Botón Inferior de Ayuda -->
+    <div class="pt-6">
+        <a href="https://wa.me/525586406475" target="_blank" class="w-full py-3 bg-slate-900 border border-slate-800 rounded-2xl text-xs font-bold text-slate-300 flex items-center justify-center space-x-2">
+            <i class="fa-brands fa-whatsapp text-emerald-400"></i>
             <span>Soporte Técnico Operativo</span>
         </a>
     </div>
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/static/sw.js');
-        }
-    </script>
 </body>
 </html>
