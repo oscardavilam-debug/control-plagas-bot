@@ -642,6 +642,19 @@ def descargar_reporte_pdf(servicio_id):
     except Exception as e:
         return f"Error al generar Certificado: {str(e)}", 500
 
+
+# ================= RUTAS PWA =================
+@app.route('/manifest.json')
+def pwa_manifest():
+    return send_file('static/manifest.json', mimetype='application/manifest+json')
+
+@app.route('/service-worker.js')
+def pwa_service_worker():
+    response = send_file('static/service-worker.js', mimetype='application/javascript')
+    response.headers['Service-Worker-Allowed'] = '/'
+    return response
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+
