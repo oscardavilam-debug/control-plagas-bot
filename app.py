@@ -4,7 +4,7 @@ import json
 import base64
 import sqlite3
 from datetime import datetime
-from flask import Flask, render_template, render_template_string, request, redirect, url_for, jsonify, send_file
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file
 
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -21,17 +21,17 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-def init_db(force_clean=False):
-    # Si la base vieja está corrupta o desfasada, regeneramos limpiamente
-    if force_clean and os.path.exists(DB_FILE):
-        try:
-            os.remove(DB_FILE)
-        except Exception:
-            pass
-
+def init_db():
     conn = get_db()
     
-    # 1. Clientes
+    # Migración garantizada: añadir tipo_inmueble a clientes si no existe
+    try:
+        conn.execute("ALTER TABLE clientes ADD COLUMN tipo_inmueble TEXT")
+        conn.commit()
+    except Exception:
+        pass
+
+    # Crear tablas limpias y completas
     conn.execute('''
         CREATE TABLE IF NOT EXISTS clientes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,7 +43,6 @@ def init_db(force_clean=False):
         )
     ''')
 
-    # 2. Servicios / Certificados
     conn.execute('''
         CREATE TABLE IF NOT EXISTS servicios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,7 +69,6 @@ def init_db(force_clean=False):
         )
     ''')
 
-    # 3. Prospectos / Cotizaciones
     conn.execute('''
         CREATE TABLE IF NOT EXISTS prospectos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -85,11 +83,10 @@ def init_db(force_clean=False):
         )
     ''')
 
-    # 4. Inventario de Químicos y Equipos
     conn.execute('''
         CREATE TABLE IF NOT EXISTS inventario (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tipo TEXT, -- 'Quimico' o 'Equipo'
+            tipo TEXT,
             nombre TEXT NOT NULL,
             registro_cofepris TEXT,
             stock_actual REAL,
@@ -99,7 +96,6 @@ def init_db(force_clean=False):
         )
     ''')
 
-    # 5. Fotos Evidencia
     conn.execute('''
         CREATE TABLE IF NOT EXISTS servicio_fotos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -108,23 +104,28 @@ def init_db(force_clean=False):
         )
     ''')
 
-    # Asegurar columnas si ya existían previamente
-    cols_check = [
+    # Migración defensiva en servicios y prospectos
+    cols_add = [
         ("servicios", "gasto_quimicos", "REAL DEFAULT 250.0"),
         ("servicios", "gasto_gasolina", "REAL DEFAULT 180.0"),
         ("servicios", "gasto_nomina", "REAL DEFAULT 350.0"),
         ("servicios", "gasto_equipo", "REAL DEFAULT 80.0"),
         ("servicios", "equipo_utilizado", "TEXT"),
         ("servicios", "cliente_id", "INTEGER"),
-        ("prospectos", "folio", "TEXT")
+        ("prospectos", "folio", "TEXT"),
+        ("prospectos", "tipo_inmueble", "TEXT"),
+        ("prospectos", "plaga", "TEXT"),
+        ("prospectos", "fecha_solicitud", "TEXT"),
+        ("prospectos", "estatus", "TEXT DEFAULT 'Pendiente'"),
+        ("prospectos", "notas", "TEXT")
     ]
-    for tabla, col, tipo in cols_check:
+    for tabla, col, tipo in cols_add:
         try:
             conn.execute(f"ALTER TABLE {tabla} ADD COLUMN {col} {tipo}")
         except Exception:
             pass
 
-    # Precarga de datos operativos iniciales
+    # Sembrado inicial
     c_count = conn.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
     if c_count == 0:
         conn.execute('''
@@ -138,8 +139,8 @@ def init_db(force_clean=False):
     if p_count == 0:
         conn.execute('''
             INSERT INTO prospectos (folio, nombre, telefono, tipo_inmueble, plaga, fecha_solicitud, estatus, notas) VALUES
-            ('COT-901', 'Bodega Abarrotes Central', '5511223344', 'Bodega Industrial', 'Roedores y Cucarachas', '2026-09-19', 'Pendiente', 'Cotización de servicio perimetral'),
-            ('COT-902', 'Panificadora La Espiga', '5598765432', 'Alimentos', 'Cucaracha Germánica', '2026-09-19', 'Atendido', 'Visita programada lunes 8am')
+            ('COT-901', 'Bodega Abarrotes Central', '5511223344', 'Bodega Industrial', 'Roedores y Cucarachas', '2026-09-19', 'Pendiente', 'Cotización urgente servicio perimetral'),
+            ('COT-902', 'Panificadora La Espiga', '5598765432', 'Alimentos', 'Cucaracha Germánica', '2026-09-19', 'Atendido', 'Póliza acordada lunes 8am')
         ''')
 
     inv_count = conn.execute("SELECT COUNT(*) FROM inventario").fetchone()[0]
@@ -180,7 +181,6 @@ try:
 except Exception:
     pass
 
-# ================= RUTAS PRINCIPALES =================
 @app.route('/')
 def home():
     return render_template('landing.html')
@@ -199,7 +199,6 @@ def dashboard_financiero():
         filas = conn.execute("SELECT * FROM servicios ORDER BY id DESC").fetchall()
         servicios = [dict(f) for f in filas]
 
-        # Desglose financiero completo
         ingresos_totales = sum([float(s.get('costo') or 0) for s in servicios if s.get('estatus') in ['Terminado', 'Atendido']])
         gasto_quimicos = sum([float(s.get('gasto_quimicos') or 0) for s in servicios])
         gasto_gasolina = sum([float(s.get('gasto_gasolina') or 0) for s in servicios])
@@ -345,7 +344,6 @@ def descargar_reporte_pdf(servicio_id):
 
         c_row = conn.execute("SELECT * FROM clientes WHERE id = ?", (srv.get('cliente_id', 1),)).fetchone()
         cliente = dict(c_row) if c_row else {'nombre_comercial': 'Cliente Comercial', 'contacto': 'Responsable', 'direccion': 'CDMX y EdoMex'}
-        fotos = conn.execute("SELECT ruta_imagen FROM servicio_fotos WHERE servicio_id = ?", (servicio_id,)).fetchall()
         conn.close()
 
         buffer = io.BytesIO()
@@ -353,7 +351,6 @@ def descargar_reporte_pdf(servicio_id):
         folio_str = str(srv.get('folio') or srv.get('id', '3501'))
         pdf.setTitle(f"Certificado_Fumilab_{folio_str}")
 
-        # ENCABEZADO CORPORATIVO
         pdf.setFillColor(colors.HexColor("#064e3b"))
         pdf.rect(0, 715, 612, 77, fill=True, stroke=False)
         pdf.setFillColor(colors.HexColor("#10b981"))
@@ -371,9 +368,7 @@ def descargar_reporte_pdf(servicio_id):
         pdf.drawRightString(572, 755, f"CERTIFICADO #{folio_str}")
         pdf.setFont("Helvetica", 8)
         pdf.drawRightString(572, 738, f"FECHA: {srv.get('fecha_servicio') or '2026-09-19'}")
-        pdf.drawRightString(572, 723, "URGENCIAS: 55 8640 6475")
 
-        # DATOS ESTABLECIMIENTO
         pdf.setFillColor(colors.HexColor("#f8fafc"))
         pdf.roundRect(35, 605, 542, 90, 6, fill=True, stroke=colors.HexColor("#cbd5e1"))
         pdf.setFillColor(colors.HexColor("#0f172a"))
@@ -381,25 +376,16 @@ def descargar_reporte_pdf(servicio_id):
         pdf.drawString(45, 675, "Razón Social / Cliente:")
         pdf.setFont("Helvetica", 8)
         pdf.drawString(150, 675, str(cliente.get('nombre_comercial'))[:45])
-
         pdf.setFont("Helvetica-Bold", 8)
         pdf.drawString(45, 655, "Dirección Inmueble:")
         pdf.setFont("Helvetica", 8)
         pdf.drawString(150, 655, str(cliente.get('direccion'))[:60])
-
         pdf.setFont("Helvetica-Bold", 8)
         pdf.drawString(45, 635, "Servicio Realizado:")
         pdf.setFont("Helvetica-Bold", 8)
         pdf.setFillColor(colors.HexColor("#047857"))
         pdf.drawString(150, 635, str(srv.get('tipo_servicio') or 'MANEJO INTEGRAL DE PLAGAS'))
 
-        pdf.setFillColor(colors.HexColor("#0f172a"))
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawString(380, 635, "Horario Operativo:")
-        pdf.setFont("Helvetica", 8)
-        pdf.drawString(470, 635, f"{srv.get('hora_inicio')} - {srv.get('hora_fin')}")
-
-        # TABLA TÉCNICA COFEPRIS
         y_tbl = 560
         pdf.setFillColor(colors.HexColor("#064e3b"))
         pdf.rect(35, y_tbl, 542, 18, fill=True, stroke=False)
@@ -420,25 +406,6 @@ def descargar_reporte_pdf(servicio_id):
         pdf.setFillColor(colors.HexColor("#b91c1c"))
         pdf.drawString(465, y_tbl - 18, str(srv.get('tiempo_reentrada') or '2 Horas'))
 
-        # ACTIVIDADES Y RECOMENDACIONES
-        pdf.setFillColor(colors.HexColor("#f8fafc"))
-        pdf.roundRect(35, 410, 542, 120, 6, fill=True, stroke=colors.HexColor("#cbd5e1"))
-        pdf.setFillColor(colors.HexColor("#0f172a"))
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawString(45, 510, "ACTIVIDADES TÉCNICAS EJECUTADAS:")
-        pdf.setFont("Helvetica", 7.5)
-        pdf.drawString(45, 495, str(srv.get('actividades_realizadas') or 'Aspersión focalizada y colocación de cebo específico.'))
-
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawString(45, 470, "RECOMENDACIONES DE INOCUIDAD:")
-        pdf.setFont("Helvetica", 7.5)
-        pdf.drawString(45, 455, str(srv.get('recomendaciones') or 'No lavar áreas tratadas por 24 horas. Mantener ventilación al reingresar.'))
-
-        pdf.setFont("Helvetica-Bold", 7.5)
-        pdf.setFillColor(colors.HexColor("#047857"))
-        pdf.drawString(45, 420, "NORMATIVA: Tratamiento validado bajo NOM-256-SSA1-2012.")
-
-        # FIRMAS
         pdf.setStrokeColor(colors.HexColor("#64748b"))
         pdf.line(60, 270, 230, 270)
         pdf.line(350, 270, 520, 270)
@@ -451,13 +418,6 @@ def descargar_reporte_pdf(servicio_id):
         pdf.drawCentredString(435, 258, str(cliente.get('contacto'))[:30])
         pdf.setFont("Helvetica", 7)
         pdf.drawCentredString(435, 248, "Firma de Conformidad del Cliente")
-
-        # PIE LEGAL
-        pdf.setFillColor(colors.HexColor("#064e3b"))
-        pdf.rect(35, 175, 542, 24, fill=True, stroke=False)
-        pdf.setFillColor(colors.white)
-        pdf.setFont("Helvetica-Bold", 7)
-        pdf.drawCentredString(306, 185, "FUMILAB CONTROL • MATRIZ: LAUREL LOTE 43 CASA 6, LOS REYES IZTACALA, TLALNEPANTLA, EDOMEX")
 
         pdf.save()
         buffer.seek(0)
