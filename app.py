@@ -19,7 +19,7 @@ app.secret_key = "fumilab_control_pro_secret_key_2026"
 DB_FILE = 'fumilab.db'
 
 # Pega tu URL de Google Apps Script (o se toma de Render Environment si existe)
-SHEETS_WEBHOOK_URL = os.environ.get('SHEETS_WEBHOOK_URL', '')
+SHEETS_WEBHOOK_URL = os.environ.get('GOOGLE_SHEETS_URL', os.environ.get('SHEETS_WEBHOOK_URL', ''))
 
 def enviar_a_google_sheets(datos):
     """Envía los datos a Google Sheets siguiendo la redirección 302 de Google."""
@@ -498,3 +498,4 @@ def descargar_reporte_pdf(servicio_id):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+
