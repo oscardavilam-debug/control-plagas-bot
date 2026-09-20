@@ -289,13 +289,39 @@ def escaner_qr():
 def solicitar_cotizacion():
     if request.method == 'POST':
         try:
-            nombre = (request.form.get('nombre') or request.form.get('nombre_completo') or 'Cliente Web').strip()
-            telefono = (request.form.get('telefono') or request.form.get('celular') or '5500000000').strip()
-            tipo_inmueble = (request.form.get('tipo_inmueble') or request.form.get('inmueble') or 'Hogar').strip()
-            plaga = (request.form.get('plaga') or request.form.get('plaga_tratar') or 'Cucarachas').strip()
+            # Capturar el nombre bajo cualquier variante del formulario
+            nombre = (
+                request.form.get('nombre') or 
+                request.form.get('nombre_completo') or 
+                request.form.get('nombre_cliente') or 
+                request.form.get('name') or 
+                'Cliente Web'
+            ).strip()
+
+            telefono = (
+                request.form.get('telefono') or 
+                request.form.get('celular') or 
+                request.form.get('whatsapp') or 
+                request.form.get('numero') or 
+                ''
+            ).strip()
+
+            tipo_inmueble = (
+                request.form.get('tipo_inmueble') or 
+                request.form.get('inmueble') or 
+                'Hogar'
+            ).strip()
+
+            plaga = (
+                request.form.get('plaga') or 
+                request.form.get('plaga_tratar') or 
+                'Cucarachas'
+            ).strip()
+
             notas = request.form.get('notas', '')
             fecha_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+            # Guardar en SQLite local
             with get_db() as conn:
                 conteo = conn.execute('SELECT COUNT(*) FROM prospectos').fetchone()[0]
                 folio = f"COT-{901 + conteo}"
@@ -305,11 +331,15 @@ def solicitar_cotizacion():
                     VALUES (?, ?, ?, ?, ?, ?, 'Pendiente', ?)
                 ''', (folio, nombre, telefono, tipo_inmueble, plaga, fecha_str, notas))
 
-            # Enviar a Google Sheets usando los nombres de tu script:
-            # sheet.appendRow([data.fecha, data.contacto, data.telefono, data.plaga, data.inmueble, data.origen])
+            # Formatear el nombre tal como estaba en tus primeras filas: "NOMBRE - TELEFONO"
+            contacto_formateado = f"{nombre} - {telefono}" if telefono else nombre
+
+            # Enviamos con todas las posibles llaves que espera tu Apps Script
             datos_sheet = {
                 "fecha": fecha_str,
-                "contacto": f"{nombre} - {telefono}",
+                "contacto": contacto_formateado,
+                "nombre": contacto_formateado,
+                "cliente": contacto_formateado,
                 "telefono": telefono,
                 "plaga": plaga,
                 "inmueble": tipo_inmueble,
@@ -498,4 +528,5 @@ def descargar_reporte_pdf(servicio_id):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
