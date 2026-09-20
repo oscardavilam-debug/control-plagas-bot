@@ -1,0 +1,84 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FumilabControl | Inventario de Químicos & Equipos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+
+    <header class="bg-slate-950/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-shield-virus text-lg"></i>
+                </div>
+                <div>
+                    <span class="text-base font-black tracking-tight text-white block">FUMILAB<span class="text-emerald-400">CONTROL</span></span>
+                    <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Sistema Operativo Sanitario</span>
+                </div>
+            </div>
+            
+            <nav class="flex items-center space-x-2">
+                <a href="/dashboard" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-chart-line text-emerald-400"></i>
+                    <span>Finanzas</span>
+                </a>
+                <a href="/inventarios" class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 text-indigo-400 border border-slate-700/60 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                    <span>Inventarios</span>
+                </a>
+                <a href="/prospectos" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-inbox text-cyan-400"></i>
+                    <span>Prospectos</span>
+                </a>
+                <a href="/certificados" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-file-shield text-amber-400"></i>
+                    <span>Certificados PDF</span>
+                </a>
+                <a href="/tecnico" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                    <span>App Técnico</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div class="flex flex-col md:flex-row justify-between md:items-end gap-4 border-b border-slate-800 pb-6">
+            <div>
+                <span class="text-xs font-bold text-indigo-400 uppercase tracking-widest block mb-1">Almacén & Cadena de Suministro</span>
+                <h1 class="text-3xl font-black text-white tracking-tight">Inventario de Químicos COFEPRIS & Equipos</h1>
+                <p class="text-xs text-slate-400 mt-1">Control de existencias de plaguicidas autorizados, aspersoras y termonebulizadores.</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for item in items %}
+            <div class="bg-slate-800/50 border border-slate-700/60 rounded-3xl p-6 backdrop-blur-xl space-y-4">
+                <div class="flex justify-between items-start">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider {{ 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' if item.tipo == 'Quimico' else 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' }}">
+                        {{ item.tipo }}
+                    </span>
+                    <span class="text-xs font-black text-white bg-slate-900 px-3 py-1 rounded-xl border border-slate-700">
+                        {{ item.stock_actual }} {{ item.unidad }}
+                    </span>
+                </div>
+                <div>
+                    <h3 class="text-base font-black text-white">{{ item.nombre }}</h3>
+                    <p class="text-[11px] text-slate-400 font-mono mt-1">{{ item.registro_cofepris }}</p>
+                </div>
+                <div class="pt-2 border-t border-slate-700/40 flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Costo Unitario:</span>
+                    <span class="font-bold text-emerald-400">${{ "{:,.2f}".format(item.costo_unitario|float) }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+</body>
+</html>

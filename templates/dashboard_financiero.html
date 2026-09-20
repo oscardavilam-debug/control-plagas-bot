@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FumilabControl | Dashboard Financiero Corporativo</title>
+    <title>FumilabControl | Dashboard Financiero Integral</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,7 +11,7 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen">
 
-    <!-- NAVBAR CORPORATIVO INTEGRADO -->
+    <!-- NAVBAR UNIFICADO -->
     <header class="bg-slate-950/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
@@ -29,6 +29,10 @@
                     <i class="fa-solid fa-chart-line"></i>
                     <span>Finanzas</span>
                 </a>
+                <a href="/inventarios" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-boxes-stacked text-indigo-400"></i>
+                    <span>Inventarios</span>
+                </a>
                 <a href="/prospectos" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center space-x-1.5">
                     <i class="fa-solid fa-inbox text-cyan-400"></i>
                     <span>Prospectos</span>
@@ -41,163 +45,106 @@
                     <i class="fa-solid fa-mobile-screen"></i>
                     <span>App Técnico</span>
                 </a>
-                <a href="/" target="_blank" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition" title="Ver Landing Pública">
-                    <i class="fa-solid fa-globe"></i>
-                </a>
             </nav>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
-        <!-- Header de Métricas -->
         <div class="flex flex-col md:flex-row justify-between md:items-end gap-4 border-b border-slate-800 pb-6">
             <div>
                 <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest block mb-1">Módulo Financiero Operativo</span>
-                <h1 class="text-3xl font-black text-white tracking-tight">Balance General & Estado de Resultados</h1>
-                <p class="text-xs text-slate-400 mt-1">Control integral de facturación de servicios, costos de insumos COFEPRIS y utilidad neta en tiempo real.</p>
+                <h1 class="text-3xl font-black text-white tracking-tight">Estado Financiero & Costos Operativos</h1>
+                <p class="text-xs text-slate-400 mt-1">Control de facturación, desglose de costos (químicos, gasolina, nómina, equipo) y utilidad neta.</p>
             </div>
             <div class="flex items-center space-x-3">
                 <a href="/reporte_campo" class="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2">
-                    <i class="fa-solid fa-file-signature"></i>
+                    <i class="fa-solid fa-plus"></i>
                     <span>Nuevo Servicio en Campo</span>
                 </a>
             </div>
         </div>
 
-        <!-- TARJETAS FINANCIERAS DE ALTO IMPACTO -->
+        <!-- KPI GENERALES -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <!-- Ingresos Totales -->
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-6 backdrop-blur-xl relative overflow-hidden group">
-                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition"></div>
-                <div class="flex justify-between items-center text-slate-400 mb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider">Ingresos Brutos</span>
-                    <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm">
-                        <i class="fa-solid fa-arrow-down-left"></i>
-                    </div>
-                </div>
-                <div class="text-3xl font-black text-white tracking-tight">${{ total_ingresos }}</div>
-                <div class="mt-2 flex items-center text-[11px] text-emerald-400 font-semibold">
-                    <i class="fa-solid fa-circle-check mr-1.5"></i> Facturación de servicios terminados
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-6">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Facturación Bruta</span>
+                <div class="text-3xl font-black text-white tracking-tight mt-2">${{ ingresos_totales }}</div>
+                <div class="mt-2 text-[11px] text-emerald-400 font-semibold flex items-center">
+                    <i class="fa-solid fa-arrow-trend-up mr-1.5"></i> Total ingresado por pólizas y servicios
                 </div>
             </div>
 
-            <!-- Egresos Operativos -->
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-6 backdrop-blur-xl relative overflow-hidden group">
-                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-rose-500/10 rounded-full blur-xl group-hover:bg-rose-500/20 transition"></div>
-                <div class="flex justify-between items-center text-slate-400 mb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider">Egresos Operativos</span>
-                    <div class="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center text-sm">
-                        <i class="fa-solid fa-arrow-up-right"></i>
-                    </div>
-                </div>
-                <div class="text-3xl font-black text-white tracking-tight">${{ total_egresos }}</div>
-                <div class="mt-2 flex items-center text-[11px] text-rose-400 font-semibold">
-                    <i class="fa-solid fa-flask-vial mr-1.5"></i> Químicos, combustible y equipo
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-6">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Egresos Totales</span>
+                <div class="text-3xl font-black text-rose-400 tracking-tight mt-2">${{ egresos_totales }}</div>
+                <div class="mt-2 text-[11px] text-rose-400 font-semibold flex items-center">
+                    <i class="fa-solid fa-arrow-trend-down mr-1.5"></i> Químicos, gasolina, nómina y equipo
                 </div>
             </div>
 
-            <!-- Utilidad Neta -->
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-6 backdrop-blur-xl relative overflow-hidden group">
-                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl group-hover:bg-cyan-500/20 transition"></div>
-                <div class="flex justify-between items-center text-slate-400 mb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider">Utilidad Neta Real</span>
-                    <div class="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center text-sm">
-                        <i class="fa-solid fa-wallet"></i>
-                    </div>
-                </div>
-                <div class="text-3xl font-black text-cyan-400 tracking-tight">${{ balance_neto }}</div>
-                <div class="mt-2 flex items-center text-[11px] text-cyan-400 font-semibold">
-                    <i class="fa-solid fa-chart-pie mr-1.5"></i> Margen bruto estimado: ~65%
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-6">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Utilidad Neta Real</span>
+                <div class="text-3xl font-black text-cyan-400 tracking-tight mt-2">${{ utilidad_neta }}</div>
+                <div class="mt-2 text-[11px] text-cyan-400 font-semibold flex items-center">
+                    <i class="fa-solid fa-wallet mr-1.5"></i> Margen neto operativo
                 </div>
             </div>
 
-            <!-- Servicios / Órdenes -->
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-6 backdrop-blur-xl relative overflow-hidden group">
-                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/20 transition"></div>
-                <div class="flex justify-between items-center text-slate-400 mb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider">Servicios Operados</span>
-                    <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-sm">
-                        <i class="fa-solid fa-clipboard-check"></i>
-                    </div>
-                </div>
-                <div class="text-3xl font-black text-white tracking-tight">{{ total_servicios }}</div>
-                <div class="mt-2 flex items-center text-[11px] text-amber-400 font-semibold">
-                    <i class="fa-solid fa-building-user mr-1.5"></i> {{ clientes_activos }} Clientes con contrato
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-6">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Servicios / Pólizas</span>
+                <div class="text-3xl font-black text-amber-400 tracking-tight mt-2">{{ total_servicios }}</div>
+                <div class="mt-2 text-[11px] text-amber-400 font-semibold flex items-center">
+                    <i class="fa-solid fa-building mr-1.5"></i> {{ clientes_activos }} clientes atendidos
                 </div>
             </div>
         </div>
 
         <!-- DESGLOSE DETALLADO DE COSTOS OPERATIVOS -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="bg-slate-800/40 border border-slate-700/60 rounded-3xl p-6 space-y-4">
-                <h3 class="text-sm font-black text-white uppercase tracking-wider flex items-center">
-                    <i class="fa-solid fa-pie-chart text-emerald-400 mr-2"></i> Desglose de Gastos
-                </h3>
-                <div class="space-y-3 text-xs">
-                    <div>
-                        <div class="flex justify-between text-slate-400 mb-1">
-                            <span>Químicos e Insumos COFEPRIS</span>
-                            <span class="text-white font-bold">45%</span>
-                        </div>
-                        <div class="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
-                            <div class="h-full bg-emerald-500 rounded-full" style="width: 45%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-slate-400 mb-1">
-                            <span>Combustible y Traslados</span>
-                            <span class="text-white font-bold">30%</span>
-                        </div>
-                        <div class="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
-                            <div class="h-full bg-cyan-500 rounded-full" style="width: 30%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-slate-400 mb-1">
-                            <span>EPP y Desgaste de Aspersoras</span>
-                            <span class="text-white font-bold">25%</span>
-                        </div>
-                        <div class="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
-                            <div class="h-full bg-amber-500 rounded-full" style="width: 25%"></div>
-                        </div>
-                    </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div class="bg-slate-800/40 border border-slate-700/40 rounded-2xl p-4 space-y-1">
+                <div class="flex justify-between items-center text-xs text-slate-400 font-bold uppercase">
+                    <span>Gasto en Químicos</span>
+                    <i class="fa-solid fa-flask text-emerald-400"></i>
                 </div>
+                <div class="text-xl font-black text-white">${{ gasto_quimicos }}</div>
+                <span class="text-[10px] text-slate-400">Insumos y dosis COFEPRIS</span>
             </div>
 
-            <div class="lg:col-span-2 bg-slate-800/40 border border-slate-700/60 rounded-3xl p-6 space-y-3">
-                <h3 class="text-sm font-black text-white uppercase tracking-wider flex items-center">
-                    <i class="fa-solid fa-file-invoice-dollar text-cyan-400 mr-2"></i> Resumen de Flujo de Efectivo
-                </h3>
-                <p class="text-xs text-slate-400 leading-relaxed">
-                    Las utilidades operativas se calculan deduciendo automáticamente los costos por orden de servicio (dosificación de ingrediente activo, viáticos y desgaste operativo). Todos los montos se reflejan de inmediato al emitir el certificado oficial en campo.
-                </p>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
-                    <div class="p-3 bg-slate-900/60 rounded-2xl border border-slate-700/40">
-                        <span class="text-[10px] text-slate-400 font-bold block uppercase">Ticket Promedio</span>
-                        <span class="text-sm font-black text-white">$1,400.00 MXN</span>
-                    </div>
-                    <div class="p-3 bg-slate-900/60 rounded-2xl border border-slate-700/40">
-                        <span class="text-[10px] text-slate-400 font-bold block uppercase">Costo Insumo / Srv</span>
-                        <span class="text-sm font-black text-rose-400">~$490.00 MXN</span>
-                    </div>
-                    <div class="p-3 bg-slate-900/60 rounded-2xl border border-slate-700/40 col-span-2 sm:col-span-1">
-                        <span class="text-[10px] text-slate-400 font-bold block uppercase">Margen por Orden</span>
-                        <span class="text-sm font-black text-emerald-400">~$910.00 MXN</span>
-                    </div>
+            <div class="bg-slate-800/40 border border-slate-700/40 rounded-2xl p-4 space-y-1">
+                <div class="flex justify-between items-center text-xs text-slate-400 font-bold uppercase">
+                    <span>Combustible / Gasolina</span>
+                    <i class="fa-solid fa-gas-pump text-cyan-400"></i>
                 </div>
+                <div class="text-xl font-black text-white">${{ gasto_gasolina }}</div>
+                <span class="text-[10px] text-slate-400">Traslados a sitio en CDMX y EdoMex</span>
+            </div>
+
+            <div class="bg-slate-800/40 border border-slate-700/40 rounded-2xl p-4 space-y-1">
+                <div class="flex justify-between items-center text-xs text-slate-400 font-bold uppercase">
+                    <span>Nómina Operativa</span>
+                    <i class="fa-solid fa-users text-indigo-400"></i>
+                </div>
+                <div class="text-xl font-black text-white">${{ gasto_nomina }}</div>
+                <span class="text-[10px] text-slate-400">Honorarios técnicos de campo</span>
+            </div>
+
+            <div class="bg-slate-800/40 border border-slate-700/40 rounded-2xl p-4 space-y-1">
+                <div class="flex justify-between items-center text-xs text-slate-400 font-bold uppercase">
+                    <span>Equipo y Mantenimiento</span>
+                    <i class="fa-solid fa-wrench text-amber-400"></i>
+                </div>
+                <div class="text-xl font-black text-white">${{ gasto_equipo }}</div>
+                <span class="text-[10px] text-slate-400">Aspersoras, ULV y refacciones</span>
             </div>
         </div>
 
-        <!-- TABLA COMPLETA DE REGISTRO FINANCIERO Y REPORTES -->
+        <!-- TABLA COMPLETA DE SERVICIOS Y PDF -->
         <div class="bg-slate-800/50 border border-slate-700/60 rounded-3xl overflow-hidden backdrop-blur-xl">
-            <div class="p-6 border-b border-slate-700/60 flex flex-col md:flex-row justify-between md:items-center gap-4">
-                <div>
-                    <h2 class="text-base font-black text-white">Registro de Órdenes y Liquidaciones de Servicio</h2>
-                    <p class="text-xs text-slate-400 mt-0.5">Historial financiero de cobros, métodos de pago y descarga de reportes oficiales</p>
-                </div>
-                <span class="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full self-start md:self-auto">
-                    {{ servicios|length }} Servicios en Sistema
+            <div class="p-6 border-b border-slate-700/60 flex justify-between items-center">
+                <h2 class="text-base font-black text-white">Historial de Órdenes & Liquidaciones</h2>
+                <span class="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+                    {{ servicios|length }} Órdenes
                 </span>
             </div>
 
@@ -207,10 +154,10 @@
                         <tr>
                             <th class="px-6 py-4">Folio / Fecha</th>
                             <th class="px-6 py-4">Servicio MIP</th>
-                            <th class="px-6 py-4">Químico COFEPRIS</th>
-                            <th class="px-6 py-4">Monto Cobrado</th>
-                            <th class="px-6 py-4">Costo Estimado</th>
-                            <th class="px-6 py-4">Estatus</th>
+                            <th class="px-6 py-4">Químico / Equipo</th>
+                            <th class="px-6 py-4">Cobrado</th>
+                            <th class="px-6 py-4">Costo Operativo</th>
+                            <th class="px-6 py-4">Utilidad</th>
                             <th class="px-6 py-4 text-right">Certificado</th>
                         </tr>
                     </thead>
@@ -219,24 +166,23 @@
                         <tr class="hover:bg-slate-700/30 transition">
                             <td class="px-6 py-4">
                                 <span class="font-mono font-black text-emerald-400 block">#{{ s.folio }}</span>
-                                <span class="text-[10px] text-slate-400">{{ s.fecha_servicio }} ({{ s.hora_inicio }})</span>
+                                <span class="text-[10px] text-slate-400">{{ s.fecha_servicio }}</span>
                             </td>
                             <td class="px-6 py-4 font-bold text-white">
                                 {{ s.tipo_servicio }}
                             </td>
-                            <td class="px-6 py-4 font-mono text-[11px] text-slate-300">
-                                {{ s.quimico_utilizado or 'DEMAND DUO' }}
+                            <td class="px-6 py-4 text-slate-300">
+                                <span class="block font-semibold">{{ s.quimico_utilizado or 'DEMAND DUO' }}</span>
+                                <span class="text-[10px] text-slate-400">{{ s.equipo_utilizado or 'Aspersora Swissmex' }}</span>
                             </td>
                             <td class="px-6 py-4 font-black text-emerald-400 text-sm">
                                 ${{ "{:,.2f}".format(s.costo|float) if s.costo else "1,400.00" }}
                             </td>
-                            <td class="px-6 py-4 font-black text-rose-400 text-xs">
-                                -${{ "{:,.2f}".format((s.costo|float * 0.35)) if s.costo else "490.00" }}
+                            <td class="px-6 py-4 font-bold text-rose-400">
+                                -${{ "{:,.2f}".format((s.gasto_quimicos|float + s.gasto_gasolina|float + s.gasto_nomina|float + s.gasto_equipo|float)) if s.gasto_quimicos else "660.00" }}
                             </td>
-                            <td class="px-6 py-4">
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider {{ 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' if s.estatus == 'Terminado' or s.estatus == 'Atendido' else 'bg-amber-500/10 text-amber-400 border border-amber-500/20' }}">
-                                    {{ s.estatus }}
-                                </span>
+                            <td class="px-6 py-4 font-black text-cyan-400">
+                                ${{ "{:,.2f}".format(s.costo|float - ((s.gasto_quimicos|float + s.gasto_gasolina|float + s.gasto_nomina|float + s.gasto_equipo|float))) if s.costo and s.gasto_quimicos else "740.00" }}
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <a href="/descargar_reporte_pdf/{{ s.id }}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-xs font-black shadow-md shadow-emerald-500/20 transition space-x-1">
@@ -244,10 +190,6 @@
                                     <span>PDF</span>
                                 </a>
                             </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="7" class="px-6 py-12 text-center text-slate-500 font-medium">No hay registros financieros disponibles.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
