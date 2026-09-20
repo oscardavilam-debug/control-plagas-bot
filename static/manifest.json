@@ -1,7 +1,8 @@
 ﻿{
+  "id": "/tecnico",
   "name": "Fumilab Técnico Pro",
   "short_name": "Fumilab",
-  "description": "App de Operaciones de Campo, Reportes Sanitarios y Firmas COFEPRIS",
+  "description": "App Operativa de Campo y Reportes Sanitarios COFEPRIS",
   "start_url": "/tecnico",
   "scope": "/",
   "display": "standalone",
