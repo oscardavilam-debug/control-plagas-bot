@@ -15,17 +15,21 @@ from reportlab.lib import colors
 from reportlab.lib.utils import ImageReader
 
 app = Flask(__name__)
-# Llave de cifrado de sesiones segura (configurable en Render o por defecto)
 app.secret_key = os.environ.get('SECRET_KEY', 'fumilab_corp_saas_secure_token_987654321_2026')
+
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=86400 * 7
+)
 
 DB_FILE = 'fumilab.db'
 SHEETS_WEBHOOK_URL = os.environ.get('GOOGLE_SHEETS_URL', os.environ.get('SHEETS_WEBHOOK_URL', ''))
 
-# Credenciales de Administrador (puedes definirlas en Render Environment si gustas)
 ADMIN_USER = os.environ.get('ADMIN_USER', 'admin')
 ADMIN_PASS = os.environ.get('ADMIN_PASS', 'Fumilab2026*')
 
-# Decorador de seguridad para blindar rutas
 def login_requerido(f):
     @wraps(f)
     def decorador(*args, **kwargs):
@@ -48,7 +52,7 @@ def enviar_a_google_sheets(datos):
         req = urllib.request.Request(url, data=payload, headers=headers, method='POST')
         opener.open(req, timeout=8)
     except Exception as e:
-        print(f"Error envio a Sheets: {e}")
+        print(f"Error envio Sheets: {e}")
 
 def get_db():
     conn = sqlite3.connect(DB_FILE, timeout=30.0)
@@ -164,15 +168,15 @@ def init_db():
 
 init_db()
 
-# ================= RUTAS DE AUTENTICACIÓN =================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
     if request.method == 'POST':
-        usuario = request.form.get('usuario', '').strip()
+        usuario = request.form.get('usuario', '').strip().lower()
         password = request.form.get('password', '').strip()
 
-        if usuario == ADMIN_USER and password == ADMIN_PASS:
+        if usuario == ADMIN_USER.lower() and password == ADMIN_PASS:
+            session.permanent = True
             session['admin_autenticado'] = True
             session['admin_user'] = usuario
             next_url = request.args.get('next') or url_for('dashboard_financiero')
@@ -187,7 +191,6 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# ================= RUTAS PÚBLICAS =================
 @app.route('/')
 def home():
     return render_template('landing.html')
@@ -278,7 +281,6 @@ def cotizacion_exitosa():
     folio = request.args.get('folio', 'COT-901')
     return render_template('cotizacion_exitosa.html', folio=folio)
 
-# ================= RUTAS PROTEGIDAS (SOLO ADMINISTRADOR) =================
 @app.route('/dashboard')
 @app.route('/dashboard_financiero')
 @login_requerido
@@ -340,7 +342,10 @@ def certificados():
     try:
         with get_db() as conn:
             filas = conn.execute('''
-                SELECT s.*, coalesce(c.nombre_comercial, 'Cliente General') as cliente_nombre 
+                SELECT s.*, 
+                       coalesce(c.nombre_comercial, 'Cliente General') as cliente_nombre,
+                       coalesce(c.telefono, '5586406475') as cliente_telefono,
+                       coalesce(c.direccion, 'CDMX y EdoMex') as cliente_direccion
                 FROM servicios s 
                 LEFT JOIN clientes c ON s.cliente_id = c.id 
                 ORDER BY s.id DESC
@@ -350,7 +355,6 @@ def certificados():
     except Exception as e:
         return f"Error en Certificados: {str(e)}", 500
 
-# ================= APIS =================
 @app.route('/api/inventario/agregar', methods=['POST'])
 @login_requerido
 def agregar_inventario():
@@ -377,6 +381,7 @@ def guardar_reporte():
     try:
         data = request.get_json() or {}
         fecha_hoy = datetime.now().strftime("%Y-%m-%d")
+        producto_nombre = data.get('producto', 'DEMAND DUO').strip()
 
         with get_db() as conn:
             c = conn.execute('SELECT COUNT(*) FROM servicios').fetchone()[0]
@@ -388,8 +393,8 @@ def guardar_reporte():
                     folio, cliente_id, tipo_servicio, fecha_servicio, hora_inicio, hora_fin,
                     costo, gasto_quimicos, gasto_gasolina, gasto_nomina, gasto_equipo,
                     quimico_utilizado, dosis_aplicada, tiempo_reentrada,
-                    actividades_realizadas, firma_cliente, estatus
-                ) VALUES (?, ?, ?, ?, ?, ?, 1400.0, 180.0, 150.0, 350.0, 50.0, ?, ?, '2 Horas', ?, ?, 'Terminado')
+                    actividades_realizadas, recomendaciones, firma_cliente, estatus
+                ) VALUES (?, ?, ?, ?, ?, ?, 1400.0, 180.0, 150.0, 350.0, 50.0, ?, ?, '2 Horas', ?, 'No lavar en 24h y mantener ventilado', ?, 'Terminado')
             ''', (
                 folio,
                 data.get('cliente_id', 1),
@@ -397,9 +402,9 @@ def guardar_reporte():
                 fecha_hoy,
                 data.get('hora_inicio', '08:00 AM'),
                 data.get('hora_fin', '09:00 AM'),
-                data.get('producto', 'DEMAND DUO'),
+                producto_nombre,
                 data.get('dosis', '4 ml / Litro'),
-                data.get('actividades', 'Aspersión focalizada'),
+                data.get('actividades', 'Aspersión focalizada y colocación de cebo específico.'),
                 data.get('firma', '')
             ))
             srv_id = cur.lastrowid
@@ -407,121 +412,16 @@ def guardar_reporte():
             for f in data.get('fotos', []):
                 cur.execute('INSERT INTO servicio_fotos (servicio_id, ruta_imagen) VALUES (?, ?)', (srv_id, f))
 
+            # Descuento de stock en inventario
+            conn.execute('''
+                UPDATE inventario 
+                SET stock_actual = MAX(0, ROUND(stock_actual - 0.25, 2)) 
+                WHERE tipo = 'Quimico' AND nombre LIKE ?
+            ''', (f"%{producto_nombre}%",))
+
         return jsonify({'status': 'ok', 'servicio_id': srv_id, 'folio': folio})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
-
-@app.route('/api/marcar-atendido/<int:lead_id>', methods=['POST'])
-@login_requerido
-def marcar_atendido(lead_id):
-    try:
-        with get_db() as conn:
-            conn.execute("UPDATE prospectos SET estatus = 'Atendido' WHERE id = ?", (lead_id,))
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/descargar_reporte_pdf/<int:servicio_id>')
-@login_requerido
-def descargar_reporte_pdf(servicio_id):
-    try:
-        with get_db() as conn:
-            row = conn.execute("SELECT * FROM servicios WHERE id = ?", (servicio_id,)).fetchone()
-            if not row:
-                return "Servicio no encontrado", 404
-            srv = dict(row)
-
-            c_row = conn.execute("SELECT * FROM clientes WHERE id = ?", (srv.get('cliente_id', 1),)).fetchone()
-            cliente = dict(c_row) if c_row else {'nombre_comercial': 'Cliente Comercial', 'contacto': 'Responsable', 'direccion': 'CDMX y EdoMex'}
-
-        buffer = io.BytesIO()
-        pdf = canvas.Canvas(buffer, pagesize=letter)
-        folio_str = str(srv.get('folio') or srv.get('id', '3501'))
-        pdf.setTitle(f"Certificado_Fumilab_{folio_str}")
-
-        pdf.setFillColor(colors.HexColor("#064e3b"))
-        pdf.rect(0, 715, 612, 77, fill=True, stroke=False)
-        pdf.setFillColor(colors.HexColor("#10b981"))
-        pdf.rect(0, 710, 612, 5, fill=True, stroke=False)
-
-        pdf.setFillColor(colors.white)
-        pdf.setFont("Helvetica-Bold", 18)
-        pdf.drawString(40, 755, "FUMILAB CONTROL INTEGRAL")
-        pdf.setFont("Helvetica", 9)
-        pdf.drawString(40, 738, "Manejo Integral de Plagas Urbanas & Desinfección")
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawString(40, 723, "LICENCIA SANITARIA COFEPRIS: 2009-15A013")
-
-        pdf.setFont("Helvetica-Bold", 12)
-        pdf.drawRightString(572, 755, f"CERTIFICADO #{folio_str}")
-        pdf.setFont("Helvetica", 8)
-        pdf.drawRightString(572, 738, f"FECHA: {srv.get('fecha_servicio') or '2026-09-19'}")
-
-        pdf.setFillColor(colors.HexColor("#f8fafc"))
-        pdf.setStrokeColor(colors.HexColor('#cbd5e1'))
-        pdf.roundRect(35, 605, 542, 90, 6, stroke=1, fill=1)
-        pdf.setFillColor(colors.HexColor("#0f172a"))
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawString(45, 675, "Razón Social / Cliente:")
-        pdf.setFont("Helvetica", 8)
-        pdf.drawString(150, 675, str(cliente.get('nombre_comercial'))[:45])
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawString(45, 655, "Dirección Inmueble:")
-        pdf.setFont("Helvetica", 8)
-        pdf.drawString(150, 655, str(cliente.get('direccion'))[:60])
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawString(45, 635, "Servicio Realizado:")
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.setFillColor(colors.HexColor("#047857"))
-        pdf.drawString(150, 635, str(srv.get('tipo_servicio') or 'MANEJO INTEGRAL DE PLAGAS'))
-
-        y_tbl = 560
-        pdf.setFillColor(colors.HexColor("#064e3b"))
-        pdf.rect(35, y_tbl, 542, 18, fill=True, stroke=False)
-        pdf.setFillColor(colors.white)
-        pdf.setFont("Helvetica-Bold", 7.5)
-        pdf.drawString(42, y_tbl + 5, "PRODUCTO COMERCIAL")
-        pdf.drawString(180, y_tbl + 5, "INGREDIENTE ACTIVO")
-        pdf.drawString(350, y_tbl + 5, "DOSIS APLICADA")
-        pdf.drawString(465, y_tbl + 5, "TIEMPO REENTRADA")
-
-        pdf.setFillColor(colors.HexColor("#0f172a"))
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawString(42, y_tbl - 18, str(srv.get('quimico_utilizado') or 'DEMAND DUO'))
-        pdf.setFont("Helvetica", 7.5)
-        pdf.drawString(180, y_tbl - 18, str(srv.get('ingrediente_activo') or 'LAMBDA CYHALOTRINA 9.7%'))
-        pdf.drawString(350, y_tbl - 18, str(srv.get('dosis_aplicada') or '4 ml / Litro'))
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.setFillColor(colors.HexColor("#b91c1c"))
-        pdf.drawString(465, y_tbl - 18, str(srv.get('tiempo_reentrada') or '2 Horas'))
-
-        firma_data = srv.get('firma_cliente')
-        if firma_data and ',' in firma_data:
-            try:
-                fb = base64.b64decode(firma_data.split(',')[1])
-                pdf.drawImage(ImageReader(io.BytesIO(fb)), 360, 270, width=150, height=60, mask='auto')
-            except Exception:
-                pass
-
-        pdf.setStrokeColor(colors.HexColor("#64748b"))
-        pdf.line(60, 270, 230, 270)
-        pdf.line(350, 270, 520, 270)
-        pdf.setFillColor(colors.HexColor("#0f172a"))
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawCentredString(145, 258, "Jonathan Dávila")
-        pdf.setFont("Helvetica", 7)
-        pdf.drawCentredString(145, 248, "Técnico Especialista COFEPRIS")
-        pdf.setFont("Helvetica-Bold", 8)
-        pdf.drawCentredString(435, 258, str(cliente.get('contacto'))[:30])
-        pdf.setFont("Helvetica", 7)
-        pdf.drawCentredString(435, 248, "Firma de Conformidad del Cliente")
-
-        pdf.save()
-        buffer.seek(0)
-        return send_file(buffer, as_attachment=True, download_name=f"Certificado_Fumilab_{folio_str}.pdf", mimetype='application/pdf')
-    except Exception as e:
-        return f"Error al generar Certificado: {str(e)}", 500
-
 
 @app.route('/servicio_exitoso/<folio>')
 def servicio_exitoso(folio):
@@ -560,7 +460,6 @@ def servicio_exitoso(folio):
 
 @app.route('/ver_certificado/<folio>')
 def ver_certificado_publico(folio):
-    """Permite al cliente descargar su certificado con el enlace que recibe por WhatsApp sin requerir login."""
     try:
         with get_db() as conn:
             srv_row = conn.execute("SELECT id FROM servicios WHERE folio = ?", (folio,)).fetchone()
@@ -571,8 +470,148 @@ def ver_certificado_publico(folio):
     except Exception as e:
         return f"Error al recuperar certificado: {str(e)}", 500
 
+@app.route('/api/marcar-atendido/<int:lead_id>', methods=['POST'])
+@login_requerido
+def marcar_atendido(lead_id):
+    try:
+        with get_db() as conn:
+            conn.execute("UPDATE prospectos SET estatus = 'Atendido' WHERE id = ?", (lead_id,))
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/descargar_reporte_pdf/<int:servicio_id>')
+def descargar_reporte_pdf(servicio_id):
+    try:
+        with get_db() as conn:
+            row = conn.execute("SELECT * FROM servicios WHERE id = ?", (servicio_id,)).fetchone()
+            if not row:
+                return "Servicio no encontrado", 404
+            srv = dict(row)
+
+            c_row = conn.execute("SELECT * FROM clientes WHERE id = ?", (srv.get('cliente_id', 1),)).fetchone()
+            cliente = dict(c_row) if c_row else {'nombre_comercial': 'Cliente Comercial', 'contacto': 'Responsable', 'direccion': 'CDMX y EdoMex'}
+
+        buffer = io.BytesIO()
+        pdf = canvas.Canvas(buffer, pagesize=letter)
+        folio_str = str(srv.get('folio') or srv.get('id', '3501'))
+        pdf.setTitle(f"Certificado_Fumilab_{folio_str}")
+
+        # ENCABEZADO
+        pdf.setFillColor(colors.HexColor("#064e3b"))
+        pdf.rect(0, 715, 612, 77, fill=True, stroke=False)
+        pdf.setFillColor(colors.HexColor("#10b981"))
+        pdf.rect(0, 710, 612, 5, fill=True, stroke=False)
+
+        pdf.setFillColor(colors.white)
+        pdf.setFont("Helvetica-Bold", 18)
+        pdf.drawString(40, 755, "FUMILAB CONTROL INTEGRAL")
+        pdf.setFont("Helvetica", 9)
+        pdf.drawString(40, 738, "Manejo Integral de Plagas Urbanas & Desinfección")
+        pdf.setFont("Helvetica-Bold", 8)
+        pdf.drawString(40, 723, "LICENCIA SANITARIA COFEPRIS: 2009-15A013")
+
+        pdf.setFont("Helvetica-Bold", 12)
+        pdf.drawRightString(572, 755, f"CERTIFICADO #{folio_str}")
+        pdf.setFont("Helvetica", 8)
+        pdf.drawRightString(572, 738, f"FECHA: {srv.get('fecha_servicio') or '2026-09-19'}")
+
+        # CUADRO CLIENTE
+        pdf.setFillColor(colors.HexColor("#f8fafc"))
+        pdf.setStrokeColor(colors.HexColor("#cbd5e1"))
+        pdf.roundRect(35, 605, 542, 90, 6, stroke=1, fill=1)
+
+        pdf.setFillColor(colors.HexColor("#0f172a"))
+        pdf.setFont("Helvetica-Bold", 8)
+        pdf.drawString(45, 675, "Razón Social / Cliente:")
+        pdf.setFont("Helvetica", 8)
+        pdf.drawString(150, 675, str(cliente.get('nombre_comercial'))[:45])
+        pdf.setFont("Helvetica-Bold", 8)
+        pdf.drawString(45, 655, "Dirección Inmueble:")
+        pdf.setFont("Helvetica", 8)
+        pdf.drawString(150, 655, str(cliente.get('direccion'))[:60])
+        pdf.setFont("Helvetica-Bold", 8)
+        pdf.drawString(45, 635, "Servicio Realizado:")
+        pdf.setFont("Helvetica-Bold", 8)
+        pdf.setFillColor(colors.HexColor("#047857"))
+        pdf.drawString(150, 635, str(srv.get('tipo_servicio') or 'MANEJO INTEGRAL DE PLAGAS'))
+
+        # TABLA TÉCNICA COFEPRIS
+        y_tbl = 560
+        pdf.setFillColor(colors.HexColor("#064e3b"))
+        pdf.rect(35, y_tbl, 542, 18, fill=True, stroke=False)
+        pdf.setFillColor(colors.white)
+        pdf.setFont("Helvetica-Bold", 7.5)
+        pdf.drawString(42, y_tbl + 5, "PRODUCTO COMERCIAL")
+        pdf.drawString(180, y_tbl + 5, "INGREDIENTE ACTIVO")
+        pdf.drawString(350, y_tbl + 5, "DOSIS APLICADA")
+        pdf.drawString(465, y_tbl + 5, "TIEMPO REENTRADA")
+
+        pdf.setFillColor(colors.HexColor("#0f172a"))
+        pdf.setFont("Helvetica-Bold", 8)
+        pdf.drawString(42, y_tbl - 18, str(srv.get('quimico_utilizado') or 'DEMAND DUO'))
+        pdf.setFont("Helvetica", 7.5)
+        pdf.drawString(180, y_tbl - 18, str(srv.get('ingrediente_activo') or 'LAMBDA CYHALOTRINA 9.7%'))
+        pdf.drawString(350, y_tbl - 18, str(srv.get('dosis_aplicada') or '4 ml / Litro'))
+        pdf.setFont("Helvetica-Bold", 8)
+        pdf.setFillColor(colors.HexColor("#b91c1c"))
+        pdf.drawString(465, y_tbl - 18, str(srv.get('tiempo_reentrada') or '2 Horas'))
+
+        # ACTIVIDADES Y RECOMENDACIONES TÉCNICAS
+        pdf.setFillColor(colors.HexColor("#f8fafc"))
+        pdf.setStrokeColor(colors.HexColor("#cbd5e1"))
+        pdf.roundRect(35, 385, 542, 130, 6, stroke=1, fill=1)
+
+        pdf.setFillColor(colors.HexColor("#0f172a"))
+        pdf.setFont("Helvetica-Bold", 8)
+        pdf.drawString(45, 495, "ACTIVIDADES TÉCNICAS EJECUTADAS:")
+        pdf.setFont("Helvetica", 7.5)
+        pdf.drawString(45, 480, str(srv.get('actividades_realizadas') or 'Aspersión perimetral focalizada y colocación de cebo específico.')[:110])
+
+        pdf.setFont("Helvetica-Bold", 8)
+        pdf.drawString(45, 455, "RECOMENDACIONES SANITARIAS & MEDIDAS PREVENTIVAS:")
+        pdf.setFont("Helvetica", 7.5)
+        pdf.drawString(45, 440, str(srv.get('recomendaciones') or 'No realizar aseo profundo en áreas tratadas por 24 horas. Mantener ventilación previa al reingreso.')[:110])
+
+        pdf.setFont("Helvetica-Bold", 7.5)
+        pdf.setFillColor(colors.HexColor("#047857"))
+        pdf.drawString(45, 405, "NORMATIVA SANITARIA: Tratamiento y aplicación validados bajo la Norma Oficial Mexicana NOM-256-SSA1-2012.")
+
+        # FIRMAS DE CONFORMIDAD
+        firma_data = srv.get('firma_cliente')
+        if firma_data and ',' in firma_data:
+            try:
+                fb = base64.b64decode(firma_data.split(',')[1])
+                pdf.drawImage(ImageReader(io.BytesIO(fb)), 360, 270, width=150, height=60, mask='auto')
+            except Exception:
+                pass
+
+        pdf.setStrokeColor(colors.HexColor("#64748b"))
+        pdf.line(60, 270, 230, 270)
+        pdf.line(350, 270, 520, 270)
+        pdf.setFillColor(colors.HexColor("#0f172a"))
+        pdf.setFont("Helvetica-Bold", 8)
+        pdf.drawCentredString(145, 258, "Jonathan Dávila")
+        pdf.setFont("Helvetica", 7)
+        pdf.drawCentredString(145, 248, "Técnico Especialista COFEPRIS")
+        pdf.setFont("Helvetica-Bold", 8)
+        pdf.drawCentredString(435, 258, str(cliente.get('contacto') or 'Responsable')[:30])
+        pdf.setFont("Helvetica", 7)
+        pdf.drawCentredString(435, 248, "Firma de Conformidad del Cliente")
+
+        # PIE INSTITUCIONAL
+        pdf.setFillColor(colors.HexColor("#064e3b"))
+        pdf.rect(35, 175, 542, 24, fill=True, stroke=False)
+        pdf.setFillColor(colors.white)
+        pdf.setFont("Helvetica-Bold", 7)
+        pdf.drawCentredString(306, 185, "FUMILAB CONTROL • MATRIZ: LAUREL LOTE 43 CASA 6, LOS REYES IZTACALA, TLALNEPANTLA, EDOMEX")
+
+        pdf.save()
+        buffer.seek(0)
+        return send_file(buffer, as_attachment=True, download_name=f"Certificado_Fumilab_{folio_str}.pdf", mimetype='application/pdf')
+    except Exception as e:
+        return f"Error al generar Certificado: {str(e)}", 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
-
-
