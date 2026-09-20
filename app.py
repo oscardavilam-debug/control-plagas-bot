@@ -17,12 +17,9 @@ app = Flask(__name__)
 app.secret_key = "fumilab_control_pro_secret_key_2026"
 
 DB_FILE = 'fumilab.db'
-
-# URL de Webhook para Google Sheets (Configurable via variable de entorno o directa)
 SHEETS_WEBHOOK_URL = os.environ.get('SHEETS_WEBHOOK_URL', '')
 
 def enviar_a_google_sheets(datos):
-    """Envía la fila del prospecto en segundo plano sin trabar la respuesta web."""
     if not SHEETS_WEBHOOK_URL:
         return
     try:
@@ -35,7 +32,7 @@ def enviar_a_google_sheets(datos):
         )
         urllib.request.urlopen(req, timeout=5)
     except Exception as e:
-        print(f"Aviso Sheets: {e}")
+        print(f"Error envio Sheets: {e}")
 
 def get_db():
     conn = sqlite3.connect(DB_FILE, timeout=30.0)
@@ -44,10 +41,13 @@ def get_db():
     return conn
 
 def asegurar_columna(conn, tabla, columna, tipo_def):
-    cursor = conn.execute(f"PRAGMA table_info({tabla})")
-    columnas = [fila[1] for fila in cursor.fetchall()]
-    if columna not in columnas:
-        conn.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {tipo_def}")
+    try:
+        cursor = conn.execute(f"PRAGMA table_info({tabla})")
+        columnas = [fila[1] for fila in cursor.fetchall()]
+        if columna not in columnas:
+            conn.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {tipo_def}")
+    except Exception:
+        pass
 
 def init_db():
     try:
@@ -89,6 +89,18 @@ def init_db():
                     estatus TEXT DEFAULT 'Terminado'
                 )
             ''')
+            for col, tipo in [
+                ("folio", "TEXT"), ("cliente_id", "INTEGER"), ("tipo_servicio", "TEXT"),
+                ("fecha_servicio", "TEXT"), ("hora_inicio", "TEXT"), ("hora_fin", "TEXT"),
+                ("costo", "REAL DEFAULT 1400.0"), ("gasto_quimicos", "REAL DEFAULT 250.0"),
+                ("gasto_gasolina", "REAL DEFAULT 180.0"), ("gasto_nomina", "REAL DEFAULT 350.0"),
+                ("gasto_equipo", "REAL DEFAULT 80.0"), ("quimico_utilizado", "TEXT"),
+                ("ingrediente_activo", "TEXT"), ("dosis_aplicada", "TEXT"),
+                ("equipo_utilizado", "TEXT"), ("tiempo_reentrada", "TEXT"),
+                ("actividades_realizadas", "TEXT"), ("recomendaciones", "TEXT"),
+                ("firma_cliente", "TEXT"), ("estatus", "TEXT DEFAULT 'Terminado'")
+            ]:
+                asegurar_columna(conn, "servicios", col, tipo)
 
             conn.execute('''
                 CREATE TABLE IF NOT EXISTS prospectos (
@@ -103,6 +115,13 @@ def init_db():
                     notas TEXT
                 )
             ''')
+            for col, tipo in [
+                ("folio", "TEXT"), ("nombre", "TEXT"), ("telefono", "TEXT"),
+                ("tipo_inmueble", "TEXT"), ("plaga", "TEXT"),
+                ("fecha_solicitud", "TEXT"), ("estatus", "TEXT DEFAULT 'Pendiente'"),
+                ("notas", "TEXT")
+            ]:
+                asegurar_columna(conn, "prospectos", col, tipo)
 
             conn.execute('''
                 CREATE TABLE IF NOT EXISTS inventario (
@@ -125,7 +144,6 @@ def init_db():
                 )
             ''')
 
-            # Asegurar datos iniciales
             if conn.execute("SELECT COUNT(*) FROM clientes").fetchone()[0] == 0:
                 conn.execute('''
                     INSERT INTO clientes (nombre_comercial, contacto, telefono, direccion, tipo_inmueble) VALUES 
@@ -143,12 +161,29 @@ def init_db():
                     ('Equipo', 'Aspersora Manual Swissmex 15L', 'NOM-STPS', 4.0, 'Piezas', 1200.0, 'Disponible'),
                     ('Equipo', 'Termonebulizador en Frío ULV', 'CE-ISO', 2.0, 'Piezas', 4800.0, 'Disponible')
                 ''')
+
+            if conn.execute("SELECT COUNT(*) FROM servicios").fetchone()[0] == 0:
+                conn.execute('''
+                    INSERT INTO servicios (
+                        folio, cliente_id, tipo_servicio, fecha_servicio, hora_inicio, hora_fin,
+                        costo, gasto_quimicos, gasto_gasolina, gasto_nomina, gasto_equipo,
+                        quimico_utilizado, ingrediente_activo, dosis_aplicada, equipo_utilizado, tiempo_reentrada,
+                        actividades_realizadas, recomendaciones, estatus
+                    ) VALUES 
+                    ('3501', 1, 'MANEJO INTEGRAL DE CUCARACHAS', '2026-09-19', '08:41 PM', '09:41 PM',
+                     1400.0, 180.0, 150.0, 350.0, 50.0,
+                     'DEMAND DUO', 'LAMBDA CYHALOTRINA 9.7%', '4 ml / L de agua', 'Aspersora Manual Swissmex', '2 Horas',
+                     'Aspersión perimetral focalizada y colocación de gel cucarachicida', 'No realizar aseo profundo en 24h', 'Terminado'),
+                    ('3502', 2, 'CONTROL DE ROEDORES (MIP)', '2026-09-18', '04:52 PM', '06:18 PM',
+                     1800.0, 220.0, 180.0, 400.0, 60.0,
+                     'RODILON BLOQUE', 'DIFETIALONA 0.0025%', '1 Bloque / Cebadero', 'Cebaderos Perimetrales R-Lock', 'Inmediata',
+                     'Revisión y reabastecimiento de 8 estaciones de cebado', 'Mantener pasillos libres de tarimas', 'Terminado')
+                ''')
     except Exception as e:
-        print(f"Init DB error: {e}")
+        print(f"Init DB: {e}")
 
 init_db()
 
-# --- NAVEGACIÓN ---
 @app.route('/')
 def home():
     return render_template('landing.html')
@@ -238,7 +273,6 @@ def reporte_campo():
 def escaner_qr():
     return render_template('escaner_qr.html')
 
-# --- COTIZADOR WEB Y ENVÍO A SHEETS ---
 @app.route('/solicitar_cotizacion', methods=['GET', 'POST'])
 def solicitar_cotizacion():
     if request.method == 'POST':
@@ -248,7 +282,7 @@ def solicitar_cotizacion():
             tipo_inmueble = (request.form.get('tipo_inmueble') or request.form.get('inmueble') or 'Hogar').strip()
             plaga = (request.form.get('plaga') or request.form.get('plaga_tratar') or 'Cucarachas').strip()
             notas = request.form.get('notas', '')
-            fecha_hora_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            fecha_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             with get_db() as conn:
                 conteo = conn.execute('SELECT COUNT(*) FROM prospectos').fetchone()[0]
@@ -257,12 +291,12 @@ def solicitar_cotizacion():
                 conn.execute('''
                     INSERT INTO prospectos (folio, nombre, telefono, tipo_inmueble, plaga, fecha_solicitud, estatus, notas)
                     VALUES (?, ?, ?, ?, ?, ?, 'Pendiente', ?)
-                ''', (folio, nombre, telefono, tipo_inmueble, plaga, fecha_hora_str, notas))
+                ''', (folio, nombre, telefono, tipo_inmueble, plaga, fecha_str, notas))
 
-            # Enviar directamente a la estructura de tu Google Sheet
+            # Compatible con las variables de tu Google Apps Script
             datos_sheet = {
-                "fecha_hora": fecha_hora_str,
-                "nombre": nombre,
+                "fecha": fecha_str,
+                "contacto": nombre,
                 "telefono": telefono,
                 "plaga": plaga,
                 "inmueble": tipo_inmueble,
@@ -281,7 +315,6 @@ def cotizacion_exitosa():
     folio = request.args.get('folio', 'COT-901')
     return render_template('cotizacion_exitosa.html', folio=folio)
 
-# --- APIS DEL SISTEMA ---
 @app.route('/api/inventario/agregar', methods=['POST'])
 def agregar_inventario():
     try:
@@ -304,7 +337,6 @@ def agregar_inventario():
 
 @app.route('/api/guardar_reporte_servicio', methods=['POST'])
 def guardar_reporte():
-    """Resuelve el fallo de conexión en el formulario de campo."""
     try:
         data = request.get_json() or {}
         fecha_hoy = datetime.now().strftime("%Y-%m-%d")
