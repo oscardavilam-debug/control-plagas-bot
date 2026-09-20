@@ -3,57 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FumilabControl | Certificados PDF Oficiales</title>
+    <title>FumilabControl | Emisión de Certificados PDF</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
-<body class="bg-slate-100 text-slate-900 min-h-screen">
-    {% include 'header_nav.html' %}
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+
+    <header class="bg-slate-950/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-shield-virus text-lg"></i>
+                </div>
+                <div>
+                    <span class="text-base font-black tracking-tight text-white block">FUMILAB<span class="text-emerald-400">CONTROL</span></span>
+                    <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Sistema Operativo Sanitario</span>
+                </div>
+            </div>
+            
+            <nav class="flex items-center space-x-2">
+                <a href="/dashboard" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-chart-line text-emerald-400"></i>
+                    <span>Finanzas</span>
+                </a>
+                <a href="/prospectos" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-inbox text-cyan-400"></i>
+                    <span>Prospectos</span>
+                </a>
+                <a href="/certificados" class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 text-amber-400 border border-slate-700/60 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-file-shield"></i>
+                    <span>Certificados PDF</span>
+                </a>
+                <a href="/tecnico" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                    <span>App Técnico</span>
+                </a>
+            </nav>
+        </div>
+    </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col md:flex-row justify-between md:items-center gap-4">
+        
+        <div class="flex flex-col md:flex-row justify-between md:items-end gap-4 border-b border-slate-800 pb-6">
             <div>
-                <h1 class="text-xl font-black text-slate-900">Emisión de Certificados & Reportes Técnicos</h1>
-                <p class="text-xs text-slate-500 mt-0.5">Certificados oficiales con Licencia Sanitaria COFEPRIS y evidencia fotográfica</p>
+                <span class="text-xs font-bold text-amber-400 uppercase tracking-widest block mb-1">Inocuidad & Cumplimiento Sanitario</span>
+                <h1 class="text-3xl font-black text-white tracking-tight">Expedientes & Certificados Oficiales</h1>
+                <p class="text-xs text-slate-400 mt-1">Licencia Sanitaria COFEPRIS 2009-15A013 • Descarga inmediata en formato PDF con firma y evidencia técnica.</p>
             </div>
-            <a href="/reporte_campo" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/30 transition flex items-center space-x-2">
+            <a href="/reporte_campo" class="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs shadow-lg shadow-emerald-500/20 transition flex items-center space-x-2">
                 <i class="fa-solid fa-plus"></i>
-                <span>Nuevo Reporte en Campo</span>
+                <span>Emitir Nuevo Reporte</span>
             </a>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for s in servicios %}
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 hover:shadow-md transition">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <span class="text-[10px] font-bold uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Folio: #{{ s['folio'] }}</span>
-                        <h3 class="font-extrabold text-sm text-slate-900 mt-1">{{ s['tipo_servicio'] }}</h3>
-                        <p class="text-xs text-slate-500">Fecha: {{ s['fecha_servicio'] }} ({{ s['hora_inicio'] }} - {{ s['hora_fin'] }})</p>
+            <div class="bg-slate-800/50 border border-slate-700/60 rounded-3xl p-6 backdrop-blur-xl space-y-4 hover:border-slate-600 transition flex flex-col justify-between">
+                <div class="space-y-3">
+                    <div class="flex justify-between items-start">
+                        <span class="px-3 py-1 rounded-full text-[10px] font-mono font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            FOLIO #{{ s.folio }}
+                        </span>
+                        <span class="text-[10px] text-slate-400 font-semibold">{{ s.fecha_servicio }}</span>
                     </div>
-                    <i class="fa-solid fa-file-shield text-2xl text-emerald-600"></i>
+
+                    <div>
+                        <h3 class="font-black text-white text-base tracking-tight leading-snug">{{ s.tipo_servicio }}</h3>
+                        <p class="text-xs text-emerald-400 font-bold mt-1">{{ s.cliente_nombre or 'Cliente General' }}</p>
+                    </div>
+
+                    <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-700/40 text-xs space-y-1 text-slate-300">
+                        <p><strong class="text-slate-400">Producto:</strong> {{ s.quimico_utilizado or 'DEMAND DUO' }}</p>
+                        <p><strong class="text-slate-400">Dosis:</strong> {{ s.dosis_aplicada or '4 ml / L' }}</p>
+                        <p><strong class="text-slate-400">Reentrada:</strong> <span class="text-amber-300 font-semibold">{{ s.tiempo_reentrada or '2 Horas' }}</span></p>
+                    </div>
                 </div>
 
-                <div class="text-xs bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1">
-                    <p><strong class="text-slate-700">Químico:</strong> {{ s['quimico_utilizado'] }}</p>
-                    <p><strong class="text-slate-700">Dosis:</strong> {{ s['dosis_aplicada'] }}</p>
-                    <p><strong class="text-slate-700">Reentrada:</strong> {{ s['tiempo_reentrada'] }}</p>
-                </div>
-
-                <a href="/descargar_reporte_pdf/{{ s['id'] }}" target="_blank" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition shadow-sm">
-                    <i class="fa-solid fa-download"></i>
-                    <span>Descargar Certificado PDF</span>
+                <a href="/descargar_reporte_pdf/{{ s.id }}" target="_blank" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-xs font-black flex items-center justify-center space-x-2 transition border border-slate-600/60">
+                    <i class="fa-solid fa-file-pdf text-rose-400 text-sm"></i>
+                    <span>Descargar Certificado Oficial</span>
                 </a>
-            </div>
-            {% else %}
-            <div class="col-span-3 bg-white p-12 rounded-3xl border border-slate-200 text-center text-slate-400">
-                <i class="fa-solid fa-file-lines text-3xl mb-2"></i>
-                <p>No hay reportes terminados para generar certificados. Realiza uno desde la <a href="/reporte_campo" class="text-emerald-600 font-bold underline">App del Técnico</a>.</p>
             </div>
             {% endfor %}
         </div>
+
     </main>
 </body>
 </html>

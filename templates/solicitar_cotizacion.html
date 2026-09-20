@@ -1,0 +1,74 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FumilabControl | Solicitar Cotización Oficial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen py-12 px-4 sm:px-6">
+
+    <div class="max-w-xl mx-auto space-y-6">
+        <div class="text-center space-y-2">
+            <div class="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 text-2xl font-black shadow-lg shadow-emerald-500/20 mb-2">
+                <i class="fa-solid fa-shield-virus"></i>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Solicitud de Cotización Técnica</h1>
+            <p class="text-xs text-slate-400">Atención profesional para empresas, comercios y hogares bajo normativa COFEPRIS.</p>
+        </div>
+
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl space-y-6">
+            <form action="/solicitar_cotizacion" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">Nombre Completo o Razón Social</label>
+                    <input type="text" name="nombre" required placeholder="Ej. Restaurante La Parroquia / Ing. Mendoza" class="w-full p-3.5 bg-slate-900 border border-slate-700 rounded-2xl text-xs font-semibold text-white outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">Teléfono WhatsApp de Contacto</label>
+                    <input type="tel" name="telefono" required placeholder="Ej. 5512345678" class="w-full p-3.5 bg-slate-900 border border-slate-700 rounded-2xl text-xs font-semibold text-white outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">Giro / Tipo Inmueble</label>
+                        <select name="tipo_inmueble" class="w-full p-3.5 bg-slate-900 border border-slate-700 rounded-2xl text-xs font-semibold text-white outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option>Comercial / Alimentos</option>
+                            <option>Industrial / Bodega</option>
+                            <option>Farmacia / Sector Salud</option>
+                            <option>Residencial / Condominio</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">Plaga Objetivo</label>
+                        <select name="plaga" class="w-full p-3.5 bg-slate-900 border border-slate-700 rounded-2xl text-xs font-semibold text-white outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option>Cucaracha Germánica</option>
+                            <option>Control de Roedores</option>
+                            <option>Insectos Rastreros y Voladores</option>
+                            <option>Desinfección Ambiental</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">Comentarios Adicionales (Opcional)</label>
+                    <textarea name="notas" rows="2" placeholder="Ej. Metros cuadrados aproximados o detalles de la incidencia..." class="w-full p-3.5 bg-slate-900 border border-slate-700 rounded-2xl text-xs font-semibold text-white outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                </div>
+
+                <button type="submit" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl text-sm shadow-xl shadow-emerald-500/20 transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Enviar Solicitud Inmediata</span>
+                </button>
+            </form>
+        </div>
+
+        <div class="text-center">
+            <a href="/" class="text-xs text-slate-400 hover:text-white font-bold transition">← Volver a la página principal</a>
+        </div>
+    </div>
+
+</body>
+</html>
