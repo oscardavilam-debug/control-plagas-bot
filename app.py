@@ -17,169 +17,159 @@ app.secret_key = "fumilab_control_pro_secret_key_2026"
 DB_FILE = 'fumilab.db'
 
 def get_db():
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(DB_FILE, timeout=30.0)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL;")
     return conn
 
 def init_db():
-    conn = get_db()
-    
-    # Migración garantizada: añadir tipo_inmueble a clientes si no existe
     try:
-        conn.execute("ALTER TABLE clientes ADD COLUMN tipo_inmueble TEXT")
-        conn.commit()
-    except Exception:
-        pass
+        with get_db() as conn:
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS clientes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nombre_comercial TEXT NOT NULL,
+                    contacto TEXT,
+                    telefono TEXT,
+                    direccion TEXT,
+                    tipo_inmueble TEXT
+                )
+            ''')
 
-    # Crear tablas limpias y completas
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS clientes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre_comercial TEXT NOT NULL,
-            contacto TEXT,
-            telefono TEXT,
-            direccion TEXT,
-            tipo_inmueble TEXT
-        )
-    ''')
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS servicios (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    folio TEXT UNIQUE,
+                    cliente_id INTEGER,
+                    tipo_servicio TEXT,
+                    fecha_servicio TEXT,
+                    hora_inicio TEXT,
+                    hora_fin TEXT,
+                    costo REAL DEFAULT 1400.0,
+                    gasto_quimicos REAL DEFAULT 250.0,
+                    gasto_gasolina REAL DEFAULT 180.0,
+                    gasto_nomina REAL DEFAULT 350.0,
+                    gasto_equipo REAL DEFAULT 80.0,
+                    quimico_utilizado TEXT,
+                    ingrediente_activo TEXT,
+                    dosis_aplicada TEXT,
+                    equipo_utilizado TEXT,
+                    tiempo_reentrada TEXT,
+                    actividades_realizadas TEXT,
+                    recomendaciones TEXT,
+                    firma_cliente TEXT,
+                    estatus TEXT DEFAULT 'Terminado'
+                )
+            ''')
 
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS servicios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            folio TEXT UNIQUE,
-            cliente_id INTEGER,
-            tipo_servicio TEXT,
-            fecha_servicio TEXT,
-            hora_inicio TEXT,
-            hora_fin TEXT,
-            costo REAL DEFAULT 1400.0,
-            gasto_quimicos REAL DEFAULT 250.0,
-            gasto_gasolina REAL DEFAULT 180.0,
-            gasto_nomina REAL DEFAULT 350.0,
-            gasto_equipo REAL DEFAULT 80.0,
-            quimico_utilizado TEXT,
-            ingrediente_activo TEXT,
-            dosis_aplicada TEXT,
-            equipo_utilizado TEXT,
-            tiempo_reentrada TEXT,
-            actividades_realizadas TEXT,
-            recomendaciones TEXT,
-            firma_cliente TEXT,
-            estatus TEXT DEFAULT 'Terminado'
-        )
-    ''')
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS prospectos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    folio TEXT UNIQUE,
+                    nombre TEXT NOT NULL,
+                    telefono TEXT NOT NULL,
+                    tipo_inmueble TEXT,
+                    plaga TEXT,
+                    fecha_solicitud TEXT,
+                    estatus TEXT DEFAULT 'Pendiente',
+                    notas TEXT
+                )
+            ''')
 
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS prospectos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            folio TEXT UNIQUE,
-            nombre TEXT NOT NULL,
-            telefono TEXT NOT NULL,
-            tipo_inmueble TEXT,
-            plaga TEXT,
-            fecha_solicitud TEXT,
-            estatus TEXT DEFAULT 'Pendiente',
-            notas TEXT
-        )
-    ''')
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS inventario (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tipo TEXT,
+                    nombre TEXT NOT NULL,
+                    registro_cofepris TEXT,
+                    stock_actual REAL,
+                    unidad TEXT,
+                    costo_unitario REAL,
+                    estado TEXT DEFAULT 'Disponible'
+                )
+            ''')
 
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS inventario (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tipo TEXT,
-            nombre TEXT NOT NULL,
-            registro_cofepris TEXT,
-            stock_actual REAL,
-            unidad TEXT,
-            costo_unitario REAL,
-            estado TEXT DEFAULT 'Disponible'
-        )
-    ''')
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS servicio_fotos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    servicio_id INTEGER,
+                    ruta_imagen TEXT
+                )
+            ''')
 
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS servicio_fotos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            servicio_id INTEGER,
-            ruta_imagen TEXT
-        )
-    ''')
+            # Migraciones defensivas
+            migraciones = [
+                ("clientes", "tipo_inmueble", "TEXT"),
+                ("servicios", "gasto_quimicos", "REAL DEFAULT 250.0"),
+                ("servicios", "gasto_gasolina", "REAL DEFAULT 180.0"),
+                ("servicios", "gasto_nomina", "REAL DEFAULT 350.0"),
+                ("servicios", "gasto_equipo", "REAL DEFAULT 80.0"),
+                ("servicios", "equipo_utilizado", "TEXT"),
+                ("servicios", "cliente_id", "INTEGER"),
+                ("prospectos", "folio", "TEXT"),
+                ("prospectos", "tipo_inmueble", "TEXT"),
+                ("prospectos", "plaga", "TEXT"),
+                ("prospectos", "fecha_solicitud", "TEXT"),
+                ("prospectos", "estatus", "TEXT DEFAULT 'Pendiente'"),
+                ("prospectos", "notas", "TEXT")
+            ]
+            for tabla, col, tipo in migraciones:
+                try:
+                    conn.execute(f"ALTER TABLE {tabla} ADD COLUMN {col} {tipo}")
+                except Exception:
+                    pass
 
-    # Migración defensiva en servicios y prospectos
-    cols_add = [
-        ("servicios", "gasto_quimicos", "REAL DEFAULT 250.0"),
-        ("servicios", "gasto_gasolina", "REAL DEFAULT 180.0"),
-        ("servicios", "gasto_nomina", "REAL DEFAULT 350.0"),
-        ("servicios", "gasto_equipo", "REAL DEFAULT 80.0"),
-        ("servicios", "equipo_utilizado", "TEXT"),
-        ("servicios", "cliente_id", "INTEGER"),
-        ("prospectos", "folio", "TEXT"),
-        ("prospectos", "tipo_inmueble", "TEXT"),
-        ("prospectos", "plaga", "TEXT"),
-        ("prospectos", "fecha_solicitud", "TEXT"),
-        ("prospectos", "estatus", "TEXT DEFAULT 'Pendiente'"),
-        ("prospectos", "notas", "TEXT")
-    ]
-    for tabla, col, tipo in cols_add:
-        try:
-            conn.execute(f"ALTER TABLE {tabla} ADD COLUMN {col} {tipo}")
-        except Exception:
-            pass
+            # Precarga inicial
+            c_count = conn.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
+            if c_count == 0:
+                conn.execute('''
+                    INSERT INTO clientes (nombre_comercial, contacto, telefono, direccion, tipo_inmueble) VALUES 
+                    ('Farmacia Similares 3509 Ecatepec', 'Nancy Padilla Garcia', '5541419369', 'Av. Jardines de Morelos Mz. 316', 'Comercial'),
+                    ('Purificadora Hidropura', 'Elizabeth Carbajal', '5534842783', 'Cuautitlan Izcalli EdoMex', 'Industrial'),
+                    ('Restaurante Aloha Mar y Tierra', 'Mauricio Garduño', '5632326172', 'Blvd. Valle San Felipe', 'Alimentos')
+                ''')
 
-    # Sembrado inicial
-    c_count = conn.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
-    if c_count == 0:
-        conn.execute('''
-            INSERT INTO clientes (nombre_comercial, contacto, telefono, direccion, tipo_inmueble) VALUES 
-            ('Farmacia Similares 3509 Ecatepec', 'Nancy Padilla Garcia', '5541419369', 'Av. Jardines de Morelos Mz. 316', 'Comercial'),
-            ('Purificadora Hidropura', 'Elizabeth Carbajal', '5534842783', 'Cuautitlan Izcalli EdoMex', 'Industrial'),
-            ('Restaurante Aloha Mar y Tierra', 'Mauricio Garduño', '5632326172', 'Blvd. Valle San Felipe', 'Alimentos')
-        ''')
+            p_count = conn.execute("SELECT COUNT(*) FROM prospectos").fetchone()[0]
+            if p_count == 0:
+                conn.execute('''
+                    INSERT INTO prospectos (folio, nombre, telefono, tipo_inmueble, plaga, fecha_solicitud, estatus, notas) VALUES
+                    ('COT-901', 'Bodega Abarrotes Central', '5511223344', 'Bodega Industrial', 'Roedores y Cucarachas', '2026-09-19', 'Pendiente', 'Cotización urgente servicio perimetral'),
+                    ('COT-902', 'Panificadora La Espiga', '5598765432', 'Alimentos', 'Cucaracha Germánica', '2026-09-19', 'Atendido', 'Póliza acordada lunes 8am')
+                ''')
 
-    p_count = conn.execute("SELECT COUNT(*) FROM prospectos").fetchone()[0]
-    if p_count == 0:
-        conn.execute('''
-            INSERT INTO prospectos (folio, nombre, telefono, tipo_inmueble, plaga, fecha_solicitud, estatus, notas) VALUES
-            ('COT-901', 'Bodega Abarrotes Central', '5511223344', 'Bodega Industrial', 'Roedores y Cucarachas', '2026-09-19', 'Pendiente', 'Cotización urgente servicio perimetral'),
-            ('COT-902', 'Panificadora La Espiga', '5598765432', 'Alimentos', 'Cucaracha Germánica', '2026-09-19', 'Atendido', 'Póliza acordada lunes 8am')
-        ''')
+            inv_count = conn.execute("SELECT COUNT(*) FROM inventario").fetchone()[0]
+            if inv_count == 0:
+                conn.execute('''
+                    INSERT INTO inventario (tipo, nombre, registro_cofepris, stock_actual, unidad, costo_unitario, estado) VALUES
+                    ('Quimico', 'DEMAND DUO (Syngenta)', 'RSCO-URB-INAC-111-315-009-0.02', 12.5, 'Litros', 850.0, 'En Stock'),
+                    ('Quimico', 'RODILON BLOQUE (Bayer)', 'RSCO-URB-ROD-0101-322-005-0.0025', 18.0, 'Kg', 420.0, 'En Stock'),
+                    ('Quimico', 'BIOCIDAL PLUS 5TA GEN', 'RSCO-DOM-DES-0102-301-002-10', 25.0, 'Litros', 310.0, 'En Stock'),
+                    ('Equipo', 'Aspersora Manual Swissmex 15L', 'NOM-STPS', 4.0, 'Piezas', 1200.0, 'Operativa'),
+                    ('Equipo', 'Termonebulizador en Frío ULV', 'CE-ISO', 2.0, 'Piezas', 4800.0, 'Operativa')
+                ''')
 
-    inv_count = conn.execute("SELECT COUNT(*) FROM inventario").fetchone()[0]
-    if inv_count == 0:
-        conn.execute('''
-            INSERT INTO inventario (tipo, nombre, registro_cofepris, stock_actual, unidad, costo_unitario, estado) VALUES
-            ('Quimico', 'DEMAND DUO (Syngenta)', 'RSCO-URB-INAC-111-315-009-0.02', 12.5, 'Litros', 850.0, 'En Stock'),
-            ('Quimico', 'RODILON BLOQUE (Bayer)', 'RSCO-URB-ROD-0101-322-005-0.0025', 18.0, 'Kg', 420.0, 'En Stock'),
-            ('Quimico', 'BIOCIDAL PLUS 5TA GEN', 'RSCO-DOM-DES-0102-301-002-10', 25.0, 'Litros', 310.0, 'En Stock'),
-            ('Equipo', 'Aspersora Manual Swissmex 15L', 'NOM-STPS', 4.0, 'Piezas', 1200.0, 'Operativa'),
-            ('Equipo', 'Termonebulizador en Frío ULV', 'CE-ISO', 2.0, 'Piezas', 4800.0, 'Operativa')
-        ''')
+            s_count = conn.execute("SELECT COUNT(*) FROM servicios").fetchone()[0]
+            if s_count == 0:
+                conn.execute('''
+                    INSERT INTO servicios (
+                        folio, cliente_id, tipo_servicio, fecha_servicio, hora_inicio, hora_fin,
+                        costo, gasto_quimicos, gasto_gasolina, gasto_nomina, gasto_equipo,
+                        quimico_utilizado, ingrediente_activo, dosis_aplicada, equipo_utilizado, tiempo_reentrada,
+                        actividades_realizadas, recomendaciones, estatus
+                    ) VALUES 
+                    ('3501', 1, 'MANEJO INTEGRAL DE CUCARACHAS', '2026-09-19', '08:41 PM', '09:41 PM',
+                     1400.0, 180.0, 150.0, 350.0, 50.0,
+                     'DEMAND DUO', 'LAMBDA CYHALOTRINA 9.7%', '4 ml / L de agua', 'Aspersora Manual Swissmex', '2 Horas',
+                     'Aspersión perimetral focalizada y colocación de gel cucarachicida', 'No realizar aseo profundo en 24h', 'Terminado'),
+                    ('3502', 2, 'CONTROL DE ROEDORES (MIP)', '2026-09-18', '04:52 PM', '06:18 PM',
+                     1800.0, 220.0, 180.0, 400.0, 60.0,
+                     'RODILON BLOQUE', 'DIFETIALONA 0.0025%', '1 Bloque / Cebadero', 'Cebaderos Perimetrales R-Lock', 'Inmediata',
+                     'Revisión y reabastecimiento de 8 estaciones de cebado', 'Mantener pasillos libres de tarimas', 'Terminado')
+                ''')
+    except Exception as e:
+        print(f"Error en init_db: {e}")
 
-    s_count = conn.execute("SELECT COUNT(*) FROM servicios").fetchone()[0]
-    if s_count == 0:
-        conn.execute('''
-            INSERT INTO servicios (
-                folio, cliente_id, tipo_servicio, fecha_servicio, hora_inicio, hora_fin,
-                costo, gasto_quimicos, gasto_gasolina, gasto_nomina, gasto_equipo,
-                quimico_utilizado, ingrediente_activo, dosis_aplicada, equipo_utilizado, tiempo_reentrada,
-                actividades_realizadas, recomendaciones, estatus
-            ) VALUES 
-            ('3501', 1, 'MANEJO INTEGRAL DE CUCARACHAS', '2026-09-19', '08:41 PM', '09:41 PM',
-             1400.0, 180.0, 150.0, 350.0, 50.0,
-             'DEMAND DUO', 'LAMBDA CYHALOTRINA 9.7%', '4 ml / L de agua', 'Aspersora Manual Swissmex', '2 Horas',
-             'Aspersión perimetral focalizada y colocación de gel cucarachicida', 'No realizar aseo profundo en 24h', 'Terminado'),
-            ('3502', 2, 'CONTROL DE ROEDORES (MIP)', '2026-09-18', '04:52 PM', '06:18 PM',
-             1800.0, 220.0, 180.0, 400.0, 60.0,
-             'RODILON BLOQUE', 'DIFETIALONA 0.0025%', '1 Bloque / Cebadero', 'Cebaderos Perimetrales R-Lock', 'Inmediata',
-             'Revisión y reabastecimiento de 8 estaciones de cebado', 'Mantener pasillos libres de tarimas', 'Terminado')
-        ''')
-
-    conn.commit()
-    conn.close()
-
-try:
-    init_db()
-except Exception:
-    pass
+init_db()
 
 @app.route('/')
 def home():
@@ -194,22 +184,20 @@ def admin_redirect():
 @app.route('/dashboard_financiero')
 def dashboard_financiero():
     try:
-        init_db()
-        conn = get_db()
-        filas = conn.execute("SELECT * FROM servicios ORDER BY id DESC").fetchall()
-        servicios = [dict(f) for f in filas]
+        with get_db() as conn:
+            filas = conn.execute("SELECT * FROM servicios ORDER BY id DESC").fetchall()
+            servicios = [dict(f) for f in filas]
 
-        ingresos_totales = sum([float(s.get('costo') or 0) for s in servicios if s.get('estatus') in ['Terminado', 'Atendido']])
-        gasto_quimicos = sum([float(s.get('gasto_quimicos') or 0) for s in servicios])
-        gasto_gasolina = sum([float(s.get('gasto_gasolina') or 0) for s in servicios])
-        gasto_nomina = sum([float(s.get('gasto_nomina') or 0) for s in servicios])
-        gasto_equipo = sum([float(s.get('gasto_equipo') or 0) for s in servicios])
-        egresos_totales = gasto_quimicos + gasto_gasolina + gasto_nomina + gasto_equipo
-        utilidad_neta = ingresos_totales - egresos_totales
+            ingresos_totales = sum([float(s.get('costo') or 0) for s in servicios if s.get('estatus') in ['Terminado', 'Atendido']])
+            gasto_quimicos = sum([float(s.get('gasto_quimicos') or 0) for s in servicios])
+            gasto_gasolina = sum([float(s.get('gasto_gasolina') or 0) for s in servicios])
+            gasto_nomina = sum([float(s.get('gasto_nomina') or 0) for s in servicios])
+            gasto_equipo = sum([float(s.get('gasto_equipo') or 0) for s in servicios])
+            egresos_totales = gasto_quimicos + gasto_gasolina + gasto_nomina + gasto_equipo
+            utilidad_neta = ingresos_totales - egresos_totales
 
-        clientes_count = conn.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
-        inv_count = conn.execute("SELECT COUNT(*) FROM inventario").fetchone()[0]
-        conn.close()
+            clientes_count = conn.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
+            inv_count = conn.execute("SELECT COUNT(*) FROM inventario").fetchone()[0]
 
         return render_template('dashboard_financiero.html',
                                servicios=servicios,
@@ -229,10 +217,8 @@ def dashboard_financiero():
 @app.route('/inventarios')
 def inventarios():
     try:
-        init_db()
-        conn = get_db()
-        items = [dict(i) for i in conn.execute("SELECT * FROM inventario ORDER BY tipo DESC, nombre ASC").fetchall()]
-        conn.close()
+        with get_db() as conn:
+            items = [dict(i) for i in conn.execute("SELECT * FROM inventario ORDER BY tipo DESC, nombre ASC").fetchall()]
         return render_template('inventarios.html', items=items)
     except Exception as e:
         return f"Error en Inventarios: {str(e)}", 500
@@ -240,10 +226,8 @@ def inventarios():
 @app.route('/prospectos')
 def prospectos():
     try:
-        init_db()
-        conn = get_db()
-        leads = [dict(f) for f in conn.execute("SELECT * FROM prospectos ORDER BY id DESC").fetchall()]
-        conn.close()
+        with get_db() as conn:
+            leads = [dict(f) for f in conn.execute("SELECT * FROM prospectos ORDER BY id DESC").fetchall()]
         return render_template('prospectos.html', leads=leads)
     except Exception as e:
         return f"Error en Prospectos: {str(e)}", 500
@@ -251,16 +235,14 @@ def prospectos():
 @app.route('/certificados')
 def certificados():
     try:
-        init_db()
-        conn = get_db()
-        filas = conn.execute('''
-            SELECT s.*, coalesce(c.nombre_comercial, 'Cliente Comercial') as cliente_nombre 
-            FROM servicios s 
-            LEFT JOIN clientes c ON s.cliente_id = c.id 
-            ORDER BY s.id DESC
-        ''').fetchall()
-        servicios = [dict(f) for f in filas]
-        conn.close()
+        with get_db() as conn:
+            filas = conn.execute('''
+                SELECT s.*, coalesce(c.nombre_comercial, 'Cliente Comercial') as cliente_nombre 
+                FROM servicios s 
+                LEFT JOIN clientes c ON s.cliente_id = c.id 
+                ORDER BY s.id DESC
+            ''').fetchall()
+            servicios = [dict(f) for f in filas]
         return render_template('certificados.html', servicios=servicios)
     except Exception as e:
         return f"Error en Certificados: {str(e)}", 500
@@ -272,11 +254,9 @@ def tecnico():
 @app.route('/reporte_campo')
 def reporte_campo():
     try:
-        init_db()
-        conn = get_db()
-        clientes = [dict(c) for c in conn.execute("SELECT * FROM clientes").fetchall()]
-        quimicos = [dict(q) for q in conn.execute("SELECT * FROM inventario WHERE tipo = 'Quimico'").fetchall()]
-        conn.close()
+        with get_db() as conn:
+            clientes = [dict(c) for c in conn.execute("SELECT * FROM clientes").fetchall()]
+            quimicos = [dict(q) for q in conn.execute("SELECT * FROM inventario WHERE tipo = 'Quimico'").fetchall()]
         return render_template('reporte_campo.html', clientes=clientes, quimicos=quimicos)
     except Exception as e:
         return f"Error en Reporte: {str(e)}", 500
@@ -287,7 +267,6 @@ def escaner_qr():
 
 @app.route('/solicitar_cotizacion', methods=['GET', 'POST'])
 def solicitar_cotizacion():
-    init_db()
     if request.method == 'POST':
         try:
             nombre = request.form.get('nombre', '').strip()
@@ -296,18 +275,16 @@ def solicitar_cotizacion():
             plaga = request.form.get('plaga', 'Cucarachas')
             notas = request.form.get('notas', '')
 
-            conn = get_db()
-            cur = conn.cursor()
-            conteo = cur.execute('SELECT COUNT(*) FROM prospectos').fetchone()[0]
-            folio = f"COT-{901 + conteo}"
-            fecha = datetime.now().strftime("%Y-%m-%d")
+            with get_db() as conn:
+                conteo = conn.execute('SELECT COUNT(*) FROM prospectos').fetchone()[0]
+                folio = f"COT-{901 + conteo}"
+                fecha = datetime.now().strftime("%Y-%m-%d")
 
-            cur.execute('''
-                INSERT INTO prospectos (folio, nombre, telefono, tipo_inmueble, plaga, fecha_solicitud, estatus, notas)
-                VALUES (?, ?, ?, ?, ?, ?, 'Pendiente', ?)
-            ''', (folio, nombre, telefono, tipo_inmueble, plaga, fecha, notas))
-            conn.commit()
-            conn.close()
+                conn.execute('''
+                    INSERT INTO prospectos (folio, nombre, telefono, tipo_inmueble, plaga, fecha_solicitud, estatus, notas)
+                    VALUES (?, ?, ?, ?, ?, ?, 'Pendiente', ?)
+                ''', (folio, nombre, telefono, tipo_inmueble, plaga, fecha, notas))
+
             return redirect(url_for('cotizacion_exitosa', folio=folio))
         except Exception as e:
             return f"Error al procesar cotización: {str(e)}", 500
@@ -322,11 +299,8 @@ def cotizacion_exitosa():
 @app.route('/api/marcar-atendido/<int:lead_id>', methods=['POST'])
 def marcar_atendido(lead_id):
     try:
-        init_db()
-        conn = get_db()
-        conn.execute("UPDATE prospectos SET estatus = 'Atendido' WHERE id = ?", (lead_id,))
-        conn.commit()
-        conn.close()
+        with get_db() as conn:
+            conn.execute("UPDATE prospectos SET estatus = 'Atendido' WHERE id = ?", (lead_id,))
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -334,17 +308,14 @@ def marcar_atendido(lead_id):
 @app.route('/descargar_reporte_pdf/<int:servicio_id>')
 def descargar_reporte_pdf(servicio_id):
     try:
-        init_db()
-        conn = get_db()
-        row = conn.execute("SELECT * FROM servicios WHERE id = ?", (servicio_id,)).fetchone()
-        if not row:
-            conn.close()
-            return "Servicio no encontrado", 404
-        srv = dict(row)
+        with get_db() as conn:
+            row = conn.execute("SELECT * FROM servicios WHERE id = ?", (servicio_id,)).fetchone()
+            if not row:
+                return "Servicio no encontrado", 404
+            srv = dict(row)
 
-        c_row = conn.execute("SELECT * FROM clientes WHERE id = ?", (srv.get('cliente_id', 1),)).fetchone()
-        cliente = dict(c_row) if c_row else {'nombre_comercial': 'Cliente Comercial', 'contacto': 'Responsable', 'direccion': 'CDMX y EdoMex'}
-        conn.close()
+            c_row = conn.execute("SELECT * FROM clientes WHERE id = ?", (srv.get('cliente_id', 1),)).fetchone()
+            cliente = dict(c_row) if c_row else {'nombre_comercial': 'Cliente Comercial', 'contacto': 'Responsable', 'direccion': 'CDMX y EdoMex'}
 
         buffer = io.BytesIO()
         pdf = canvas.Canvas(buffer, pagesize=letter)
