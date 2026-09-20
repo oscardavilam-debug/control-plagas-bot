@@ -30,11 +30,75 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# ================= RUTAS PÚBLICAS Y DE CAMPO =================
+# ================= SITIO WEB PÚBLICO =================
 @app.route('/')
 def home():
     return render_template('landing.html')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        if username == 'admin' and password in ['admin123', 'fumilab2026']:
+            session['logged_in'] = True
+            session['user'] = username
+            return redirect(url_for('dashboard_financiero'))
+        else:
+            error = 'Credenciales no autorizadas.'
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+# ================= MÓDULO 1: DASHBOARD FINANCIERO =================
+@app.route('/dashboard')
+@app.route('/dashboard_financiero')
+def dashboard_financiero():
+    conn = get_db_connection()
+    servicios = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
+    total_ingresos = conn.execute("SELECT SUM(costo) as total FROM servicios WHERE estatus = 'Terminado'").fetchone()['total'] or 0.0
+    total_servicios = len(servicios)
+    clientes_activos = conn.execute("SELECT COUNT(*) as total FROM clientes").fetchone()['total'] or 0
+    conn.close()
+    return render_template('dashboard_financiero.html', 
+                           servicios=servicios, 
+                           total_ingresos=total_ingresos, 
+                           total_servicios=total_servicios, 
+                           clientes_activos=clientes_activos)
+
+# ================= MÓDULO 2: BANDEJA DE PROSPECTOS Y ATENCIÓN =================
+@app.route('/admin')
+@app.route('/prospectos')
+def prospectos():
+    conn = get_db_connection()
+    leads = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
+    conn.close()
+    return render_template('prospectos.html', leads=leads)
+
+@app.route('/api/marcar-atendido/<int:lead_id>', methods=['POST'])
+def marcar_atendido(lead_id):
+    try:
+        conn = get_db_connection()
+        conn.execute("UPDATE servicios SET estatus = 'Atendido' WHERE id = ?", (lead_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ================= MÓDULO 3: CERTIFICADOS PDF Y BITÁCORA =================
+@app.route('/certificados')
+def lista_certificados():
+    conn = get_db_connection()
+    servicios = conn.execute('SELECT * FROM servicios WHERE estatus = "Terminado" ORDER BY id DESC').fetchall()
+    conn.close()
+    return render_template('certificados.html', servicios=servicios)
+
+# ================= MÓDULO 4: APP TÉCNICA MÓVIL (PLAGAP) =================
 @app.route('/tecnico')
 def tecnico_home():
     return render_template('tecnico_home.html')
@@ -51,26 +115,7 @@ def reporte_campo():
 def escaner_qr():
     return render_template('escaner_qr.html')
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    error = None
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '').strip()
-        if username == 'admin' and password in ['admin123', 'fumilab2026']:
-            session['logged_in'] = True
-            session['user'] = username
-            return redirect(url_for('admin_dashboard'))
-        else:
-            error = 'Credenciales no autorizadas.'
-    return render_template('login.html', error=error)
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
-
-# ================= API DE GUARDADO =================
+# ================= API DE GUARDADO DE REPORTE =================
 @app.route('/api/guardar_reporte_servicio', methods=['POST'])
 def guardar_reporte():
     try:
@@ -100,9 +145,9 @@ def guardar_reporte():
             data.get('hora_inicio', ''),
             data.get('hora_fin', ''),
             data.get('areas_cubiertas', 'Instalaciones Generales'),
-            data.get('actividades', 'Aspersion y cebo en gel'),
-            data.get('plagas', 'Cucaracha / Rastreros'),
-            data.get('recomendaciones', 'No limpiar antes de 24h'),
+            data.get('actividades', 'Aspersion y colocacion de gel'),
+            data.get('plagas', 'Cucaracha / Insectos Rastreros'),
+            data.get('recomendaciones', 'No realizar aseo profundo en 24h'),
             data.get('reentrada', '2 Horas'),
             data.get('costo', 1400.00),
             data.get('metodo_pago', 'Efectivo'),
@@ -121,6 +166,7 @@ def guardar_reporte():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+# ================= GENERADOR PDF REPORTE/CERTIFICADO =================
 @app.route('/descargar_reporte_pdf/<int:servicio_id>')
 def descargar_reporte_pdf(servicio_id):
     conn = get_db_connection()
@@ -137,6 +183,7 @@ def descargar_reporte_pdf(servicio_id):
     pdf = canvas.Canvas(buffer, pagesize=letter)
     pdf.setTitle(f"Reporte_Fumilab_{srv['folio']}")
 
+    # Pagina 1
     pdf.setFillColor(colors.HexColor("#107c41"))
     pdf.rect(0, 720, 612, 72, fill=True, stroke=False)
     pdf.setFillColor(colors.white)
@@ -164,12 +211,16 @@ def descargar_reporte_pdf(servicio_id):
     pdf.setFont("Helvetica-Bold", 8)
     pdf.drawString(450, 694, "Telefono:")
     pdf.setFont("Helvetica", 8)
-    pdf.drawString(500, 694, cliente['telefono'] if cliente else "N/A")
+    pdf.drawString(500, 694, cliente['telefono'] if cliente else "55 1480 6293")
 
     pdf.setFont("Helvetica-Bold", 8)
     pdf.drawString(45, 678, "Direccion:")
     pdf.setFont("Helvetica", 8)
-    pdf.drawString(100, 678, (cliente['direccion'] if cliente else "Local")[:60])
+    pdf.drawString(100, 678, (cliente['direccion'] if cliente else "Local Comercial")[:60])
+    pdf.setFont("Helvetica-Bold", 8)
+    pdf.drawString(450, 678, "Metodo Pago:")
+    pdf.setFont("Helvetica", 8)
+    pdf.drawString(510, 678, str(srv['metodo_pago']))
 
     pdf.setFont("Helvetica-Bold", 8)
     pdf.drawString(45, 662, "Fecha Servicio:")
@@ -239,6 +290,7 @@ def descargar_reporte_pdf(servicio_id):
     pdf.setFont("Helvetica-Bold", 7.5)
     pdf.drawCentredString(306, 183, "LAUREL LOTE 43 CASA 6 COL. LOS REYES IZTACALA TLALNEPANTLA - TEL: 56114806293")
 
+    # Pagina 2 - Fotos
     if fotos:
         pdf.showPage()
         pdf.setFillColor(colors.HexColor("#107c41"))
@@ -262,26 +314,7 @@ def descargar_reporte_pdf(servicio_id):
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name=f"Reporte_Fumilab_{srv['folio']}.pdf", mimetype='application/pdf')
 
-@app.route('/admin')
-@login_required
-def admin_dashboard():
-    conn = get_db_connection()
-    leads = conn.execute('SELECT * FROM servicios ORDER BY id DESC').fetchall()
-    conn.close()
-    return render_template('admin.html', leads=leads)
-
-@app.route('/api/marcar-atendido/<int:lead_id>', methods=['POST'])
-@login_required
-def marcar_atendido(lead_id):
-    try:
-        conn = get_db_connection()
-        conn.execute("UPDATE servicios SET estatus = 'Atendido' WHERE id = ?", (lead_id,))
-        conn.commit()
-        conn.close()
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
+# Webhook
 @app.route('/webhook', methods=['GET', 'POST'])
 def whatsapp_webhook():
     if request.method == 'GET':
@@ -290,7 +323,6 @@ def whatsapp_webhook():
         return 'Token invalido', 403
     return 'EVENT_RECEIVED', 200
 
-# ================= ARRANQUE DEL SERVIDOR =================
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)

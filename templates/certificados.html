@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FumilabControl | Certificados PDF Oficiales</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen">
+    {% include 'header_nav.html' %}
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col md:flex-row justify-between md:items-center gap-4">
+            <div>
+                <h1 class="text-xl font-black text-slate-900">Emisión de Certificados & Reportes Técnicos</h1>
+                <p class="text-xs text-slate-500 mt-0.5">Certificados oficiales con Licencia Sanitaria COFEPRIS y evidencia fotográfica</p>
+            </div>
+            <a href="/reporte_campo" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/30 transition flex items-center space-x-2">
+                <i class="fa-solid fa-plus"></i>
+                <span>Nuevo Reporte en Campo</span>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for s in servicios %}
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 hover:shadow-md transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Folio: #{{ s['folio'] }}</span>
+                        <h3 class="font-extrabold text-sm text-slate-900 mt-1">{{ s['tipo_servicio'] }}</h3>
+                        <p class="text-xs text-slate-500">Fecha: {{ s['fecha_servicio'] }} ({{ s['hora_inicio'] }} - {{ s['hora_fin'] }})</p>
+                    </div>
+                    <i class="fa-solid fa-file-shield text-2xl text-emerald-600"></i>
+                </div>
+
+                <div class="text-xs bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1">
+                    <p><strong class="text-slate-700">Químico:</strong> {{ s['quimico_utilizado'] }}</p>
+                    <p><strong class="text-slate-700">Dosis:</strong> {{ s['dosis_aplicada'] }}</p>
+                    <p><strong class="text-slate-700">Reentrada:</strong> {{ s['tiempo_reentrada'] }}</p>
+                </div>
+
+                <a href="/descargar_reporte_pdf/{{ s['id'] }}" target="_blank" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition shadow-sm">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Descargar Certificado PDF</span>
+                </a>
+            </div>
+            {% else %}
+            <div class="col-span-3 bg-white p-12 rounded-3xl border border-slate-200 text-center text-slate-400">
+                <i class="fa-solid fa-file-lines text-3xl mb-2"></i>
+                <p>No hay reportes terminados para generar certificados. Realiza uno desde la <a href="/reporte_campo" class="text-emerald-600 font-bold underline">App del Técnico</a>.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+</body>
+</html>
