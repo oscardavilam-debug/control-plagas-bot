@@ -654,7 +654,21 @@ def pwa_service_worker():
     response.headers['Service-Worker-Allowed'] = '/'
     return response
 
+
+# ================= BACKUP ADMINISTRATIVO =================
+@app.route('/api/descargar_backup_db')
+@login_requerido
+def descargar_backup_db():
+    try:
+        if os.path.exists(DB_FILE):
+            fecha_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+            return send_file(DB_FILE, as_attachment=True, download_name=f"fumilab_backup_{fecha_str}.db")
+        return "Archivo de base de datos no encontrado", 404
+    except Exception as e:
+        return f"Error al exportar base de datos: {str(e)}", 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
