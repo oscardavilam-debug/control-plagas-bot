@@ -1,46 +1,78 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso Administrativo | FUMILAB</title>
+    <title>Acceso Administrativo | FumilabControl</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
-<body class="bg-gray-900 min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
-        <div class="text-center mb-8">
-            <div class="w-16 h-16 bg-green-700 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-lg">
-                <i class="fas fa-lock"></i>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full space-y-6">
+        
+        <!-- Identidad Corporativa -->
+        <div class="text-center space-y-2">
+            <div class="inline-flex w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 text-3xl font-black shadow-xl shadow-emerald-500/20 mb-1">
+                <i class="fa-solid fa-shield-virus"></i>
             </div>
-            <h2 class="text-2xl font-black text-gray-900 tracking-tight">FUMILAB ADMIN</h2>
-            <p class="text-xs text-gray-500 uppercase tracking-widest mt-1">Panel de Control y Gestión</p>
+            <h1 class="text-2xl font-black text-white tracking-tight">FUMILAB<span class="text-emerald-400">CONTROL</span></h1>
+            <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Módulo de Autenticación Central</p>
         </div>
 
-        {% if error %}
-        <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center gap-2">
-            <i class="fas fa-exclamation-circle"></i>
-            <span>{{ error }}</span>
-        </div>
-        {% endif %}
-
-        <form action="/login" method="POST" class="space-y-4">
+        <!-- Tarjeta de Login -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-8 backdrop-blur-xl shadow-2xl space-y-5">
             <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Contraseña de Administrador</label>
-                <input type="password" name="password" required placeholder="••••••••••••" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-600 focus:bg-white focus:outline-none text-sm transition">
+                <h2 class="text-lg font-black text-white">Iniciar Sesión de Administrador</h2>
+                <p class="text-xs text-slate-400 mt-1">Ingresa tus credenciales autorizadas para gestionar finanzas, prospectos y certificados.</p>
             </div>
 
-            <button type="submit" class="w-full py-3.5 bg-green-700 hover:bg-green-800 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-sm">
-                <span>Ingresar al Sistema</span>
-                <i class="fas fa-arrow-right text-xs"></i>
-            </button>
-        </form>
+            {% if error %}
+            <div class="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-400 text-xs font-bold flex items-center space-x-2">
+                <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
 
-        <div class="mt-6 text-center">
-            <a href="/" class="text-xs text-gray-400 hover:text-gray-600 transition">
-                <i class="fas fa-arrow-left mr-1"></i> Volver a la página principal
-            </a>
+            <form action="/login" method="POST" class="space-y-4 text-xs font-bold">
+                <div>
+                    <label class="block uppercase text-slate-400 mb-1.5">Usuario de Acceso</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" name="usuario" required placeholder="admin" class="w-full pl-10 pr-4 py-3.5 bg-slate-950 border border-slate-800 rounded-2xl text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block uppercase text-slate-400 mb-1.5">Contraseña Maestra</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" name="password" required placeholder="••••••••••••" class="w-full pl-10 pr-4 py-3.5 bg-slate-950 border border-slate-800 rounded-2xl text-white outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl text-sm shadow-xl shadow-emerald-500/20 transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Acceder al Sistema</span>
+                </button>
+            </form>
+
+            <div class="pt-2 border-t border-slate-800 text-center">
+                <a href="/" class="text-xs text-slate-500 hover:text-emerald-400 font-bold transition">← Volver al Portal Web Público</a>
+            </div>
         </div>
+
+        <p class="text-center text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+            Fumilab Control Sanitario • Acceso Protegido
+        </p>
+
     </div>
+
 </body>
 </html>

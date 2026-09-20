@@ -6,7 +6,8 @@ import urllib.request
 import urllib.parse
 import sqlite3
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file
+from functools import wraps
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, session
 
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -14,18 +15,28 @@ from reportlab.lib import colors
 from reportlab.lib.utils import ImageReader
 
 app = Flask(__name__)
-app.secret_key = "fumilab_control_pro_secret_key_2026"
+# Llave de cifrado de sesiones segura (configurable en Render o por defecto)
+app.secret_key = os.environ.get('SECRET_KEY', 'fumilab_corp_saas_secure_token_987654321_2026')
 
 DB_FILE = 'fumilab.db'
-
-# Pega tu URL de Google Apps Script (o se toma de Render Environment si existe)
 SHEETS_WEBHOOK_URL = os.environ.get('GOOGLE_SHEETS_URL', os.environ.get('SHEETS_WEBHOOK_URL', ''))
 
+# Credenciales de Administrador (puedes definirlas en Render Environment si gustas)
+ADMIN_USER = os.environ.get('ADMIN_USER', 'admin')
+ADMIN_PASS = os.environ.get('ADMIN_PASS', 'Fumilab2026*')
+
+# Decorador de seguridad para blindar rutas
+def login_requerido(f):
+    @wraps(f)
+    def decorador(*args, **kwargs):
+        if not session.get('admin_autenticado'):
+            return redirect(url_for('login', next=request.path))
+        return f(*args, **kwargs)
+    return decorador
+
 def enviar_a_google_sheets(datos):
-    """Envía los datos a Google Sheets siguiendo la redirección 302 de Google."""
     url = SHEETS_WEBHOOK_URL.strip()
     if not url:
-        print("Aviso: SHEETS_WEBHOOK_URL no configurada")
         return
     try:
         payload = json.dumps(datos).encode('utf-8')
@@ -33,16 +44,9 @@ def enviar_a_google_sheets(datos):
             'Content-Type': 'application/json; charset=utf-8',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
         }
-        
-        # Clase para seguir redirecciones conservando el POST y contenido
-        class RedirectHandler(urllib.request.HTTPRedirectHandler):
-            def http_error_302(self, req, fp, code, msg, headers):
-                return urllib.request.HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)
-
-        opener = urllib.request.build_opener(RedirectHandler)
+        opener = urllib.request.build_opener(urllib.request.HTTPRedirectHandler)
         req = urllib.request.Request(url, data=payload, headers=headers, method='POST')
-        with opener.open(req, timeout=8) as resp:
-            print(f"Respuesta Sheets: {resp.status}")
+        opener.open(req, timeout=8)
     except Exception as e:
         print(f"Error envio a Sheets: {e}")
 
@@ -155,53 +159,129 @@ def init_db():
                     ruta_imagen TEXT
                 )
             ''')
-
-            if conn.execute("SELECT COUNT(*) FROM clientes").fetchone()[0] == 0:
-                conn.execute('''
-                    INSERT INTO clientes (nombre_comercial, contacto, telefono, direccion, tipo_inmueble) VALUES 
-                    ('Farmacia Similares 3509 Ecatepec', 'Nancy Padilla Garcia', '5541419369', 'Av. Jardines de Morelos Mz. 316', 'Comercial'),
-                    ('Purificadora Hidropura', 'Elizabeth Carbajal', '5534842783', 'Cuautitlan Izcalli EdoMex', 'Industrial'),
-                    ('Restaurante Aloha Mar y Tierra', 'Mauricio Garduño', '5632326172', 'Blvd. Valle San Felipe', 'Alimentos')
-                ''')
-
-            if conn.execute("SELECT COUNT(*) FROM inventario").fetchone()[0] == 0:
-                conn.execute('''
-                    INSERT INTO inventario (tipo, nombre, registro_cofepris, stock_actual, unidad, costo_unitario, estado) VALUES
-                    ('Quimico', 'DEMAND DUO (Syngenta)', 'RSCO-URB-INAC-111-315-009-0.02', 12.5, 'Litros', 850.0, 'Disponible'),
-                    ('Quimico', 'RODILON BLOQUE (Bayer)', 'RSCO-URB-ROD-0101-322-005-0.0025', 18.0, 'Kg', 420.0, 'Disponible'),
-                    ('Quimico', 'BIOCIDAL PLUS 5TA GEN', 'RSCO-DOM-DES-0102-301-002-10', 25.0, 'Litros', 310.0, 'Disponible'),
-                    ('Equipo', 'Aspersora Manual Swissmex 15L', 'NOM-STPS', 4.0, 'Piezas', 1200.0, 'Disponible'),
-                    ('Equipo', 'Termonebulizador en Frío ULV', 'CE-ISO', 2.0, 'Piezas', 4800.0, 'Disponible')
-                ''')
-
-            if conn.execute("SELECT COUNT(*) FROM servicios").fetchone()[0] == 0:
-                conn.execute('''
-                    INSERT INTO servicios (
-                        folio, cliente_id, tipo_servicio, fecha_servicio, hora_inicio, hora_fin,
-                        costo, gasto_quimicos, gasto_gasolina, gasto_nomina, gasto_equipo,
-                        quimico_utilizado, ingrediente_activo, dosis_aplicada, equipo_utilizado, tiempo_reentrada,
-                        actividades_realizadas, recomendaciones, estatus
-                    ) VALUES 
-                    ('3501', 1, 'MANEJO INTEGRAL DE CUCARACHAS', '2026-09-19', '08:41 PM', '09:41 PM',
-                     1400.0, 180.0, 150.0, 350.0, 50.0,
-                     'DEMAND DUO', 'LAMBDA CYHALOTRINA 9.7%', '4 ml / L de agua', 'Aspersora Manual Swissmex', '2 Horas',
-                     'Aspersión perimetral focalizada y colocación de gel cucarachicida', 'No realizar aseo profundo en 24h', 'Terminado'),
-                    ('3502', 2, 'CONTROL DE ROEDORES (MIP)', '2026-09-18', '04:52 PM', '06:18 PM',
-                     1800.0, 220.0, 180.0, 400.0, 60.0,
-                     'RODILON BLOQUE', 'DIFETIALONA 0.0025%', '1 Bloque / Cebadero', 'Cebaderos Perimetrales R-Lock', 'Inmediata',
-                     'Revisión y reabastecimiento de 8 estaciones de cebado', 'Mantener pasillos libres de tarimas', 'Terminado')
-                ''')
     except Exception as e:
         print(f"Init DB: {e}")
 
 init_db()
 
+# ================= RUTAS DE AUTENTICACIÓN =================
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        usuario = request.form.get('usuario', '').strip()
+        password = request.form.get('password', '').strip()
+
+        if usuario == ADMIN_USER and password == ADMIN_PASS:
+            session['admin_autenticado'] = True
+            session['admin_user'] = usuario
+            next_url = request.args.get('next') or url_for('dashboard_financiero')
+            return redirect(next_url)
+        else:
+            error = "Credenciales incorrectas. Verifique su usuario y contraseña."
+
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+# ================= RUTAS PÚBLICAS =================
 @app.route('/')
 def home():
     return render_template('landing.html')
 
+@app.route('/tecnico')
+def tecnico():
+    return render_template('tecnico_home.html')
+
+@app.route('/reporte_campo')
+def reporte_campo():
+    try:
+        with get_db() as conn:
+            clientes = [dict(c) for c in conn.execute("SELECT * FROM clientes").fetchall()]
+            quimicos = [dict(q) for q in conn.execute("SELECT * FROM inventario WHERE tipo = 'Quimico'").fetchall()]
+        return render_template('reporte_campo.html', clientes=clientes, quimicos=quimicos)
+    except Exception as e:
+        return f"Error en Reporte: {str(e)}", 500
+
+@app.route('/escaner_qr')
+def escaner_qr():
+    return render_template('escaner_qr.html')
+
+@app.route('/solicitar_cotizacion', methods=['GET', 'POST'])
+def solicitar_cotizacion():
+    if request.method == 'POST':
+        try:
+            nombre = (
+                request.form.get('nombre') or 
+                request.form.get('nombre_completo') or 
+                request.form.get('nombre_cliente') or 
+                request.form.get('name') or 
+                'Cliente Web'
+            ).strip()
+
+            telefono = (
+                request.form.get('telefono') or 
+                request.form.get('celular') or 
+                request.form.get('whatsapp') or 
+                request.form.get('numero') or 
+                ''
+            ).strip()
+
+            tipo_inmueble = (
+                request.form.get('tipo_inmueble') or 
+                request.form.get('inmueble') or 
+                'Hogar'
+            ).strip()
+
+            plaga = (
+                request.form.get('plaga') or 
+                request.form.get('plaga_tratar') or 
+                'Cucarachas'
+            ).strip()
+
+            notas = request.form.get('notas', '')
+            fecha_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            with get_db() as conn:
+                conteo = conn.execute('SELECT COUNT(*) FROM prospectos').fetchone()[0]
+                folio = f"COT-{901 + conteo}"
+
+                conn.execute('''
+                    INSERT INTO prospectos (folio, nombre, telefono, tipo_inmueble, plaga, fecha_solicitud, estatus, notas)
+                    VALUES (?, ?, ?, ?, ?, ?, 'Pendiente', ?)
+                ''', (folio, nombre, telefono, tipo_inmueble, plaga, fecha_str, notas))
+
+            contacto_formateado = f"{nombre} - {telefono}" if telefono else nombre
+            datos_sheet = {
+                "fecha": fecha_str,
+                "contacto": contacto_formateado,
+                "nombre": contacto_formateado,
+                "cliente": contacto_formateado,
+                "telefono": telefono,
+                "plaga": plaga,
+                "inmueble": tipo_inmueble,
+                "origen": "Formulario Web"
+            }
+            enviar_a_google_sheets(datos_sheet)
+
+            return redirect(url_for('cotizacion_exitosa', folio=folio))
+        except Exception as e:
+            return f"Error al procesar cotización: {str(e)}", 500
+
+    return render_template('solicitar_cotizacion.html')
+
+@app.route('/cotizacion_exitosa')
+def cotizacion_exitosa():
+    folio = request.args.get('folio', 'COT-901')
+    return render_template('cotizacion_exitosa.html', folio=folio)
+
+# ================= RUTAS PROTEGIDAS (SOLO ADMINISTRADOR) =================
 @app.route('/dashboard')
 @app.route('/dashboard_financiero')
+@login_requerido
 def dashboard_financiero():
     try:
         with get_db() as conn:
@@ -235,6 +315,7 @@ def dashboard_financiero():
         return f"Error en Dashboard: {str(e)}", 500
 
 @app.route('/inventarios')
+@login_requerido
 def inventarios():
     try:
         with get_db() as conn:
@@ -244,6 +325,7 @@ def inventarios():
         return f"Error en Inventarios: {str(e)}", 500
 
 @app.route('/prospectos')
+@login_requerido
 def prospectos():
     try:
         with get_db() as conn:
@@ -253,6 +335,7 @@ def prospectos():
         return f"Error en Prospectos: {str(e)}", 500
 
 @app.route('/certificados')
+@login_requerido
 def certificados():
     try:
         with get_db() as conn:
@@ -267,98 +350,9 @@ def certificados():
     except Exception as e:
         return f"Error en Certificados: {str(e)}", 500
 
-@app.route('/tecnico')
-def tecnico():
-    return render_template('tecnico_home.html')
-
-@app.route('/reporte_campo')
-def reporte_campo():
-    try:
-        with get_db() as conn:
-            clientes = [dict(c) for c in conn.execute("SELECT * FROM clientes").fetchall()]
-            quimicos = [dict(q) for q in conn.execute("SELECT * FROM inventario WHERE tipo = 'Quimico'").fetchall()]
-        return render_template('reporte_campo.html', clientes=clientes, quimicos=quimicos)
-    except Exception as e:
-        return f"Error en Reporte: {str(e)}", 500
-
-@app.route('/escaner_qr')
-def escaner_qr():
-    return render_template('escaner_qr.html')
-
-@app.route('/solicitar_cotizacion', methods=['GET', 'POST'])
-def solicitar_cotizacion():
-    if request.method == 'POST':
-        try:
-            # Capturar el nombre bajo cualquier variante del formulario
-            nombre = (
-                request.form.get('nombre') or 
-                request.form.get('nombre_completo') or 
-                request.form.get('nombre_cliente') or 
-                request.form.get('name') or 
-                'Cliente Web'
-            ).strip()
-
-            telefono = (
-                request.form.get('telefono') or 
-                request.form.get('celular') or 
-                request.form.get('whatsapp') or 
-                request.form.get('numero') or 
-                ''
-            ).strip()
-
-            tipo_inmueble = (
-                request.form.get('tipo_inmueble') or 
-                request.form.get('inmueble') or 
-                'Hogar'
-            ).strip()
-
-            plaga = (
-                request.form.get('plaga') or 
-                request.form.get('plaga_tratar') or 
-                'Cucarachas'
-            ).strip()
-
-            notas = request.form.get('notas', '')
-            fecha_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-            # Guardar en SQLite local
-            with get_db() as conn:
-                conteo = conn.execute('SELECT COUNT(*) FROM prospectos').fetchone()[0]
-                folio = f"COT-{901 + conteo}"
-
-                conn.execute('''
-                    INSERT INTO prospectos (folio, nombre, telefono, tipo_inmueble, plaga, fecha_solicitud, estatus, notas)
-                    VALUES (?, ?, ?, ?, ?, ?, 'Pendiente', ?)
-                ''', (folio, nombre, telefono, tipo_inmueble, plaga, fecha_str, notas))
-
-            # Formatear el nombre tal como estaba en tus primeras filas: "NOMBRE - TELEFONO"
-            contacto_formateado = f"{nombre} - {telefono}" if telefono else nombre
-
-            # Enviamos con todas las posibles llaves que espera tu Apps Script
-            datos_sheet = {
-                "fecha": fecha_str,
-                "contacto": contacto_formateado,
-                "nombre": contacto_formateado,
-                "cliente": contacto_formateado,
-                "telefono": telefono,
-                "plaga": plaga,
-                "inmueble": tipo_inmueble,
-                "origen": "Formulario Web"
-            }
-            enviar_a_google_sheets(datos_sheet)
-
-            return redirect(url_for('cotizacion_exitosa', folio=folio))
-        except Exception as e:
-            return f"Error al procesar cotización: {str(e)}", 500
-
-    return render_template('solicitar_cotizacion.html')
-
-@app.route('/cotizacion_exitosa')
-def cotizacion_exitosa():
-    folio = request.args.get('folio', 'COT-901')
-    return render_template('cotizacion_exitosa.html', folio=folio)
-
+# ================= APIS =================
 @app.route('/api/inventario/agregar', methods=['POST'])
+@login_requerido
 def agregar_inventario():
     try:
         tipo = request.form.get('tipo', 'Quimico')
@@ -418,6 +412,7 @@ def guardar_reporte():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/marcar-atendido/<int:lead_id>', methods=['POST'])
+@login_requerido
 def marcar_atendido(lead_id):
     try:
         with get_db() as conn:
@@ -427,6 +422,7 @@ def marcar_atendido(lead_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/descargar_reporte_pdf/<int:servicio_id>')
+@login_requerido
 def descargar_reporte_pdf(servicio_id):
     try:
         with get_db() as conn:
@@ -528,5 +524,3 @@ def descargar_reporte_pdf(servicio_id):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
-
-
