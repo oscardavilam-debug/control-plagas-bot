@@ -60,11 +60,24 @@ def get_db():
     conn.execute("PRAGMA journal_mode=WAL;")
     return conn
 
+def asegurar_columna(conn, tabla, columna, tipo_def):
+    try:
+        cur = conn.cursor()
+        cur.execute(f"PRAGMA table_info({tabla})")
+        columnas = [fila[1] for fila in cur.fetchall()]
+        if columna not in columnas:
+            cur.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {tipo_def}")
+            conn.commit()
+    except Exception as err:
+        print(f"Asegurar columna {columna} en {tabla}: {err}")
+
 def init_db():
     conn = sqlite3.connect(DB_FILE, timeout=30.0)
     conn.row_factory = sqlite3.Row
     try:
         cur = conn.cursor()
+        
+        # 1. Tabla Clientes
         cur.execute('''
             CREATE TABLE IF NOT EXISTS clientes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,7 +88,10 @@ def init_db():
                 tipo_inmueble TEXT
             )
         ''')
+        conn.commit()
+        asegurar_columna(conn, "clientes", "tipo_inmueble", "TEXT")
 
+        # 2. Tabla Servicios
         cur.execute('''
             CREATE TABLE IF NOT EXISTS servicios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -101,7 +117,35 @@ def init_db():
                 estatus TEXT DEFAULT 'Terminado'
             )
         ''')
+        conn.commit()
 
+        # Asegurar todas las columnas necesarias en servicios
+        columnas_servicios = [
+            ("folio", "TEXT"),
+            ("cliente_id", "INTEGER DEFAULT 1"),
+            ("tipo_servicio", "TEXT"),
+            ("fecha_servicio", "TEXT"),
+            ("hora_inicio", "TEXT"),
+            ("hora_fin", "TEXT"),
+            ("costo", "REAL DEFAULT 1400.0"),
+            ("gasto_quimicos", "REAL DEFAULT 250.0"),
+            ("gasto_gasolina", "REAL DEFAULT 180.0"),
+            ("gasto_nomina", "REAL DEFAULT 350.0"),
+            ("gasto_equipo", "REAL DEFAULT 80.0"),
+            ("quimico_utilizado", "TEXT"),
+            ("ingrediente_activo", "TEXT"),
+            ("dosis_aplicada", "TEXT"),
+            ("equipo_utilizado", "TEXT"),
+            ("tiempo_reentrada", "TEXT"),
+            ("actividades_realizadas", "TEXT"),
+            ("recomendaciones", "TEXT"),
+            ("firma_cliente", "TEXT"),
+            ("estatus", "TEXT DEFAULT 'Terminado'")
+        ]
+        for col, tipo in columnas_servicios:
+            asegurar_columna(conn, "servicios", col, tipo)
+
+        # 3. Tabla Prospectos
         cur.execute('''
             CREATE TABLE IF NOT EXISTS prospectos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -115,7 +159,9 @@ def init_db():
                 notas TEXT
             )
         ''')
+        conn.commit()
 
+        # 4. Tabla Inventario
         cur.execute('''
             CREATE TABLE IF NOT EXISTS inventario (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -128,7 +174,9 @@ def init_db():
                 estado TEXT DEFAULT 'Disponible'
             )
         ''')
+        conn.commit()
 
+        # 5. Tabla Fotos
         cur.execute('''
             CREATE TABLE IF NOT EXISTS servicio_fotos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -138,7 +186,7 @@ def init_db():
         ''')
         conn.commit()
 
-        # Sembrado forzado con transacciones independientes
+        # Siembra de Clientes si está vacía
         c_count = cur.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
         if c_count == 0:
             cur.executemany('''
@@ -150,6 +198,7 @@ def init_db():
             ])
             conn.commit()
 
+        # Siembra de Inventario si está vacío
         inv_count = cur.execute("SELECT COUNT(*) FROM inventario").fetchone()[0]
         if inv_count == 0:
             cur.executemany('''
@@ -163,7 +212,8 @@ def init_db():
             ])
             conn.commit()
 
-        srv_count = cur.execute("SELECT COUNT(*) FROM servicios WHERE folio = '3501'").fetchone()[0]
+        # Siembra de Servicio #3501 si está vacío
+        srv_count = cur.execute("SELECT COUNT(*) FROM servicios").fetchone()[0]
         if srv_count == 0:
             cur.execute('''
                 INSERT INTO servicios (
@@ -181,8 +231,9 @@ def init_db():
                 )
             ''')
             conn.commit()
+
     except Exception as e:
-        print(f"Init DB error: {e}")
+        print(f"Error critico en init_db: {e}")
     finally:
         conn.close()
 
