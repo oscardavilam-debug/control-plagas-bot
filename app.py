@@ -732,9 +732,113 @@ def descargar_backup_db():
     except Exception as e:
         return f"Error al exportar base de datos: {str(e)}", 500
 
+# ================= GENERADOR DE STICKERS / CREDENCIALES QR =================
+@app.route('/imprimir_stickers_qr/<int:cliente_id>')
+@login_requerido
+def imprimir_stickers_qr(cliente_id):
+    try:
+        import qrcode
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+        from reportlab.lib import colors
+        from reportlab.lib.utils import ImageReader
+
+        with get_db() as conn:
+            c_row = conn.execute("SELECT * FROM clientes WHERE id = ?", (cliente_id,)).fetchone()
+            if not c_row:
+                return "Cliente no encontrado", 404
+            cliente = dict(c_row)
+
+        buffer = io.BytesIO()
+        pdf = canvas.Canvas(buffer, pagesize=letter)
+        pdf.setTitle(f"Stickers_QR_{cliente.get('nombre_comercial')}")
+
+        # Generar imagen QR en memoria apuntando al reporte de campo del cliente
+        qr_url = f"https://control-plagas-bot.onrender.com/reporte_campo?cliente_id={cliente_id}"
+        qr = qrcode.QRCode(box_size=10, border=1)
+        qr.add_data(qr_url)
+        qr.make(fit=True)
+        img_qr = qr.make_image(fill_color="#064e3b", back_color="white")
+        
+        qr_buffer = io.BytesIO()
+        img_qr.save(qr_buffer, format='PNG')
+        qr_buffer.seek(0)
+        qr_reader = ImageReader(qr_buffer)
+
+        # Dibujar 4 stickers de inspección por hoja (2x2)
+        posiciones = [
+            (35, 410),  # Arriba Izquierda
+            (315, 410), # Arriba Derecha
+            (35, 40),   # Abajo Izquierda
+            (315, 40)   # Abajo Derecha
+        ]
+
+        for idx, (x, y) in enumerate(posiciones, start=1):
+            # Contenedor del sticker (260 x 340 pt)
+            pdf.setFillColor(colors.HexColor("#f8fafc"))
+            pdf.setStrokeColor(colors.HexColor("#064e3b"))
+            pdf.roundRect(x, y, 260, 345, 8, stroke=2, fill=1)
+
+            # Encabezado verde institucional
+            pdf.setFillColor(colors.HexColor("#064e3b"))
+            pdf.roundRect(x, y + 295, 260, 50, 6, stroke=0, fill=1)
+
+            pdf.setFillColor(colors.white)
+            pdf.setFont("Helvetica-Bold", 10)
+            pdf.drawString(x + 10, y + 328, "FUMILAB CONTROL INTEGRAL")
+            pdf.setFont("Helvetica", 7.5)
+            pdf.drawString(x + 10, y + 316, "LICENCIA COFEPRIS: 2009-15A013")
+            pdf.setFont("Helvetica-Bold", 8)
+            pdf.drawRightString(x + 250, y + 316, f"ESTACIÓN #{idx:02d}")
+
+            # Datos del cliente
+            pdf.setFillColor(colors.HexColor("#0f172a"))
+            pdf.setFont("Helvetica-Bold", 8.5)
+            pdf.drawString(x + 10, y + 280, str(cliente.get('nombre_comercial'))[:36])
+            pdf.setFont("Helvetica", 7)
+            pdf.setFillColor(colors.HexColor("#64748b"))
+            pdf.drawString(x + 10, y + 270, f"Ubicación: {str(cliente.get('direccion'))[:40]}")
+
+            # Código QR impreso
+            pdf.drawImage(qr_reader, x + 70, y + 145, width=120, height=120)
+
+            # Cuadro de bitácora técnica de campo
+            pdf.setFillColor(colors.HexColor("#e2e8f0"))
+            pdf.rect(x + 10, y + 45, 240, 90, fill=0, stroke=1)
+
+            # Filas para sellos o firmas de técnicos
+            pdf.setFillColor(colors.HexColor("#0f172a"))
+            pdf.setFont("Helvetica-Bold", 7)
+            pdf.drawString(x + 15, y + 122, "BITÁCORA DE REVISIÓN EN SITIO")
+            pdf.setFont("Helvetica", 6.5)
+            pdf.drawString(x + 15, y + 108, "Fecha: ____/____/2026   | Consumo: [ ] 0% [ ] 50% [ ] 100%")
+            pdf.drawString(x + 15, y + 92, "Fecha: ____/____/2026   | Consumo: [ ] 0% [ ] 50% [ ] 100%")
+            pdf.drawString(x + 15, y + 76, "Fecha: ____/____/2026   | Consumo: [ ] 0% [ ] 50% [ ] 100%")
+            pdf.drawString(x + 15, y + 60, "Fecha: ____/____/2026   | Consumo: [ ] 0% [ ] 50% [ ] 100%")
+
+            # Pie de advertencia
+            pdf.setFillColor(colors.HexColor("#b91c1c"))
+            pdf.setFont("Helvetica-Bold", 6.5)
+            pdf.drawCentredString(x + 130, y + 28, "DISPOSITIVO DE MONITOREO SANITARIO • NO RETIRAR")
+            pdf.setFillColor(colors.HexColor("#64748b"))
+            pdf.setFont("Helvetica", 6)
+            pdf.drawCentredString(x + 130, y + 16, "Escanea este código QR con la App Técnico para registrar visita")
+
+        pdf.save()
+        buffer.seek(0)
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f"Stickers_QR_Fumilab_{cliente_id}.pdf",
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        return f"Error al generar Stickers QR: {str(e)}", 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+
 
 
 

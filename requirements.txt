@@ -2,3 +2,6 @@
 gunicorn
 reportlab
 requests
+
+qrcode
+pypng
