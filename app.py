@@ -5,7 +5,7 @@ import base64
 import sqlite3
 from datetime import datetime
 from functools import wraps
-from flask import Flask, render_template, render_template_string, request, redirect, url_for, jsonify, send_file, session
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_file, session
 
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -22,6 +22,8 @@ def get_db():
 
 def init_db():
     conn = get_db()
+    
+    # 1. Clientes
     conn.execute('''
         CREATE TABLE IF NOT EXISTS clientes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,6 +34,8 @@ def init_db():
             tipo_inmueble TEXT
         )
     ''')
+
+    # 2. Servicios
     conn.execute('''
         CREATE TABLE IF NOT EXISTS servicios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,10 +56,11 @@ def init_db():
             estatus TEXT DEFAULT 'Terminado'
         )
     ''')
+
+    # 3. Prospectos
     conn.execute('''
         CREATE TABLE IF NOT EXISTS prospectos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            folio TEXT UNIQUE,
             nombre TEXT NOT NULL,
             telefono TEXT NOT NULL,
             tipo_inmueble TEXT,
@@ -65,6 +70,40 @@ def init_db():
             notas TEXT
         )
     ''')
+
+    # Migración de columnas en servicios
+    cols_servicios = [
+        ("folio", "TEXT"),
+        ("quimico_utilizado", "TEXT"),
+        ("ingrediente_activo", "TEXT"),
+        ("dosis_aplicada", "TEXT"),
+        ("tiempo_reentrada", "TEXT"),
+        ("actividades_realizadas", "TEXT"),
+        ("recomendaciones", "TEXT"),
+        ("firma_cliente", "TEXT")
+    ]
+    for col, tipo in cols_servicios:
+        try:
+            conn.execute(f"ALTER TABLE servicios ADD COLUMN {col} {tipo}")
+        except Exception:
+            pass
+
+    # Migración de columnas en prospectos (resuelve el error de folio faltante)
+    cols_prospectos = [
+        ("folio", "TEXT"),
+        ("tipo_inmueble", "TEXT"),
+        ("plaga", "TEXT"),
+        ("fecha_solicitud", "TEXT"),
+        ("estatus", "TEXT DEFAULT 'Pendiente'"),
+        ("notas", "TEXT")
+    ]
+    for col, tipo in cols_prospectos:
+        try:
+            conn.execute(f"ALTER TABLE prospectos ADD COLUMN {col} {tipo}")
+        except Exception:
+            pass
+
+    # 4. Fotos
     conn.execute('''
         CREATE TABLE IF NOT EXISTS servicio_fotos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,6 +111,7 @@ def init_db():
             ruta_imagen TEXT
         )
     ''')
+
     conn.commit()
     conn.close()
 
@@ -84,7 +124,7 @@ except Exception:
 def home():
     try:
         return render_template('landing.html')
-    except Exception as e:
+    except Exception:
         return redirect('/dashboard')
 
 @app.route('/panel')
@@ -193,88 +233,15 @@ def solicitar_cotizacion():
     try:
         return render_template('solicitar_cotizacion.html')
     except Exception:
-        # Fallback embebido directo para que JAMÁS marque error 500
-        return '''
-        <!DOCTYPE html>
-        <html lang="es">
-        <head>
-            <meta charset="UTF-8"><title>Solicitud de Cotización | FumilabControl</title>
-            <script src="https://cdn.tailwindcss.com"></script>
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-        </head>
-        <body class="bg-slate-900 text-white min-h-screen py-12 px-4 flex items-center justify-center">
-            <div class="max-w-lg w-full bg-slate-800/90 border border-slate-700 rounded-3xl p-8 shadow-2xl">
-                <div class="text-center mb-6">
-                    <div class="w-12 h-12 bg-emerald-500 text-slate-950 rounded-2xl flex items-center justify-center text-xl font-black mx-auto mb-3">
-                        <i class="fa-solid fa-shield-virus"></i>
-                    </div>
-                    <h1 class="text-2xl font-black">Solicitar Cotización Inmediata</h1>
-                    <p class="text-xs text-slate-400 mt-1">Atención certificada COFEPRIS para empresas y hogares</p>
-                </div>
-                <form action="/solicitar_cotizacion" method="POST" class="space-y-4 text-xs font-bold">
-                    <div>
-                        <label class="block uppercase text-slate-400 mb-1">Nombre o Empresa</label>
-                        <input type="text" name="nombre" required placeholder="Ej. Restaurante Roma" class="w-full p-3.5 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block uppercase text-slate-400 mb-1">Teléfono / WhatsApp</label>
-                        <input type="tel" name="telefono" required placeholder="Ej. 5512345678" class="w-full p-3.5 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-emerald-500">
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block uppercase text-slate-400 mb-1">Inmueble</label>
-                            <select name="tipo_inmueble" class="w-full p-3.5 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none">
-                                <option>Comercial / Alimentos</option>
-                                <option>Industrial / Bodega</option>
-                                <option>Sector Salud</option>
-                                <option>Residencial</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block uppercase text-slate-400 mb-1">Plaga</label>
-                            <select name="plaga" class="w-full p-3.5 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none">
-                                <option>Cucarachas</option>
-                                <option>Roedores</option>
-                                <option>Rastreros / Chinches</option>
-                                <option>Sanitización</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button type="submit" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-sm transition">
-                        Enviar Solicitud
-                    </button>
-                </form>
-            </div>
-        </body>
-        </html>
-        '''
+        return redirect('/')
 
 @app.route('/cotizacion_exitosa')
 def cotizacion_exitosa():
     folio = request.args.get('folio', 'COT-901')
-    return f'''
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8"><title>Cotización Registrada | Fumilab</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    </head>
-    <body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-4">
-        <div class="max-w-md w-full bg-slate-800 border border-slate-700 rounded-3xl p-8 text-center space-y-4">
-            <div class="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center text-2xl mx-auto">
-                <i class="fa-solid fa-check"></i>
-            </div>
-            <h1 class="text-xl font-black">¡Cotización Registrada!</h1>
-            <p class="text-xs text-slate-300">Folio asignado: <strong class="text-emerald-400">{folio}</strong></p>
-            <div class="pt-3 space-y-2 text-xs font-bold">
-                <a href="/prospectos" class="block w-full py-3 bg-emerald-500 text-slate-950 rounded-xl">Ver en Bandeja de Prospectos</a>
-                <a href="/dashboard" class="block w-full py-3 bg-slate-700 text-white rounded-xl">Ir al Dashboard</a>
-            </div>
-        </div>
-    </body>
-    </html>
-    '''
+    try:
+        return render_template('cotizacion_exitosa.html', folio=folio)
+    except Exception:
+        return redirect('/prospectos')
 
 @app.route('/api/marcar-atendido/<int:lead_id>', methods=['POST'])
 def marcar_atendido(lead_id):
@@ -288,6 +255,45 @@ def marcar_atendido(lead_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/guardar_reporte_servicio', methods=['POST'])
+def guardar_reporte():
+    try:
+        init_db()
+        data = request.get_json() or {}
+        conn = get_db()
+        cur = conn.cursor()
+        c = cur.execute('SELECT COUNT(*) FROM servicios').fetchone()[0]
+        folio = f"{3501 + c}"
+        fecha_hoy = datetime.now().strftime("%Y-%m-%d")
+
+        cur.execute('''
+            INSERT INTO servicios (
+                folio, cliente_id, tipo_servicio, fecha_servicio, hora_inicio, hora_fin,
+                costo, quimico_utilizado, ingrediente_activo, dosis_aplicada, tiempo_reentrada,
+                actividades_realizadas, recomendaciones, firma_cliente, estatus
+            ) VALUES (?, ?, ?, ?, ?, ?, 1400.0, ?, 'LAMBDA CYHALOTRINA', ?, '2 Horas', ?, 'No limpiar en 24h', ?, 'Terminado')
+        ''', (
+            folio,
+            data.get('cliente_id', 1),
+            data.get('tipo_visita', 'MIP'),
+            fecha_hoy,
+            data.get('hora_inicio', '08:00'),
+            data.get('hora_fin', '09:00'),
+            data.get('producto', 'DEMAND DUO'),
+            data.get('dosis', '4 ml / L'),
+            data.get('actividades', 'Aspersion focalizada'),
+            data.get('firma', '')
+        ))
+        srv_id = cur.lastrowid
+        for f in data.get('fotos', []):
+            cur.execute('INSERT INTO servicio_fotos (servicio_id, ruta_imagen) VALUES (?, ?)', (srv_id, f))
+
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'ok', 'servicio_id': srv_id, 'folio': folio})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 @app.route('/descargar_reporte_pdf/<int:servicio_id>')
 def descargar_reporte_pdf(servicio_id):
     try:
@@ -298,19 +304,29 @@ def descargar_reporte_pdf(servicio_id):
             conn.close()
             return "Servicio no encontrado", 404
         srv = dict(row)
+        
         cliente_row = conn.execute("SELECT * FROM clientes WHERE id = ?", (srv.get('cliente_id', 1),)).fetchone()
-        cliente = dict(cliente_row) if cliente_row else {'nombre_comercial': 'Establecimiento Comercial', 'contacto': 'Responsable en Turno', 'direccion': 'CDMX y EdoMex'}
+        cliente = dict(cliente_row) if cliente_row else {
+            'nombre_comercial': 'Establecimiento Comercial',
+            'contacto': 'Responsable en Turno',
+            'telefono': '55 8640 6475',
+            'direccion': 'Ciudad de México y Área Metropolitana'
+        }
+        
         fotos = conn.execute("SELECT ruta_imagen FROM servicio_fotos WHERE servicio_id = ?", (servicio_id,)).fetchall()
         conn.close()
 
         buffer = io.BytesIO()
         pdf = canvas.Canvas(buffer, pagesize=letter)
-        pdf.setTitle(f"Certificado_Fumilab_{srv.get('folio')}")
+        folio_val = srv.get('folio') or str(srv.get('id', '3501'))
+        pdf.setTitle(f"Certificado_Fumilab_{folio_val}")
 
+        # Cabecera Oficial
         pdf.setFillColor(colors.HexColor("#064e3b"))
         pdf.rect(0, 715, 612, 77, fill=True, stroke=False)
         pdf.setFillColor(colors.HexColor("#10b981"))
         pdf.rect(0, 710, 612, 5, fill=True, stroke=False)
+
         pdf.setFillColor(colors.white)
         pdf.setFont("Helvetica-Bold", 18)
         pdf.drawString(40, 755, "FUMILAB CONTROL INTEGRAL")
@@ -318,11 +334,14 @@ def descargar_reporte_pdf(servicio_id):
         pdf.drawString(40, 738, "Servicios Profesionales de Desinfeccion y Manejo Integral de Plagas")
         pdf.setFont("Helvetica-Bold", 8)
         pdf.drawString(40, 723, "LICENCIA SANITARIA COFEPRIS: 2009-15A013")
-        pdf.setFont("Helvetica-Bold", 12)
-        pdf.drawRightString(572, 755, f"CERTIFICADO: #{srv.get('folio')}")
-        pdf.setFont("Helvetica", 8)
-        pdf.drawRightString(572, 738, f"EMISIÓN: {srv.get('fecha_servicio')}")
 
+        pdf.setFont("Helvetica-Bold", 12)
+        pdf.drawRightString(572, 755, f"CERTIFICADO: #{folio_val}")
+        pdf.setFont("Helvetica", 8)
+        pdf.drawRightString(572, 738, f"EMISIÓN: {srv.get('fecha_servicio') or '2026-09-19'}")
+        pdf.drawRightString(572, 723, "URGENCIAS: 55 8640 6475")
+
+        # Datos Inmueble
         pdf.setFillColor(colors.HexColor("#f8fafc"))
         pdf.roundRect(35, 610, 542, 85, 6, fill=True, stroke=colors.HexColor("#cbd5e1"))
         pdf.setFillColor(colors.HexColor("#0f172a"))
@@ -338,8 +357,9 @@ def descargar_reporte_pdf(servicio_id):
         pdf.drawString(45, 635, "Servicio Ejecutado:")
         pdf.setFont("Helvetica-Bold", 8)
         pdf.setFillColor(colors.HexColor("#047857"))
-        pdf.drawString(150, 635, str(srv.get('tipo_servicio')))
+        pdf.drawString(150, 635, str(srv.get('tipo_servicio') or 'Manejo Integral de Plagas'))
 
+        # Tabla Técnica
         y_tbl = 565
         pdf.setFillColor(colors.HexColor("#064e3b"))
         pdf.rect(35, y_tbl, 542, 18, fill=True, stroke=False)
@@ -360,14 +380,26 @@ def descargar_reporte_pdf(servicio_id):
         pdf.setFillColor(colors.HexColor("#b91c1c"))
         pdf.drawString(465, y_tbl - 18, str(srv.get('tiempo_reentrada') or '2 Horas'))
 
+        # Firmas
+        firma_data = srv.get('firma_cliente')
+        if firma_data and ',' in firma_data:
+            try:
+                fb = base64.b64decode(firma_data.split(',')[1])
+                pdf.drawImage(ImageReader(io.BytesIO(fb)), 360, 270, width=150, height=60, mask='auto')
+            except Exception:
+                pass
+
         pdf.setStrokeColor(colors.HexColor("#64748b"))
+        pdf.setLineWidth(1)
         pdf.line(60, 270, 230, 270)
         pdf.line(350, 270, 520, 270)
+
         pdf.setFillColor(colors.HexColor("#0f172a"))
         pdf.setFont("Helvetica-Bold", 8)
         pdf.drawCentredString(145, 258, "Jonathan Dávila")
         pdf.setFont("Helvetica", 7)
-        pdf.drawCentredString(145, 248, "Técnico Especialista COFEPRIS")
+        pdf.drawCentredString(145, 248, "Técnico Especialista en Inocuidad")
+
         pdf.setFont("Helvetica-Bold", 8)
         pdf.drawCentredString(435, 258, str(cliente.get('contacto'))[:30])
         pdf.setFont("Helvetica", 7)
@@ -375,9 +407,9 @@ def descargar_reporte_pdf(servicio_id):
 
         pdf.save()
         buffer.seek(0)
-        return send_file(buffer, as_attachment=True, download_name=f"Certificado_Fumilab_{srv.get('folio')}.pdf", mimetype='application/pdf')
+        return send_file(buffer, as_attachment=True, download_name=f"Certificado_Fumilab_{folio_val}.pdf", mimetype='application/pdf')
     except Exception as e:
-        return f"Error al generar PDF: {str(e)}", 500
+        return f"Error al generar Certificado: {str(e)}", 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
