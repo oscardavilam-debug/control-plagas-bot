@@ -175,40 +175,40 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-700/40 text-slate-300">
-                        {% for p in polizas %}
+                        {% for poliza in polizas|default([]) %}
                         <tr class="hover:bg-slate-700/30 transition">
                             <td class="px-5 py-3.5">
-                                <span class="font-bold text-white block">{{ p.nombre }}</span>
-                                <span class="text-[10px] text-slate-400">{{ p.contacto }} • {{ p.telefono }}</span>
+                                <span class="font-bold text-white block">{{ poliza.nombre }}</span>
+                                <span class="text-[10px] text-slate-400">{{ poliza.contacto }} • {{ poliza.telefono }}</span>
                             </td>
                             <td class="px-5 py-3.5 font-mono text-emerald-400 font-bold">
-                                #{{ p.folio_ultimo }}
+                                #{{ poliza.folio_ultimo }}
                             </td>
                             <td class="px-5 py-3.5 font-medium text-slate-300">
-                                {{ p.dias_pasados }} días
+                                {{ poliza.dias_pasados }} días
                             </td>
                             <td class="px-5 py-3.5 font-bold">
-                                {% if p.estado == 'Vencido' %}
+                                {% if poliza.estado == 'Vencido' %}
                                     <span class="text-rose-400 font-black">0 días (Expirado)</span>
                                 {% else %}
-                                    <span class="text-emerald-400 font-black">{{ p.dias_restantes }} días</span>
+                                    <span class="text-emerald-400 font-black">{{ poliza.dias_restantes }} días</span>
                                 {% endif %}
                             </td>
                             <td class="px-5 py-3.5">
-                                {% if p.estado == 'Vigente' %}
+                                {% if poliza.estado == 'Vigente' %}
                                     <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Vigente</span>
-                                {% elif p.estado == 'Por Vencer' %}
+                                {% elif poliza.estado == 'Por Vencer' %}
                                     <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-500/10 text-amber-400 border border-amber-500/20">Por Vencer</span>
                                 {% else %}
                                     <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-500/10 text-rose-400 border border-rose-500/20">Vencido</span>
                                 {% endif %}
                             </td>
                             <td class="px-5 py-3.5 text-right space-x-2">
-                                <a href="/imprimir_stickers_qr/{{ p.id }}" target="_blank" class="inline-flex items-center px-2.5 py-1.5 bg-slate-700/60 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl text-xs font-bold transition space-x-1" title="Descargar Stickers QR en PDF">
+                                <a href="/imprimir_stickers_qr/{{ poliza.id }}" target="_blank" class="inline-flex items-center px-2.5 py-1.5 bg-slate-700/60 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded-xl text-xs font-bold transition space-x-1" title="Descargar Stickers QR en PDF">
                                     <i class="fa-solid fa-qrcode text-emerald-400"></i>
                                     <span>Stickers QR</span>
                                 </a>
-                                <a href="{{ p.wa_link }}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 border border-emerald-500/30 rounded-xl text-xs font-bold transition space-x-1.5" title="Enviar recordatorio de renovación por WhatsApp">
+                                <a href="{{ poliza.wa_link }}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 border border-emerald-500/30 rounded-xl text-xs font-bold transition space-x-1.5" title="Enviar recordatorio de renovación por WhatsApp">
                                     <i class="fa-brands fa-whatsapp text-sm"></i>
                                     <span>Recordar Renovación</span>
                                 </a>
@@ -241,30 +241,30 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-700/40 text-slate-300">
-                        {% for s in servicios %}
+                        {% for servicio in servicios|default([]) %}
                         <tr class="hover:bg-slate-700/30 transition">
                             <td class="px-5 py-3.5">
-                                <span class="font-mono font-black text-emerald-400 block">#{{ s.folio }}</span>
-                                <span class="text-[10px] text-slate-400">{{ s.fecha_servicio }}</span>
+                                <span class="font-mono font-black text-emerald-400 block">#{{ servicio.folio }}</span>
+                                <span class="text-[10px] text-slate-400">{{ servicio.fecha_servicio }}</span>
                             </td>
                             <td class="px-5 py-3.5 font-bold text-white">
-                                {{ s.tipo_servicio }}
+                                {{ servicio.tipo_servicio }}
                             </td>
                             <td class="px-5 py-3.5">
-                                <span class="block font-semibold">{{ s.quimico_utilizado or 'DEMAND DUO' }}</span>
-                                <span class="text-[10px] text-slate-400">{{ s.equipo_utilizado or 'Aspersora Manual' }}</span>
+                                <span class="block font-semibold">{{ servicio.quimico_utilizado or 'DEMAND DUO' }}</span>
+                                <span class="text-[10px] text-slate-400">{{ servicio.equipo_utilizado or 'Aspersora Manual' }}</span>
                             </td>
                             <td class="px-5 py-3.5 font-black text-emerald-400">
-                                ${{ "%.2f"|format(s.costo or 1400) }}
+                                ${{ "%.2f"|format(servicio.costo or 1400) }}
                             </td>
                             <td class="px-5 py-3.5 text-rose-400 font-semibold">
-                                -${{ "%.2f"|format((s.gasto_quimicos or 0) + (s.gasto_gasolina or 0) + (s.gasto_nomina or 0) + (s.gasto_equipo or 0)) }}
+                                -${{ "%.2f"|format((servicio.gasto_quimicos or 0) + (servicio.gasto_gasolina or 0) + (servicio.gasto_nomina or 0) + (servicio.gasto_equipo or 0)) }}
                             </td>
                             <td class="px-5 py-3.5 font-black text-cyan-400">
-                                ${{ "%.2f"|format((s.costo or 1400) - ((s.gasto_quimicos or 0) + (s.gasto_gasolina or 0) + (s.gasto_nomina or 0) + (s.gasto_equipo or 0))) }}
+                                ${{ "%.2f"|format((servicio.costo or 1400) - ((servicio.gasto_quimicos or 0) + (servicio.gasto_gasolina or 0) + (servicio.gasto_nomina or 0) + (servicio.gasto_equipo or 0))) }}
                             </td>
                             <td class="px-5 py-3.5 text-right">
-                                <a href="/ver_certificado/{{ s.folio }}" target="_blank" class="inline-flex items-center px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 border border-emerald-500/20 rounded-lg text-[11px] font-bold transition space-x-1">
+                                <a href="/ver_certificado/{{ servicio.folio }}" target="_blank" class="inline-flex items-center px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 border border-emerald-500/20 rounded-lg text-[11px] font-bold transition space-x-1">
                                     <i class="fa-solid fa-file-pdf"></i>
                                     <span>PDF</span>
                                 </a>
