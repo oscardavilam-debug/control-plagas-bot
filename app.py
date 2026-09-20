@@ -22,9 +22,16 @@ def get_db():
     conn.execute("PRAGMA journal_mode=WAL;")
     return conn
 
+def asegurar_columna(conn, tabla, columna, tipo_def):
+    cursor = conn.execute(f"PRAGMA table_info({tabla})")
+    columnas = [fila[1] for fila in cursor.fetchall()]
+    if columna not in columnas:
+        conn.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {tipo_def}")
+
 def init_db():
     try:
         with get_db() as conn:
+            # 1. Clientes
             conn.execute('''
                 CREATE TABLE IF NOT EXISTS clientes (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,7 +42,9 @@ def init_db():
                     tipo_inmueble TEXT
                 )
             ''')
+            asegurar_columna(conn, "clientes", "tipo_inmueble", "TEXT")
 
+            # 2. Servicios
             conn.execute('''
                 CREATE TABLE IF NOT EXISTS servicios (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,13 +70,23 @@ def init_db():
                     estatus TEXT DEFAULT 'Terminado'
                 )
             ''')
+            for col, tipo in [
+                ("folio", "TEXT"), ("cliente_id", "INTEGER"), ("costo", "REAL DEFAULT 1400.0"),
+                ("gasto_quimicos", "REAL DEFAULT 250.0"), ("gasto_gasolina", "REAL DEFAULT 180.0"),
+                ("gasto_nomina", "REAL DEFAULT 350.0"), ("gasto_equipo", "REAL DEFAULT 80.0"),
+                ("quimico_utilizado", "TEXT"), ("ingrediente_activo", "TEXT"), ("dosis_aplicada", "TEXT"),
+                ("equipo_utilizado", "TEXT"), ("tiempo_reentrada", "TEXT"), ("actividades_realizadas", "TEXT"),
+                ("recomendaciones", "TEXT"), ("firma_cliente", "TEXT"), ("estatus", "TEXT DEFAULT 'Terminado'")
+            ]:
+                asegurar_columna(conn, "servicios", col, tipo)
 
+            # 3. Prospectos
             conn.execute('''
                 CREATE TABLE IF NOT EXISTS prospectos (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    folio TEXT UNIQUE,
-                    nombre TEXT NOT NULL,
-                    telefono TEXT NOT NULL,
+                    folio TEXT,
+                    nombre TEXT,
+                    telefono TEXT,
                     tipo_inmueble TEXT,
                     plaga TEXT,
                     fecha_solicitud TEXT,
@@ -75,7 +94,15 @@ def init_db():
                     notas TEXT
                 )
             ''')
+            for col, tipo in [
+                ("folio", "TEXT"), ("nombre", "TEXT"), ("telefono", "TEXT"),
+                ("tipo_inmueble", "TEXT"), ("plaga", "TEXT"),
+                ("fecha_solicitud", "TEXT"), ("estatus", "TEXT DEFAULT 'Pendiente'"),
+                ("notas", "TEXT")
+            ]:
+                asegurar_columna(conn, "prospectos", col, tipo)
 
+            # 4. Inventario
             conn.execute('''
                 CREATE TABLE IF NOT EXISTS inventario (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -89,6 +116,7 @@ def init_db():
                 )
             ''')
 
+            # 5. Fotos
             conn.execute('''
                 CREATE TABLE IF NOT EXISTS servicio_fotos (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,31 +125,8 @@ def init_db():
                 )
             ''')
 
-            # Migraciones defensivas
-            migraciones = [
-                ("clientes", "tipo_inmueble", "TEXT"),
-                ("servicios", "gasto_quimicos", "REAL DEFAULT 250.0"),
-                ("servicios", "gasto_gasolina", "REAL DEFAULT 180.0"),
-                ("servicios", "gasto_nomina", "REAL DEFAULT 350.0"),
-                ("servicios", "gasto_equipo", "REAL DEFAULT 80.0"),
-                ("servicios", "equipo_utilizado", "TEXT"),
-                ("servicios", "cliente_id", "INTEGER"),
-                ("prospectos", "folio", "TEXT"),
-                ("prospectos", "tipo_inmueble", "TEXT"),
-                ("prospectos", "plaga", "TEXT"),
-                ("prospectos", "fecha_solicitud", "TEXT"),
-                ("prospectos", "estatus", "TEXT DEFAULT 'Pendiente'"),
-                ("prospectos", "notas", "TEXT")
-            ]
-            for tabla, col, tipo in migraciones:
-                try:
-                    conn.execute(f"ALTER TABLE {tabla} ADD COLUMN {col} {tipo}")
-                except Exception:
-                    pass
-
-            # Precarga inicial
-            c_count = conn.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
-            if c_count == 0:
+            # Precarga de datos operativos garantizada
+            if conn.execute("SELECT COUNT(*) FROM clientes").fetchone()[0] == 0:
                 conn.execute('''
                     INSERT INTO clientes (nombre_comercial, contacto, telefono, direccion, tipo_inmueble) VALUES 
                     ('Farmacia Similares 3509 Ecatepec', 'Nancy Padilla Garcia', '5541419369', 'Av. Jardines de Morelos Mz. 316', 'Comercial'),
@@ -129,16 +134,14 @@ def init_db():
                     ('Restaurante Aloha Mar y Tierra', 'Mauricio Garduño', '5632326172', 'Blvd. Valle San Felipe', 'Alimentos')
                 ''')
 
-            p_count = conn.execute("SELECT COUNT(*) FROM prospectos").fetchone()[0]
-            if p_count == 0:
+            if conn.execute("SELECT COUNT(*) FROM prospectos").fetchone()[0] == 0:
                 conn.execute('''
                     INSERT INTO prospectos (folio, nombre, telefono, tipo_inmueble, plaga, fecha_solicitud, estatus, notas) VALUES
                     ('COT-901', 'Bodega Abarrotes Central', '5511223344', 'Bodega Industrial', 'Roedores y Cucarachas', '2026-09-19', 'Pendiente', 'Cotización urgente servicio perimetral'),
-                    ('COT-902', 'Panificadora La Espiga', '5598765432', 'Alimentos', 'Cucaracha Germánica', '2026-09-19', 'Atendido', 'Póliza acordada lunes 8am')
+                    ('COT-902', 'Panificadora La Espiga', '5598765432', 'Alimentos', 'Cucaracha Germánica', '2026-09-19', 'Atendido', 'Visita programada lunes 8am')
                 ''')
 
-            inv_count = conn.execute("SELECT COUNT(*) FROM inventario").fetchone()[0]
-            if inv_count == 0:
+            if conn.execute("SELECT COUNT(*) FROM inventario").fetchone()[0] == 0:
                 conn.execute('''
                     INSERT INTO inventario (tipo, nombre, registro_cofepris, stock_actual, unidad, costo_unitario, estado) VALUES
                     ('Quimico', 'DEMAND DUO (Syngenta)', 'RSCO-URB-INAC-111-315-009-0.02', 12.5, 'Litros', 850.0, 'En Stock'),
@@ -148,8 +151,7 @@ def init_db():
                     ('Equipo', 'Termonebulizador en Frío ULV', 'CE-ISO', 2.0, 'Piezas', 4800.0, 'Operativa')
                 ''')
 
-            s_count = conn.execute("SELECT COUNT(*) FROM servicios").fetchone()[0]
-            if s_count == 0:
+            if conn.execute("SELECT COUNT(*) FROM servicios").fetchone()[0] == 0:
                 conn.execute('''
                     INSERT INTO servicios (
                         folio, cliente_id, tipo_servicio, fecha_servicio, hora_inicio, hora_fin,
@@ -164,7 +166,11 @@ def init_db():
                     ('3502', 2, 'CONTROL DE ROEDORES (MIP)', '2026-09-18', '04:52 PM', '06:18 PM',
                      1800.0, 220.0, 180.0, 400.0, 60.0,
                      'RODILON BLOQUE', 'DIFETIALONA 0.0025%', '1 Bloque / Cebadero', 'Cebaderos Perimetrales R-Lock', 'Inmediata',
-                     'Revisión y reabastecimiento de 8 estaciones de cebado', 'Mantener pasillos libres de tarimas', 'Terminado')
+                     'Revisión y reabastecimiento de 8 estaciones de cebado', 'Mantener pasillos libres de tarimas', 'Terminado'),
+                    ('3503', 3, 'DESINFECCION AMBIENTAL Y SANITIZACION', '2026-09-17', '10:00 AM', '11:30 AM',
+                     2200.0, 280.0, 200.0, 450.0, 90.0,
+                     'BIOCIDAL PLUS', 'SALES DE AMONIO CUATERNARIO', '5 ml / L de agua', 'Termonebulizador ULV', '3 Horas',
+                     'Nebulización ultra bajo volumen en áreas comunes y almacén', 'Ventilar 30 min antes de reingreso', 'Terminado')
                 ''')
     except Exception as e:
         print(f"Error en init_db: {e}")
@@ -237,7 +243,7 @@ def certificados():
     try:
         with get_db() as conn:
             filas = conn.execute('''
-                SELECT s.*, coalesce(c.nombre_comercial, 'Cliente Comercial') as cliente_nombre 
+                SELECT s.*, coalesce(c.nombre_comercial, 'Cliente General') as cliente_nombre 
                 FROM servicios s 
                 LEFT JOIN clientes c ON s.cliente_id = c.id 
                 ORDER BY s.id DESC
@@ -269,10 +275,10 @@ def escaner_qr():
 def solicitar_cotizacion():
     if request.method == 'POST':
         try:
-            nombre = request.form.get('nombre', '').strip()
-            telefono = request.form.get('telefono', '').strip()
-            tipo_inmueble = request.form.get('tipo_inmueble', 'Comercial')
-            plaga = request.form.get('plaga', 'Cucarachas')
+            nombre = (request.form.get('nombre') or request.form.get('nombre_completo') or 'Cliente Web').strip()
+            telefono = (request.form.get('telefono') or request.form.get('celular') or '5500000000').strip()
+            tipo_inmueble = (request.form.get('tipo_inmueble') or request.form.get('inmueble') or 'Comercial').strip()
+            plaga = (request.form.get('plaga') or request.form.get('plaga_tratar') or 'Cucarachas').strip()
             notas = request.form.get('notas', '')
 
             with get_db() as conn:
