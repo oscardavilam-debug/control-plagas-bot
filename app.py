@@ -413,8 +413,8 @@ def dashboard_financiero():
                     estado_vigencia = "Vencido"
                     badge_color = "rose"
 
-                tel_raw = "".join([d for d in str(c_dict.get('telefono') or '5586406475') if d.isdigit()])
-                wa_tel = f"52{tel_raw}" if len(tel_raw) == 10 else (tel_raw or "525586406475")
+                tel_raw = "".join([d for d in str(c_dict.get('telefono') or '5649643758') if d.isdigit()])
+                wa_tel = f"52{tel_raw}" if len(tel_raw) == 10 else (tel_raw or "525649643758")
                 contacto_nom = c_dict.get('contacto') or c_dict.get('nombre_comercial')
 
                 if estado_vigencia == "Vencido":
@@ -491,7 +491,7 @@ def certificados():
             filas = conn.execute('''
                 SELECT s.*, 
                        coalesce(c.nombre_comercial, 'Cliente General') as cliente_nombre,
-                       coalesce(c.telefono, '5586406475') as cliente_telefono,
+                       coalesce(c.telefono, '5649643758') as cliente_telefono,
                        coalesce(c.direccion, 'CDMX y EdoMex') as cliente_direccion
                 FROM servicios s 
                 LEFT JOIN clientes c ON s.cliente_id = c.id 
@@ -581,13 +581,13 @@ def servicio_exitoso(folio):
             srv = dict(srv_row)
             
             c_row = conn.execute("SELECT * FROM clientes WHERE id = ?", (srv.get('cliente_id', 1),)).fetchone()
-            cliente = dict(c_row) if c_row else {'nombre_comercial': 'Cliente General', 'contacto': 'Responsable', 'telefono': '5586406475'}
+            cliente = dict(c_row) if c_row else {'nombre_comercial': 'Cliente General', 'contacto': 'Responsable', 'telefono': '5649643758'}
 
-        tel_limpio = "".join([c for c in str(cliente.get('telefono') or '5586406475') if c.isdigit()])
+        tel_limpio = "".join([c for c in str(cliente.get('telefono') or '5649643758') if c.isdigit()])
         if len(tel_limpio) == 10:
             wa_tel = f"52{tel_limpio}"
         else:
-            wa_tel = tel_limpio or "525586406475"
+            wa_tel = tel_limpio or "525649643758"
 
         url_certificado = f"https://control-plagas-bot.onrender.com/ver_certificado/{folio}"
         mensaje_texto = (
@@ -868,7 +868,7 @@ def descargar_reporte_pdf(servicio_id):
         pdf.rect(35, 175, 542, 24, fill=True, stroke=False)
         pdf.setFillColor(colors.white)
         pdf.setFont("Helvetica-Bold", 7)
-        pdf.drawCentredString(306, 185, "FUMILAB CONTROL • MATRIZ: LAUREL LOTE 43 CASA 6, LOS REYES IZTACALA, TLALNEPANTLA, EDOMEX")
+        pdf.drawCentredString(306, 185, "FUMILAB CONTROL • TEL/WHATSAPP: 56 4964 3758 • MATRIZ: LOS REYES IZTACALA, TLALNEPANTLA, EDOMEX")
 
         pdf.save()
         buffer.seek(0)
@@ -889,3 +889,4 @@ def pwa_service_worker():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+
