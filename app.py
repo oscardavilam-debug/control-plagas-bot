@@ -15,6 +15,8 @@ from reportlab.lib import colors
 from reportlab.lib.utils import ImageReader
 
 app = Flask(__name__)
+OFFICIAL_PHONE = os.environ.get('OFFICIAL_PHONE', '5649643758')
+OFFICIAL_WA = '52' + OFFICIAL_PHONE
 app.secret_key = os.environ.get('SECRET_KEY', 'fumilab_corp_saas_secure_token_987654321_2026')
 
 app.config.update(
