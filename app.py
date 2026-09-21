@@ -147,7 +147,7 @@ def init_db():
         for col, tipo in columnas_servicios:
             asegurar_columna(conn, "servicios", col, tipo)
 
-        # 3. Tabla Prospectos
+                # 3. Tabla Prospectos
         cur.execute('''
             CREATE TABLE IF NOT EXISTS prospectos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -162,6 +162,14 @@ def init_db():
             )
         ''')
         conn.commit()
+        asegurar_columna(conn, "prospectos", "folio", "TEXT")
+        asegurar_columna(conn, "prospectos", "nombre", "TEXT")
+        asegurar_columna(conn, "prospectos", "telefono", "TEXT")
+        asegurar_columna(conn, "prospectos", "tipo_inmueble", "TEXT")
+        asegurar_columna(conn, "prospectos", "plaga", "TEXT")
+        asegurar_columna(conn, "prospectos", "fecha_solicitud", "TEXT")
+        asegurar_columna(conn, "prospectos", "estatus", "TEXT DEFAULT 'Pendiente'")
+        asegurar_columna(conn, "prospectos", "notas", "TEXT")
 
         # 4. Tabla Inventario
         cur.execute('''
