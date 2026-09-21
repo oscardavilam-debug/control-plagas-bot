@@ -897,6 +897,82 @@ def pwa_service_worker():
     response.headers['Service-Worker-Allowed'] = '/'
     return response
 
+
+# ============================================================
+# WEBHOOK OFICIAL DE WHATSAPP META CLOUD API
+# ============================================================
+VERIFY_TOKEN = os.environ.get('VERIFY_TOKEN', 'fumilab_token_seguro_2026')
+WHATSAPP_TOKEN = os.environ.get('WHATSAPP_TOKEN', '')
+PHONE_NUMBER_ID = os.environ.get('PHONE_NUMBER_ID', '1335257003001244')
+
+def responder_whatsapp(telefono_destino, mensaje):
+    if not WHATSAPP_TOKEN or not PHONE_NUMBER_ID:
+        print("Falta WHATSAPP_TOKEN o PHONE_NUMBER_ID")
+        return
+    try:
+        import requests
+        url = f"https://graph.facebook.com/v20.0/{PHONE_NUMBER_ID}/messages"
+        headers = {
+            "Authorization": f"Bearer {WHATSAPP_TOKEN}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": telefono_destino,
+            "type": "text",
+            "text": {"body": mensaje}
+        }
+        r = requests.post(url, json=payload, headers=headers, timeout=10)
+        print("Envio WhatsApp status:", r.status_code, r.text)
+    except Exception as err:
+        print("Error al responder mensaje por WhatsApp:", err)
+
+@app.route('/webhook/whatsapp', methods=['GET', 'POST'])
+@app.route('/webhook', methods=['GET', 'POST'])
+def webhook_whatsapp():
+    if request.method == 'GET':
+        mode = request.args.get('hub.mode')
+        token = request.args.get('hub.verify_token')
+        challenge = request.args.get('hub.challenge')
+        if mode == 'subscribe' and token == VERIFY_TOKEN:
+            return challenge, 200
+        return challenge or "Token invalido", 200
+
+    if request.method == 'POST':
+        data = request.get_json() or {}
+        try:
+            entry = data.get('entry', [])[0]
+            changes = entry.get('changes', [])[0]
+            value = changes.get('value', {})
+            messages = value.get('messages', [])
+            if messages:
+                msg = messages[0]
+                remitente = msg.get('from')
+                texto_cliente = msg.get('text', {}).get('body', '').strip().lower()
+
+                nombre_perfil = "Estimado cliente"
+                contacts = value.get('contacts', [])
+                if contacts:
+                    nombre_perfil = contacts[0].get('profile', {}).get('name', 'Estimado cliente')
+
+                respuesta = (
+                    f"¡Hola {nombre_perfil}! Gracias por comunicarte con *Fumilab Control Integral* 🐜🛡️.\n\n"
+                    "Somos especialistas en Manejo Integral de Plagas (MIP) y Desinfección con Licencia Sanitaria COFEPRIS: *2009-15A013*.\n\n"
+                    "Por favor indícanos cómo podemos apoyarte:\n"
+                    "1️⃣ Cotizar servicio residencial o comercial.\n"
+                    "2️⃣ Seguimiento a póliza o reporte técnico.\n"
+                    "3️⃣ Hablar con un asesor técnico.\n\n"
+                    "🌐 También puedes cotizar en línea directamente aquí:\n"
+                    "https://control-plagas-bot.onrender.com/solicitar_cotizacion"
+                )
+
+                responder_whatsapp(remitente, respuesta)
+        except Exception as e:
+            print("Error procesando mensaje webhook:", e)
+
+        return "EVENT_RECEIVED", 200
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
