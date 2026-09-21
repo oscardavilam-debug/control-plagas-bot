@@ -27,7 +27,7 @@ app.config.update(
 )
 
 DB_FILE = 'fumilab.db'
-SHEETS_WEBHOOK_URL = os.environ.get('GOOGLE_SHEETS_URL', os.environ.get('SHEETS_WEBHOOK_URL', ''))
+SHEETS_WEBHOOK_URL = os.environ.get('GOOGLE_SHEETS_URL', 'https://script.google.com/macros/s/AKfycbzJx5hM_CWeZ_tlFen9owTybNeyOQnpjxHsuQVHpmq1ZbfasmfDPmwCNi5vVkqTZpO1/exec')
 
 ADMIN_USER = os.environ.get('ADMIN_USER', 'admin')
 ADMIN_PASS = os.environ.get('ADMIN_PASS', 'Fumilab2026*')
