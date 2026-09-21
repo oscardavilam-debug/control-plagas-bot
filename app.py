@@ -41,20 +41,21 @@ def login_requerido(f):
     return decorador
 
 def enviar_a_google_sheets(datos):
-    url = SHEETS_WEBHOOK_URL.strip()
-    if not url:
+    webhook_url = os.environ.get('GOOGLE_SHEETS_URL', 'https://script.google.com/macros/s/AKfycbzJx5hM_CWeZ_tlFen9owTybNeyOQnpjxHsuQVHpmq1ZbfasmfDPmwCNi5vVkqTZpO1/exec').strip()
+    if not webhook_url:
         return
     try:
-        payload = json.dumps(datos).encode('utf-8')
-        headers = {
-            'Content-Type': 'application/json; charset=utf-8',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-        }
-        opener = urllib.request.build_opener(urllib.request.HTTPRedirectHandler)
-        req = urllib.request.Request(url, data=payload, headers=headers, method='POST')
-        opener.open(req, timeout=8)
+        import requests
+        resp = requests.post(webhook_url, json=datos, timeout=12, allow_redirects=True)
+        print(f"Respuesta Sheets Webhook: {resp.status_code}")
     except Exception as e:
-        print(f"Error envio Sheets: {e}")
+        try:
+            payload = json.dumps(datos).encode('utf-8')
+            req = urllib.request.Request(webhook_url, data=payload, headers={'Content-Type': 'application/json'}, method='POST')
+            with urllib.request.urlopen(req, timeout=12) as response:
+                print(f"Respuesta fallback Sheets: {response.getcode()}")
+        except Exception as err:
+            print(f"Error final envio Sheets: {err}")
 
 def get_db():
     conn = sqlite3.connect(DB_FILE, timeout=30.0)
