@@ -936,7 +936,7 @@ def webhook_whatsapp():
         challenge = request.args.get('hub.challenge')
         if mode == 'subscribe' and token == VERIFY_TOKEN:
             return challenge, 200
-        return challenge or "Token invalido", 200
+        return challenge or 'Token invalido', 200
 
     if request.method == 'POST':
         data = request.get_json() or {}
@@ -948,30 +948,74 @@ def webhook_whatsapp():
             if messages:
                 msg = messages[0]
                 remitente = msg.get('from')
-                texto_cliente = msg.get('text', {}).get('body', '').strip().lower()
+                texto = msg.get('text', {}).get('body', '').strip().lower()
 
-                nombre_perfil = "Estimado cliente"
                 contacts = value.get('contacts', [])
-                if contacts:
-                    nombre_perfil = contacts[0].get('profile', {}).get('name', 'Estimado cliente')
+                nombre = contacts[0].get('profile', {}).get('name', '') if contacts else ''
+                saludo = ('Estimado(a) ' + nombre + ',') if nombre else 'Estimado cliente,'
 
-                respuesta = (
-                    f"¡Hola {nombre_perfil}! Gracias por comunicarte con *Fumilab Control Integral* 🐜🛡️.\n\n"
-                    "Somos especialistas en Manejo Integral de Plagas (MIP) y Desinfección con Licencia Sanitaria COFEPRIS: *2009-15A013*.\n\n"
-                    "Por favor indícanos cómo podemos apoyarte:\n"
-                    "1️⃣ Cotizar servicio residencial o comercial.\n"
-                    "2️⃣ Seguimiento a póliza o reporte técnico.\n"
-                    "3️⃣ Hablar con un asesor técnico.\n\n"
-                    "🌐 También puedes cotizar en línea directamente aquí:\n"
-                    "https://control-plagas-bot.onrender.com/solicitar_cotizacion"
-                )
+                if texto in ['1', 'cotizar', 'cotizacion', 'costo', 'precio', 'presupuesto']:
+                    lineas = [
+                        saludo,
+                        '',
+                        'Con gusto le compartimos los detalles para la cotizacion de su servicio.',
+                        '',
+                        'En *Fumilab Control Integral* implementamos programas de Manejo Integral de Plagas bajo normativa *NOM-256-SSA1-2012*, utilizando insumos autorizados por COFEPRIS y emitiendo certificado con validez oficial.',
+                        '',
+                        'Para generar su propuesta tecnica formal y cotizacion con folio inmediato, ingrese a nuestro portal institucional:',
+                        'https://control-plagas-bot.onrender.com/solicitar_cotizacion',
+                        '',
+                        'Si requiere atencion directa, compartanos:',
+                        '- Giro del inmueble (Residencial, Restaurante, Industria, Comercio)',
+                        '- Tipo de plaga a tratar',
+                        '- Ubicacion (Municipio o Alcaldia)'
+                    ]
+                elif texto in ['2', 'poliza', 'certificado', 'reporte', 'vigencia']:
+                    lineas = [
+                        saludo,
+                        '',
+                        'Para validar la vigencia de su poliza, solicitar copia de Certificado Sanitario o programar su servicio preventivo mensual, proporcionenos:',
+                        '',
+                        '- Razon Social o Nombre comercial del establecimiento',
+                        '- Numero de Folio o Certificado anterior (si cuenta con el)',
+                        '',
+                        'Nuestro departamento de control sanitario validara su expediente a la brevedad.'
+                    ]
+                elif texto in ['3', 'asesor', 'humano', 'contacto', 'urgente', 'tecnico']:
+                    lineas = [
+                        saludo,
+                        '',
+                        'Su solicitud ha sido turnada al area tecnica especializada.',
+                        '',
+                        'Un asesor tomara el control de esta conversacion a la brevedad para brindarle asistencia personalizada.',
+                        '',
+                        'Línea directa: *56 4964 3758*',
+                        'Licencia Sanitaria COFEPRIS: *2009-15A013*',
+                        'Horario de atencion: Lunes a Sabado de 8:00 a 19:00 hrs.'
+                    ]
+                else:
+                    lineas = [
+                        saludo,
+                        'Bienvenido al canal corporativo de atencion de *Fumilab Control Integral*.',
+                        '',
+                        'Especialistas en Manejo Integral de Plagas Urbanas, Desinfeccion y Bioseguridad institucional bajo *Licencia Sanitaria COFEPRIS: 2009-15A013*.',
+                        '',
+                        'Por favor elija una de las siguientes opciones indicando el numero:',
+                        '',
+                        '*[ 1 ]* Solicitar cotizacion o propuesta de servicio',
+                        '*[ 2 ]* Seguimiento de polizas y certificados sanitarios',
+                        '*[ 3 ]* Contactar a un asesor tecnico',
+                        '',
+                        'Portal en linea de cotizaciones inmediatas:',
+                        'https://control-plagas-bot.onrender.com/solicitar_cotizacion'
+                    ]
 
+                respuesta = '\n'.join(lineas)
                 responder_whatsapp(remitente, respuesta)
         except Exception as e:
-            print("Error procesando mensaje webhook:", e)
+            print('Error procesando mensaje webhook:', e)
 
-        return "EVENT_RECEIVED", 200
-
+        return 'EVENT_RECEIVED', 200
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
